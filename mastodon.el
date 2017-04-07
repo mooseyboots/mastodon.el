@@ -63,13 +63,13 @@
   "Returns Mastondon API URL for ENDPOINT."
   (concat mastodon-instance-url "/api/" mastodon--api-version "/" endpoint))
 
-(defun mastodon--http-post (url callback args)
+(defun mastodon--http-post (url callback args &optional headers)
   "Sends ARGS to URL as a POST request.
 
 Response buffer is passed to the CALLBACK function."
   (let ((url-request-method "POST")
         (url-request-extra-headers
-         '(("Content-Type" . "application/x-www-form-urlencoded")))
+         (append '(("Content-Type" . "application/x-www-form-urlencoded")) headers))
         (url-request-data
          (mapconcat (lambda (arg)
                       (concat (url-hexify-string (car arg))
