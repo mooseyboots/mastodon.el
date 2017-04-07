@@ -29,7 +29,7 @@
                                           (setq mastodon--client-plist `(:client_id ,(gethash "client_id" client-data) :client_secret ,(gethash "client_secret" client-data)))))
                        '(("client_name" . "mastodon.el")
                          ("redirect_uris" . "urn:ietf:wg:oauth:2.0:oob")
-                         ("scopes" . "read write"))))
+                         ("scopes" . "read write follow"))))
 
 (defun mastodon--store-access-token-file ()
   (let ((plstore (plstore-open mastodon-token-file)))
