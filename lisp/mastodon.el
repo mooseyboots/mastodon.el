@@ -14,10 +14,20 @@
 (defvar mastodon--api-version "v1")
 
 ;;;###autoload
-(defun mastodon ()
+(defun mastodon-toot ()
+  "Updates a Mastodon instance with new toot. Content is captured in a new buffer."
   (interactive)
-  (load-file "mastodon-http.el")
-  (load-file "mastodon-auth.el")
-  (load-file "mastodon-toot.el"))
+  (progn
+    (require 'mastodon-toot)
+    (switch-to-buffer-other-window (get-buffer-create "*new toot*"))
+    (mastodon-toot-mode t)))
+
+;;;###autoload
+(defun mastodon-register ()
+  "Registers mastodon.el with the Mastodon instance."
+  (interactive)
+  (progn
+    (require 'mastodon-auth)
+    (mastodon--store-client-id-and-secret)))
 
 (provide 'mastodon)

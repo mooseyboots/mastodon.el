@@ -5,13 +5,6 @@
   "Capture Mastodon toots."
   :group 'mastodon)
 
-(defun mastodon-new-toot ()
-  "Updates a Mastodon instance with new toot. Content is captured in a new buffer."
-  (interactive)
-  (progn
-    (switch-to-buffer-other-window (get-buffer-create "*new toot*"))
-    (mastodon-toot-mode t)))
-
 (defun mastodon-toot--send-triage (status)
   "Callback function to triage toot POST.
 
