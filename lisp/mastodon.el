@@ -6,7 +6,6 @@
   :group 'mastodon
   :type 'string)
 
-;; TODO
 (defcustom mastodon-token-file (concat user-emacs-directory "mastodon.plstore")
   "File path where Mastodon access tokens are stored."
   :group 'mastodon

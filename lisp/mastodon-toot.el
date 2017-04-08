@@ -11,6 +11,10 @@
     (switch-to-buffer-other-window (get-buffer-create "*new toot*"))
     (mastodon-toot-mode t)))
 
+(defun mastodon-toot--send-triage (status)
+  (mastodon--http-response-triage status
+                                  (lambda () (switch-to-buffer (current-buffer))))) ;; FIXME
+
 (defun mastodon-toot--send ()
   (interactive)
   (let ((toot (buffer-string))
@@ -18,9 +22,8 @@
     (progn
       (kill-buffer-and-window)
       (mastodon--http-post endpoint
-                           (lambda (status) (switch-to-buffer (current-buffer))) ;; FIXME
-                           `(("status" . ,toot)
-                             ("visibility" . "public"))
+                           'mastodon-toot--send-triage
+                           `(("status" . ,toot))
                            `(("Authorization" . ,(concat
                                                   "Bearer "
                                                   (mastodon--access-token))))))))
