@@ -1,7 +1,5 @@
-(load-file "mastodon-auth.el")
-(load-file "mastodon-http.el")
-
-(defvar mastodon--api-version "v1")
+(defgroup mastodon nil
+  "Interface with Mastodon.")
 
 (defcustom mastodon-instance-url "https://mastodon.social"
   "Base URL for the Masto instance from which you toot."
@@ -14,10 +12,13 @@
   :group 'mastodon
   :type 'file)
 
-(defvar mastodon--client-plist (mastodon--read-access-token-file)
-  "Stores CLIENT_ID, CLIENT_SECRET, and ACCESS_TOKEN.
+(defvar mastodon--api-version "v1")
 
-Reads values from `mastodon-token-file' if they exist.")
+;;;###autoload
+(defun mastodon ()
+  (interactive)
+  (load-file "mastodon-http.el")
+  (load-file "mastodon-auth.el")
+  (load-file "mastodon-toot.el"))
 
-(defvar mastodon--token (mastodon--read-or-get-access-token)
-  "API token for Mastodon.")
+(provide 'mastodon)

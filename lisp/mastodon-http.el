@@ -1,3 +1,5 @@
+(require 'mastodon)
+
 (defun mastodon--api-for (endpoint)
   "Returns Mastondon API URL for ENDPOINT."
   (concat mastodon-instance-url "/api/" mastodon--api-version "/" endpoint))
@@ -18,17 +20,44 @@ Response buffer is passed to the CALLBACK function."
                     "&")))
     (url-retrieve url callback)))
 
-(defun mastodon--response-json (status)
-  "Returns JSON string from `mastodon--http-post' response buffer."
-  (let ((resp (with-current-buffer (current-buffer)
-                (buffer-substring-no-properties (point-min) (point-max)))))
+(defun mastodon--response-buffer ()
+  (with-current-buffer (current-buffer)
+    (buffer-substring-no-properties (point-min) (point-max))))
+
+(defun mastodon--response-body-substring (pattern)
+  (let ((resp (mastodon--response-buffer)))
     (progn
-      (string-match "\{.*\}" resp)
+      (string-match pattern resp)
       (match-string 0 resp))))
 
-(defun mastodon--json-hash-table (status)
+(defun mastodon--response-match-p (pattern)
+  (let ((resp (mastodon--response-buffer)))
+    (string-match-p pattern resp)))
+
+(defun mastodon--response-status-p ()
+  (when (mastodon--response-match-p "^HTTP/1.*$") t))
+
+(defun mastodon--response-json ()
+    (mastodon--response-body-substring "\{.*\}"))
+
+(defun mastodon--response-code ()
+  (let* ((status-line (mastodon--response-body-substring "^HTTP/1.*$")))
+         (progn
+           (string-match "[0-9][0-9][0-9]" status-line)
+           (match-string 0 status-line))))
+
+(defun mastodon--json-hash-table ()
   "Reads JSON string from `mastodon--response-json' into a hash table."
   (let ((json-object-type 'hash-table)
         (json-array-type 'list)
         (json-key-type 'string))
-    (json-read-from-string (mastodon--response-json status))))
+    (json-read-from-string (mastodon--response-json))))
+
+(defun mastodon--http-response-triage (status success)
+  (when (not (mastodon--response-status))
+    (mastodon--http-response-triage status))
+  (if (string-prefix-p "2" (mastodon--response-code))
+      (funcall success)
+    (switch-to-buffer (current-buffer))))
+
+(provide 'mastodon-http)
