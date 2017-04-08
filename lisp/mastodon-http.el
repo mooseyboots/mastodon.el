@@ -54,7 +54,7 @@ Response buffer is passed to the CALLBACK function."
     (json-read-from-string (mastodon--response-json))))
 
 (defun mastodon--http-response-triage (status success)
-  (when (not (mastodon--response-status))
+  (when (not (mastodon--response-status-p))
     (mastodon--http-response-triage status))
   (if (string-prefix-p "2" (mastodon--response-code))
       (funcall success)
