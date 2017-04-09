@@ -1,5 +1,5 @@
 # mastodon.el
-Emacs client for [Mastodon](https://mastodon.social)
+Emacs client for [Mastodon](https://github.com/tootsuite/mastodon)
 
 ## Installation
 
