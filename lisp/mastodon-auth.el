@@ -84,7 +84,8 @@ Email address and password are not stored."
                          ("client_secret" . ,(plist-get (mastodon--client-app) :client_secret))
                          ("grant_type" . "password")
                          ("username" . ,(read-string "Email: "))
-                         ("password" . ,(read-passwd "Password: ")))))
+                         ("password" . ,(read-passwd "Password: "))
+                         ("scope" . "read write follow"))))
 
 (defun mastodon--access-token ()
   "Returns `mastodon--api-token-string'.
