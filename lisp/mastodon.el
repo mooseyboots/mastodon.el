@@ -25,6 +25,14 @@
 
 (defvar mastodon--api-version "v1")
 
+(defun mastodon-version ()
+  "Message package version."
+  (interactive)
+  (with-temp-buffer
+    (insert-file-contents "../.version")
+    (message
+     (concat "mastodon.el v" (buffer-string)))))
+
 ;;;###autoload
 (defun mastodon-toot ()
   "Update a Mastodon instance with new toot. Content is captured in a new buffer."
