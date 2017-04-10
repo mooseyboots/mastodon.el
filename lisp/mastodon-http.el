@@ -1,10 +1,27 @@
 ;;; mastodon-http.el --- HTTP request/response functions for mastodon.el
 
-;;; Commentary:
+;; Copyright (C) 2017 Johnson Denen
+;; Author: Johnson Denen <johnson.denen@gmail.com>
+;; Homepage: https://github.com/jdenen/mastodon.el
 
-;; mastodon.el is an Emacs client for Mastodon, the federated microblogging
-;; social network. It is very much a work-in-progress, but it is a labor of
-;; love.
+;; This file is not part of GNU Emacs.
+
+;; This file is part of mastodon.el.
+
+;; mastodon.el is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; mastodon.el is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with mastodon.el.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
 
 ;; mastodon-http.el provides HTTP request/response functions.
 
