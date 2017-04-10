@@ -40,7 +40,8 @@ STATUS is passed by `url-retrieve'."
                        'mastodon--register-client-app-triage
                        '(("client_name" . "mastodon.el")
                          ("redirect_uris" . "urn:ietf:wg:oauth:2.0:oob")
-                         ("scopes" . "read write follow"))))
+                         ("scopes" . "read write follow")
+                         ("website" . "https://github.com/jdenen/mastodon.el"))))
 
 (defun mastodon--register-and-return-client-app ()
   "Register `mastodon' with an instance. Return `mastodon--client-app-plist'."
