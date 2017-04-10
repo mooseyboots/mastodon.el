@@ -1,5 +1,17 @@
+;;; mastodon.el -- Mastodon client for Emacs
+
+;;; Commentary:
+
+;; mastodon.el is an Emacs client for Mastodon, the federated microblogging
+;; social network. It is very much a work-in-progress, but it is a labor of
+;; love.
+
+;;; Code:
+
 (defgroup mastodon nil
-  "Interface with Mastodon.")
+  "Interface with Mastodon."
+  :prefix "mastodon-"
+  :group 'external)
 
 (defcustom mastodon-instance-url "https://mastodon.social"
   "Base URL for the Masto instance from which you toot."
@@ -15,7 +27,7 @@
 
 ;;;###autoload
 (defun mastodon-toot ()
-  "Updates a Mastodon instance with new toot. Content is captured in a new buffer."
+  "Update a Mastodon instance with new toot. Content is captured in a new buffer."
   (interactive)
   (progn
     (require 'mastodon-toot)
@@ -31,3 +43,4 @@
     (mastodon--store-client-id-and-secret)))
 
 (provide 'mastodon)
+;;; mastodon.el ends here

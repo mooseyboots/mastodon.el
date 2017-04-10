@@ -1,8 +1,21 @@
+;;; mastodon-toot.el --- Minor mode for sending Mastodon toots
+
+;;; Commentary:
+
+;; mastodon.el is an Emacs client for Mastodon, the federated microblogging
+;; social network. It is very much a work-in-progress, but it is a labor of
+;; love.
+
+;; mastodon-toot.el supports POSTing status data to Mastodon.
+
+;;; Code:
+
 (require 'mastodon-auth)
 (require 'mastodon-http)
 
 (defgroup mastodon-toot nil
   "Capture Mastodon toots."
+  :prefix "mastodon-toot-"
   :group 'mastodon)
 
 (defun mastodon-toot--send-triage (status)
@@ -13,7 +26,7 @@ STATUS is passed by `url-retrieve'."
                                   (lambda () (switch-to-buffer (current-buffer))))) ;; FIXME
 
 (defun mastodon-toot--send ()
-  "Kills new-toot buffer/window and POSTs contents to the Mastodon instance."
+  "Kill new-toot buffer/window and POST contents to the Mastodon instance."
   (interactive)
   (let ((toot (buffer-string))
         (endpoint (mastodon--api-for "statuses")))
@@ -27,7 +40,7 @@ STATUS is passed by `url-retrieve'."
                                                   (mastodon--access-token))))))))
 
 (defun mastodon-toot--cancel ()
-  "Kills new-toot buffer/window. Does not POST content to Mastodon."
+  "Kill new-toot buffer/window. Does not POST content to Mastodon."
   (interactive)
   (kill-buffer-and-window))
 
@@ -45,3 +58,4 @@ STATUS is passed by `url-retrieve'."
   :global nil)
 
 (provide 'mastodon-toot)
+;;; mastodon-toot.el ends here
