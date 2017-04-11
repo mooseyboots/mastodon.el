@@ -39,17 +39,20 @@
 (defvar mastodon--client-app-plist nil)
 (defvar mastodon--api-token-string nil)
 
+(defun mastodon-auth--registration-success ()
+  (let ((client-data (mastodon--json-hash-table)))
+    (setq mastodon--client-app-plist
+          `(:client_id
+            ,(gethash "client_id" client-data)
+            :client_secret
+            ,(gethash "client_secret" client-data)))))
+
 (defun mastodon--register-client-app-triage (status)
   "Callback function to triage `mastodon--register-client-app' response.
 
 STATUS is passed by `url-retrieve'."
   (mastodon--http-response-triage status
-                                  (lambda () (let ((client-data (mastodon--json-hash-table)))
-                                               (setq mastodon--client-app-plist
-                                                     `(:client_id
-                                                       ,(gethash "client_id" client-data)
-                                                       :client_secret
-                                                       ,(gethash "client_secret" client-data)))))))
+                                  'mastodon-auth--registration-success))
 
 (defun mastodon--register-client-app ()
   "Add `:client_id' and `client_secret' to `mastodon--client-plist'."
