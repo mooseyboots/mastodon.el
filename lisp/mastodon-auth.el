@@ -65,9 +65,7 @@ STATUS is passed by `url-retrieve'."
 
 (defun mastodon--register-and-return-client-app ()
   "Register `mastodon' with an instance. Return `mastodon--client-app-plist'."
-  (progn
-    (mastodon--register-client-app)
-    mastodon--client-app-plist))
+  (mastodon--register-client-app))
 
 (defun mastodon--store-client-id-and-secret ()
   "Store `:client_id' and `:client_secret' in a plstore."
