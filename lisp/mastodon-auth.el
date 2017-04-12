@@ -71,10 +71,14 @@ STATUS is passed by `url-retrieve'."
   "Return t if `mastodon--client-app-plist' has a :client_secret value."
   (when (plist-get mastodon--client-app-plist :client_secret) t))
 
+(defun mastodon-auth--client ()
+  "Return `mastodon--client-app-plist' value."
+  mastodon--client-app-plist)
+
 (defun mastodon--register-and-return-client-app ()
   "Register `mastodon' with an instance. Return `mastodon--client-app-plist'."
   (if (mastodon-auth--client-app-secret-p)
-      mastodon--client-app-plist
+      (mastodon-auth--client)
     (progn
       (mastodon--register-client-app)
       (sleep-for 2)
