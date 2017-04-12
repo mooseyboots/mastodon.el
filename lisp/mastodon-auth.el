@@ -39,6 +39,10 @@
 (defvar mastodon--client-app-plist nil)
 (defvar mastodon--api-token-string nil)
 
+(defun mastodon-auth--token-file ()
+  "Returns `mastodon-token-file' string."
+  mastodon-token-file)
+
 (defun mastodon-auth--registration-success ()
   (let ((client-data (mastodon--json-hash-table)))
     (setq mastodon--client-app-plist
@@ -70,7 +74,7 @@ STATUS is passed by `url-retrieve'."
 (defun mastodon--store-client-id-and-secret ()
   "Store `:client_id' and `:client_secret' in a plstore."
   (let ((client-plist (mastodon--register-and-return-client-app))
-        (plstore (plstore-open mastodon-token-file)))
+        (plstore (plstore-open (mastodon-auth--token-file))))
     (plstore-put plstore "mastodon" `(:client_id
                                       ,(plist-get client-plist :client_id)
                                       :client_secret
@@ -86,7 +90,7 @@ If not set, retrieves client data from `mastodon-token-file'.
 If no data can be found in the token file, registers the app and stores its data via `mastodon--store-client-id-and-secret'."
   (if (plist-get mastodon--client-app-plist :client_secret)
       mastodon--client-app-plist
-    (let* ((plstore (plstore-open mastodon-token-file))
+    (let* ((plstore (plstore-open (mastodon-auth--token-file)))
            (mastodon (plstore-get plstore "mastodon")))
       (if mastodon
           (progn

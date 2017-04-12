@@ -1,5 +1,12 @@
 (require 'el-mock)
+
+(load-file "../lisp/mastodon.el")
+(load-file "../lisp/mastodon-http.el")
 (load-file "../lisp/mastodon-auth.el")
+
+(ert-deftest mastodon-auth:token-file ()
+  "Should return `mastodon-token-file' value."
+  (should (string= (mastodon-auth--token-file) "~/.emacs.d/mastodon.plstore")))
 
 (ert-deftest mastodon-auth:registration-success ()
   "Should set `mastodon--client-app-plist' on succesful registration."
@@ -42,3 +49,20 @@
     (with-mock
       (mock (mastodon--register-client-app) => app-plist)
       (should (equal app-plist (mastodon--register-and-return-client-app))))))
+
+(defun helper:read-plstore (file key)
+  (let* ((plstore (plstore-open file))
+         (masto (delete "mastodon" (plstore-get plstore "mastodon"))))
+    (progn
+      (plstore-close plstore)
+      (plist-get masto key))))
+
+(ert-deftest mastodon-auth:store-client-id-and-secret ()
+  "Should create plstore from client plist. Should return plist."
+  (let ((app-plist '(:client_id "id-val" :client_secret "secret-val")))
+    (with-mock
+      (mock (mastodon--register-and-return-client-app) => app-plist)
+      (mock (mastodon-auth--token-file) => "stubfile.plstore")
+      (should (eq app-plist (mastodon--store-client-id-and-secret)))
+      (should (string= (helper:read-plstore (mastodon-auth--token-file) :client_id) "id-val"))
+      (should (string= (helper:read-plstore (mastodon-auth--token-file) :client_secret) "secret-val")))))
