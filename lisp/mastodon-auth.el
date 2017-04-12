@@ -113,18 +113,27 @@ STATUS is passed by `url-retrieve'."
   (mastodon--http-response-triage status
                                   'mastodon-auth--get-token-success))
 
+(defun mastodon-auth--user-and-passwd ()
+  "Prompt for user email and password."
+  (let ((email (read-string "Email: "))
+        (passwd (read-string "Password: ")))
+    (cons email passwd)))
+
 (defun mastodon--get-access-token ()
   "Retrieve access token from instance.
 
 Authenticates with email address and password. Neither are not stored."
-  (mastodon--http-post (concat mastodon-instance-url "/oauth/token")
-                       'mastodon--get-access-token-triage
-                       `(("client_id" . ,(plist-get (mastodon--client-app) :client_id))
-                         ("client_secret" . ,(plist-get (mastodon--client-app) :client_secret))
-                         ("grant_type" . "password")
-                         ("username" . ,(read-string "Email: "))
-                         ("password" . ,(read-passwd "Password: "))
-                         ("scope" . "read write follow"))))
+  (let* ((creds (mastodon-auth--user-and-passwd))
+         (email (car creds))
+         (passwd (cdr creds)))
+    (mastodon--http-post (concat mastodon-instance-url "/oauth/token")
+                         'mastodon--get-access-token-triage
+                         `(("client_id" . ,(plist-get (mastodon--client-app) :client_id))
+                           ("client_secret" . ,(plist-get (mastodon--client-app) :client_secret))
+                           ("grant_type" . "password")
+                           ("username" . ,email)
+                           ("password" . ,passwd)
+                           ("scope" . "read write follow")))))
 
 (defun mastodon--access-token ()
   "Return `mastodon--api-token-string'.
