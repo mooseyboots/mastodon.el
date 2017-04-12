@@ -34,18 +34,27 @@ This value can be customized too, and defaults to `${EMACS_HOME_DIRECTORY}/masto
 
 `M-x mastodon-toot`
 
-Pops a new buffer/window with a `mastodon-toot` minor mode. Enter the contents of your toot here. `C-c C-c` sends the toot. 
+Pops a new buffer/window with a `mastodon-toot` minor mode. Enter the contents of your toot here. `C-c C-c` sends the toot.
 `C-c C-k` cancels. Both actions kill the buffer and window.
 
-If you have not previously authenticated, you will be prompted for your account email and password. **NOTE**: Email and 
-password are NOT stored by mastodon.el. 
+If you have not previously authenticated, you will be prompted for your account email and password. **NOTE**: Email and
+password are NOT stored by mastodon.el.
 
-Authentication stores your access token in the `mastodon--api-token-string` variable. It is not stored on your filesystem, so 
+Authentication stores your access token in the `mastodon--api-token-string` variable. It is not stored on your filesystem, so
 you will have to re-authenticate when you close/reopen Emacs.
 
-## Contributing 
+## Roadmap
 
-PRs, issues, and feature requests are very welcome! 
+TODOs for the `1.0.0` release are as far as I plan to roadmap. Repo issues track the roadmap via a label.
+Click [here](https://github.com/jdenen/mastodon.el/issues?q=is%3Aopen+is%3Aissue+label%3A%22road+to+1.0.0%22).
+
+Issues labeled as bugs should also be fixed before 1.0.0, but delievered is better than perfect, so I don't consider them blocking.
+
+Issues labeled as enhancements can happen whenever.
+
+## Contributing
+
+PRs, issues, and feature requests are very welcome!
 
 ### Features
 
