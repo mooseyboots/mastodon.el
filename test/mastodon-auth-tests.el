@@ -43,11 +43,14 @@
             => (funcall 'mastodon-auth--registration-success))
       (should (eq app-plist (mastodon--register-client-app-triage "status"))))))
 
-(ert-deftest mastodon-auth:register-and-return-client-app ()
-  "Should return a plist of client_id and client_secret after registration."
-  (let ((app-plist '("id" "id-val" "secret" "secret-val")))
+(ert-deftest mastodon-auth:register-and-return-client-app:with-p ()
+  "Should return a plist of client_id and client_secret without registration."
+  (let ((app-plist '(:client_id "id-val" :client_secret "secret-val")))
     (with-mock
-      (mock (mastodon--register-client-app) => app-plist)
+      (mock (mastodon-auth--client-app-secret-p) => t)
+      (mock (mastodon-auth--client) => app-plist)
+      (stub mastodon-auth--registration-success => mastodon--client-app-plist)
+      (not-called sleep-for)
       (should (equal app-plist (mastodon--register-and-return-client-app))))))
 
 (defun helper:read-plstore (file key)
