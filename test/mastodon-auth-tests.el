@@ -87,3 +87,17 @@
     (mock (mastodon-auth--token-file) => "fixture/empty.plstore")
     (mock (mastodon--store-client-id-and-secret))
     (mastodon--client-app)))
+
+(ert-deftest mastodon-auth:get-token-success ()
+  "Should return access token from `url-retrieve' response JSON."
+  (let ((hash (make-hash-table :test 'equal)))
+    (puthash "access_token" "token-value" hash)
+    (with-mock
+      (mock (mastodon--json-hash-table) => hash)
+      (should (string= (mastodon-auth--get-token-success) "token-value")))))
+
+(ert-deftest mastodon-auth:get-access-token-triage ()
+  "Should wrap `mastodon--http-response-triage'."
+  (with-mock
+    (mock (mastodon--http-response-triage "status" 'mastodon-auth--get-token-success))
+    (mastodon--get-access-token-triage "status")))
