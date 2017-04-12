@@ -103,7 +103,7 @@
     (mastodon--get-access-token-triage "status")))
 
 (ert-deftest mastodon-auth:get-access-token ()
-  "Should POST auth data to retreive access token."
+  "Should POST auth data to retrieve access token."
   (let ((client-app '(:client_id "id" :client_secret "secret")))
     (with-mock
       (mock (mastodon-auth--user-and-passwd) => (cons "email" "password"))
@@ -117,3 +117,17 @@
                                    ("password" . "password")
                                    ("scope" . "read write follow"))))
       (mastodon--get-access-token))))
+
+(ert-deftest mastodon-auth:access-token:memoized ()
+  "Should return `mastodon--api-token-string' if set."
+  (with-mock
+    (mock (mastodon-auth--token) => "foobar")
+    (should (string= (mastodon--access-token) "foobar"))))
+
+(ert-deftest mastodon-auth:access-token:generated ()
+  "Should generate `mastodon--api-token-string' if not memoized."
+  (with-mock
+    (mock (mastodon-auth--token) => nil)
+    (mock (mastodon--get-access-token)
+          => (mock (mastodon-auth--token) => "foobar"))
+    (should (string= (mastodon--access-token) "foobar"))))
