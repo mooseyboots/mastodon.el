@@ -66,3 +66,24 @@
       (should (eq app-plist (mastodon--store-client-id-and-secret)))
       (should (string= (helper:read-plstore (mastodon-auth--token-file) :client_id) "id-val"))
       (should (string= (helper:read-plstore (mastodon-auth--token-file) :client_secret) "secret-val")))))
+
+(ert-deftest mastodon-auth:client-app:memoized ()
+  "Should return `mastodon--client-app-plist' if it has a :client_secret."
+  (with-mock
+    (mock (plist-get mastodon--client-app-plist :client_secret) => t)
+    (should (eq (mastodon--client-app) mastodon--client-app-plist))))
+
+(ert-deftest mastodon-auth:client-app:stored ()
+  "Should retrieve from `mastodon-token-file' if not memoized."
+  (with-mock
+    (stub plist-get)
+    (mock (mastodon-auth--token-file) => "fixture/client.plstore")
+    (should (equal (mastodon--client-app) '(:client_id "id" :client_secret "secret")))))
+
+(ert-deftest mastodon-auth:client-app:generated ()
+  "Should generate `mastodon--client-app-plist' if not memoized or stored."
+  (with-mock
+    (stub plist-get)
+    (mock (mastodon-auth--token-file) => "fixture/empty.plstore")
+    (mock (mastodon--store-client-id-and-secret))
+    (mastodon--client-app)))
