@@ -101,3 +101,19 @@
   (with-mock
     (mock (mastodon--http-response-triage "status" 'mastodon-auth--get-token-success))
     (mastodon--get-access-token-triage "status")))
+
+(ert-deftest mastodon-auth:get-access-token ()
+  "Should POST auth data to retreive access token."
+  (let ((client-app '(:client_id "id" :client_secret "secret")))
+    (with-mock
+      (mock (mastodon-auth--user-and-passwd) => (cons "email" "password"))
+      (mock (mastodon--client-app) => client-app)
+      (mock (mastodon--http-post "https://mastodon.social/oauth/token"
+                                 'mastodon--get-access-token-triage
+                                 '(("client_id" . "id")
+                                   ("client_secret" . "secret")
+                                   ("grant_type" . "password")
+                                   ("username" . "email")
+                                   ("password" . "password")
+                                   ("scope" . "read write follow"))))
+      (mastodon--get-access-token))))
