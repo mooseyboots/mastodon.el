@@ -100,16 +100,18 @@ If no data can be found in the token file, registers the app and stores its data
           (setq mastodon--client-app-plist (mastodon--store-client-id-and-secret))
           mastodon--client-app-plist)))))
 
+(defun mastodon-auth--get-token-success ()
+  (let ((token-data (mastodon--json-hash-table)))
+    (progn
+      (setq mastodon--api-token-string (gethash "access_token" token-data))
+      mastodon--api-token-string)))
+
 (defun mastodon--get-access-token-triage (status)
   "Callback function to triage `mastodon--get-access-token' response.
 
 STATUS is passed by `url-retrieve'."
   (mastodon--http-response-triage status
-                                  (lambda ()
-                                    (let ((token-data (mastodon--json-hash-table)))
-                                      (progn
-                                        (setq mastodon--api-token-string (gethash "access_token" token-data))
-                                        mastodon--api-token-string)))))
+                                  'mastodon-auth--get-token-success))
 
 (defun mastodon--get-access-token ()
   "Retrieve access token from instance.
