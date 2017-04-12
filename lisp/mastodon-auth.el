@@ -135,18 +135,21 @@ Authenticates with email address and password. Neither are not stored."
                            ("password" . ,passwd)
                            ("scope" . "read write follow")))))
 
+(defun mastodon-auth--token ()
+  "Return `mastodon--api-token-string'."
+  mastodon--api-token-string)
+
 (defun mastodon--access-token ()
   "Return `mastodon--api-token-string'.
 
 If not set, retrieves token with `mastodon--get-access-token'."
-  (if mastodon--api-token-string
-      mastodon--api-token-string
-    (progn
-      (mastodon--get-access-token)
-      (while (not mastodon--api-token-string)
-        (sleep-for 1)
-        (mastodon--access-token))
-      mastodon--api-token-string)))
+  (or (mastodon-auth--token)
+      (progn
+        (mastodon--get-access-token)
+        (or (mastodon-auth--token)
+            (progn
+              (sleep-for 2)
+              (mastodon--access-token))))))
 
 (provide 'mastodon-auth)
 ;;; mastodon-auth.el ends here
