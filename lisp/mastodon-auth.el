@@ -67,11 +67,18 @@ STATUS is passed by `url-retrieve'."
                          ("scopes" . "read write follow")
                          ("website" . "https://github.com/jdenen/mastodon.el"))))
 
+(defun mastodon-auth--client-app-secret-p ()
+  "Return t if `mastodon--client-app-plist' has a :client_secret value."
+  (when (plist-get mastodon--client-app-plist :client_secret) t))
+
 (defun mastodon--register-and-return-client-app ()
   "Register `mastodon' with an instance. Return `mastodon--client-app-plist'."
-  (progn
-    (mastodon--register-client-app)
-    mastodon--client-app-plist))
+  (if (mastodon-auth--client-app-secret-p)
+      mastodon--client-app-plist
+    (progn
+      (mastodon--register-client-app)
+      (sleep-for 2)
+      (mastodon--register-and-return-client-app))))
 
 (defun mastodon--store-client-id-and-secret ()
   "Store `:client_id' and `:client_secret' in a plstore."
