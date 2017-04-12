@@ -116,7 +116,7 @@ STATUS is passed by `url-retrieve'."
 (defun mastodon-auth--user-and-passwd ()
   "Prompt for user email and password."
   (let ((email (read-string "Email: "))
-        (passwd (read-string "Password: ")))
+        (passwd (read-passwd "Password: ")))
     (cons email passwd)))
 
 (defun mastodon--get-access-token ()
