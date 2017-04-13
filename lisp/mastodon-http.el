@@ -109,5 +109,12 @@ If response code is not 2XX, switches to the response buffer created by `url-ret
       (funcall success)
     (switch-to-buffer (current-buffer))))
 
+(defun mastodon-http--get (url callback)
+  "Make GET request to URL.
+
+Pass response buffer to CALLBACK function."
+  (let ((url-request-method "GET"))
+    (url-retrieve url callback)))
+
 (provide 'mastodon-http)
 ;;; mastodon-http.el ends here
