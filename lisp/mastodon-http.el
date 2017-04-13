@@ -109,12 +109,25 @@ If response code is not 2XX, switches to the response buffer created by `url-ret
       (funcall success)
     (switch-to-buffer (current-buffer))))
 
-(defun mastodon-http--get (url callback)
+(defun mastodon-http--get (url)
   "Make GET request to URL.
 
 Pass response buffer to CALLBACK function."
-  (let ((url-request-method "GET"))
-    (url-retrieve url callback)))
+  (let ((url-request-method "GET")
+        (url-request-extra-headers
+         `(("Authorization" . ,(concat "Bearer "
+                                       (mastodon--access-token))))))
+    (url-retrieve-synchronously url)))
+
+(defun mastodon-http--get-json (url)
+  "Make GET request to URL. Return JSON response vector."
+  (let ((json-vector
+         (with-current-buffer (mastodon-http--get url)
+           (goto-char (point-min))
+           (re-search-forward "^$" nil 'move)
+           (let ((json-string (buffer-substring-no-properties (point) (point-max))))
+             (json-read-from-string json-string)))))
+    json-vector))
 
 (provide 'mastodon-http)
 ;;; mastodon-http.el ends here
