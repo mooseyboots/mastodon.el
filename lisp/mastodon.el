@@ -53,6 +53,12 @@
 
 (defvar mastodon--api-version "v1")
 
+(defcustom mastodon-mode-hook nil
+  "Hook run when entering Mastodon mode."
+  :type 'hook
+  :options '(provide-discover-context-menu)
+  :group 'mastodon)
+
 ;; FIXME #25
 (defun mastodon-version ()
   "Message package version."
@@ -88,15 +94,37 @@
   "Major mode for Mastodon, the federated microblogging network."
   :group 'mastodon
   (let ((map mastodon-mode-map))
-    (define-key map (kbd "F") (lambda () (interactive) (mastodon-tl--get "public")))
-    (define-key map (kbd "H") (lambda () (interactive) (mastodon-tl--get "home")))
-    (define-key map (kbd "L") (lambda () (interactive) (mastodon-tl--get "public?local=true")))
+    (define-key map (kbd "F") #'mastodon-tl--get-federated-timeline)
+    (define-key map (kbd "H") #'mastodon-tl--get-home-timeline)
+    (define-key map (kbd "L") #'mastodon-tl--get-local-timeline)
     (define-key map (kbd "n") #'mastodon-toot)
     (define-key map (kbd "q") #'kill-this-buffer)
     (define-key map (kbd "Q") #'kill-buffer-and-window)
-    (define-key map (kbd "T") (lambda () (interactive)
-                                (let ((tag (read-string "Tag: ")))
-                                  (mastodon-tl--get (concat "tag/" tag)))))))
+    (define-key map (kbd "T") #'mastodon-tl--get-tag-timeline)))
+
+(defun provide-discover-context-menu ()
+  "Provides a shortcut overview through Discover mode.
+Press '?' to activate it."
+  (when (bound-and-true-p discover-mode)
+    (discover-add-context-menu
+     :bind "?"
+     :mode 'mastodon-mode
+     :mode-hook 'mastodon-mode-hook
+     :context-menu '(mastodon
+                     (description "Mastodon feed viewer")
+                     (actions
+                      ("Feed switch"
+                       ("F" "Open federated timeline" mastodon-tl--get-federated-timeline)
+                       ("H" "Open home timeline" mastodon-tl--get-home-timeline)
+                       ("L" "Open local timeline" mastodon-tl--get-local-timeline)
+                       ("T" "Prompt for tag and open its timeline" mastodon-tl--get-tag-timeline))
+                      ("Toot"
+                       ("n" "Switch to 'mastodon-toot' buffer" mastodon-toot))
+                      ("Quit"
+                       ("q" "Quit mastodon buffer. Leave window open." kill-this-buffer)
+                       ("Q" "Quit mastodon buffer and kill window." kill-buffer-and-window)))))))
+
+(add-hook 'mastodon-mode-hook 'provide-discover-context-menu t)
 
 (provide 'mastodon)
 ;;; mastodon.el ends here

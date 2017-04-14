@@ -42,6 +42,27 @@
   '((t (:foreground "cyan")))
   "Mastodon user handle face.")
 
+(defun mastodon-tl--get-federated-timeline ()
+  "Opens federated timeline."
+  (interactive)
+  (mastodon-tl--get "public"))
+
+(defun mastodon-tl--get-home-timeline ()
+  "Opens home timeline."
+  (interactive)
+  (mastodon-tl--get "home"))
+
+(defun mastodon-tl--get-local-timeline ()
+  "Opens local timeline."
+  (interactive)
+  (mastodon-tl--get "public?local=true"))
+
+(defun mastodon-tl--get-tag-timeline ()
+  "Prompts for tag and opens its timeline."
+  (interactive)
+  (let ((tag (read-string "Tag: ")))
+    (mastodon-tl--get (concat "tag/" tag))))
+
 (defun mastodon-tl--from-toot (key toot)
   "Return value for KEY in TOOT."
   (cdr (assoc key toot)))
