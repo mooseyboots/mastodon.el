@@ -66,7 +66,7 @@
 (defun mastodon ()
   (interactive)
   (require 'mastodon-tl)
-  (mastodon-home))
+  (mastodon-tl--get "home"))
 
 ;;;###autoload
 (defun mastodon-toot ()
