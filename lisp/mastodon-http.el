@@ -27,7 +27,6 @@
 
 ;;; Code:
 
-(require 'mastodon)
 (require 'json)
 
 (defgroup mastodon-http nil
