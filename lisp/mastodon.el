@@ -47,6 +47,10 @@
   :group 'mastodon
   :type 'file)
 
+(defvar mastodon-mode-map
+  (make-sparse-keymap)
+  "Keymap for `mastodon-mode'.")
+
 (defvar mastodon--api-version "v1")
 
 ;; FIXME #25
@@ -62,7 +66,7 @@
 (defun mastodon ()
   (interactive)
   (require 'mastodon-tl)
-  (mastodon-tl--get "home"))
+  (mastodon-home))
 
 ;;;###autoload
 (defun mastodon-toot ()
@@ -79,6 +83,20 @@
   (interactive)
   (progn
     (mastodon--store-client-id-and-secret)))
+
+(define-derived-mode mastodon-mode nil "Mastodon"
+  "Major mode for Mastodon, the federated microblogging network."
+  :group 'mastodon
+  (let ((map mastodon-mode-map))
+    (define-key map (kbd "F") (lambda () (interactive) (mastodon-tl--get "public")))
+    (define-key map (kbd "H") (lambda () (interactive) (mastodon-tl--get "home")))
+    (define-key map (kbd "L") (lambda () (interactive) (mastodon-tl--get "public?local=true")))
+    (define-key map (kbd "n") #'mastodon-toot)
+    (define-key map (kbd "q") #'kill-this-buffer)
+    (define-key map (kbd "Q") #'kill-buffer-and-window)
+    (define-key map (kbd "T") (lambda () (interactive)
+                                (let ((tag (read-string "Tag: ")))
+                                  (mastodon-tl--get (concat "tag/" tag)))))))
 
 (provide 'mastodon)
 ;;; mastodon.el ends here

@@ -88,7 +88,8 @@
   (let* ((url (mastodon--api-for (concat "timelines/" timeline)))
          (tl-buff (concat "*mastodon-" timeline "*"))
          (tl-json (mastodon-http--get-json url)))
-    (mastodon-tl--render-timeline tl-buff tl-json)))
+    (mastodon-tl--render-timeline tl-buff tl-json)
+    (mastodon-mode)))
 
 (provide 'mastodon-tl)
 ;;; mastodon-tl.el ends here
