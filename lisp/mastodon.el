@@ -30,6 +30,8 @@
 
 ;;; Code:
 
+(require 'mastodon-auth)
+
 (defgroup mastodon nil
   "Interface with Mastodon."
   :prefix "mastodon-"
@@ -56,11 +58,17 @@
      (concat "mastodon.el v" (buffer-string)))))
 
 ;;;###autoload
+(defun mastodon ()
+  (interactive)
+  (require 'mastodon-tl)
+  (mastodon-tl--get "home"))
+
+;;;###autoload
 (defun mastodon-toot ()
   "Update a Mastodon instance with new toot. Content is captured in a new buffer."
   (interactive)
+  (require 'mastodon-toot)
   (progn
-    (require 'mastodon-toot)
     (switch-to-buffer-other-window (get-buffer-create "*new toot*"))
     (mastodon-toot-mode t)))
 
@@ -69,7 +77,6 @@
   "Registers mastodon.el with the Mastodon instance."
   (interactive)
   (progn
-    (require 'mastodon-auth)
     (mastodon--store-client-id-and-secret)))
 
 (provide 'mastodon)

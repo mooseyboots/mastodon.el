@@ -28,7 +28,6 @@
 ;;; Code:
 
 (require 'plstore)
-(require 'mastodon)
 (require 'mastodon-http)
 
 (defgroup mastodon-auth nil
