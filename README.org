@@ -41,8 +41,19 @@ This value can be customized too, and defaults to
 
 =M-x mastodon=
 
-Opens a =*mastodon-home*= buffer so you can see toots. There's no major mode yet, so there are
-no keybindings or actions to take from this buffer. Coming soon!
+Opens a =*mastodon-home*= buffer in the major mode so you can see toots. Keybindings:
+
+|-----+------------------------------------------|
+| Key | Action                                   |
+|-----+------------------------------------------|
+| =F= | Open federated timeline                  |
+| =H= | Open home timeline                       |
+| =L= | Open local timeline                      |
+| =n= | Switch to =mastodon-toot= buffer         |
+| =q= | Quit mastodon buffer. Leave window open. |
+| =Q= | Quit mastodon buffer and kill window.    |
+| =T= | Prompt for tag and open its timeline     |
+|-----+------------------------------------------|
 
 *** Toot toot
 
