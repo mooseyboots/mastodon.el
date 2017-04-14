@@ -42,7 +42,7 @@ STATUS is passed by `url-retrieve'."
   (mastodon--http-response-triage status
                                   (lambda () (switch-to-buffer (current-buffer))))) ;; FIXME
 
-(defun mastodon-toot--send ()
+(defun mastodon-toot-send ()
   "Kill new-toot buffer/window and POST contents to the Mastodon instance."
   (interactive)
   (let ((toot (buffer-string))
@@ -56,15 +56,15 @@ STATUS is passed by `url-retrieve'."
                                                   "Bearer "
                                                   (mastodon--access-token))))))))
 
-(defun mastodon-toot--cancel ()
+(defun mastodon-toot-cancel ()
   "Kill new-toot buffer/window. Does not POST content to Mastodon."
   (interactive)
   (kill-buffer-and-window))
 
 (defvar mastodon-toot-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-c") #'mastodon-toot--send)
-    (define-key map (kbd "C-c C-k") #'mastodon-toot--cancel)
+    (define-key map (kbd "C-c C-c") #'mastodon-toot-send)
+    (define-key map (kbd "C-c C-k") #'mastodon-toot-cancel)
       map)
   "Keymap for `mastodon-toot-mode'.")
 

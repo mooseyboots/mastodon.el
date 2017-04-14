@@ -49,6 +49,7 @@
 
 (defvar mastodon--api-version "v1")
 
+;; FIXME #25
 (defun mastodon-version ()
   "Message package version."
   (interactive)
