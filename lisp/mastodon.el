@@ -96,6 +96,8 @@
   (let ((map mastodon-mode-map))
     (define-key map (kbd "F") #'mastodon-tl--get-federated-timeline)
     (define-key map (kbd "H") #'mastodon-tl--get-home-timeline)
+    (define-key map (kbd "j") #'mastodon-tl--goto-next-toot)
+    (define-key map (kbd "k") #'mastodon-tl--goto-prev-toot)
     (define-key map (kbd "L") #'mastodon-tl--get-local-timeline)
     (define-key map (kbd "n") #'mastodon-toot)
     (define-key map (kbd "q") #'kill-this-buffer)
@@ -111,6 +113,9 @@
      :context-menu '(mastodon
                      (description "Mastodon feed viewer")
                      (actions
+                      ("Navigation"
+                       ("j" "Go to next toot" mastodon-tl--goto-next-toot)
+                       ("k" "Go to previous toot" mastodon-tl--goto-prev-toot))
                       ("Feed switch"
                        ("F" "Open federated timeline" mastodon-tl--get-federated-timeline)
                        ("H" "Open home timeline" mastodon-tl--get-home-timeline)

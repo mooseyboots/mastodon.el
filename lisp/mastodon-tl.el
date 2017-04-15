@@ -67,15 +67,31 @@
   "Return value for KEY in TOOT."
   (cdr (assoc key toot)))
 
-(defun mastodon-tl--render-display-name (name)
-  (insert
-   (propertize (concat name " ")
-               'face 'mastodon-tl-toot-display-name-face)))
+(defun mastodon-tl--goto-toot-pos (find-pos &optional pos)
+  (let* ((npos (funcall find-pos
+                        (or pos (point))
+                        'toot-id
+                        (current-buffer))))
+    (when npos (if (not (get-text-property npos 'toot-id))
+                   (mastodon-tl--goto-toot-pos find-pos npos)
+                 (when npos (goto-char npos))))))
 
-(defun mastodon-tl--render-header (handle name id url)
-  (insert "=== ")
-  (mastodon-tl--render-display-name name)
-  (insert (concat "@" handle "\n")))
+(defun mastodon-tl--goto-next-toot ()
+  (interactive)
+  (mastodon-tl--goto-toot-pos 'next-single-property-change))
+
+(defun mastodon-tl--goto-prev-toot ()
+  (interactive)
+  (mastodon-tl--goto-toot-pos 'previous-single-property-change))
+
+(defun mastodon-tl--header (handle name id)
+  (propertize
+   (concat "=== "
+           (propertize name 'face 'mastodon-tl-toot-display-name-face)
+           " @"
+           handle
+           "\n")
+   'toot-id id))
 
 (defun mastodon-tl--remove-html (toot)
   (let* ((t1 (replace-regexp-in-string "<\/p>" "\n\n" toot))
@@ -83,12 +99,10 @@
          (t3 (replace-regexp-in-string "<span class=\"h-card\">" "" t2)))
     t3))
 
-(defun mastodon-tl--render-content (toot)
+(defun mastodon-tl--content (toot)
   (let* ((content (mastodon-tl--remove-html toot)))
-    (insert
      (propertize content
-                 'face 'mastodon-tl-toot-text-face))
-    (insert "\n")))
+                 'face 'mastodon-tl-toot-text-face)))
 
 (defun mastodon-tl--render-toot (toot)
   (let ((id (number-to-string (mastodon-tl--from-toot 'id toot)))
@@ -96,8 +110,13 @@
         (name (mastodon-tl--from-toot 'display_name (mastodon-tl--from-toot 'account toot)))
         (text (mastodon-tl--from-toot 'content toot))
         (url (mastodon-tl--from-toot 'url toot)))
-    (mastodon-tl--render-header handle name id url)
-    (mastodon-tl--render-content text)))
+    (insert
+     (propertize
+      (concat
+       (mastodon-tl--header handle name id)
+       (mastodon-tl--content text)
+       "\n")
+      'toot-url url))))
 
 (defun mastodon-tl--render-timeline (buffer json)
   (with-output-to-temp-buffer buffer
