@@ -19,6 +19,14 @@ Then, require it and go.
 I'll make mastdon.el available on MELPA when I feel like it's reached a
 stable state.
 
+Mastodon mode provides a overview of it's shortcuts through [[https://github.com/mickeynp/discover.el][Discover mode]].
+To activate Discover mode locally for Mastodon mode buffers add this to your emacs configuration:
+#+BEGIN_SRC emacs-lisp
+    (add-hook 'mastodon-mode-hook 'discover-mode-turn-on)
+#+END_SRC
+
+The context menu is then activated by pressing '?'.
+
 ** Usage
 
 *** Instance
@@ -54,6 +62,8 @@ Opens a =*mastodon-home*= buffer in the major mode so you can see toots. Keybind
 | =Q= | Quit mastodon buffer and kill window.    |
 | =T= | Prompt for tag and open its timeline     |
 |-----+------------------------------------------|
+
+
 
 *** Toot toot
 
