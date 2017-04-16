@@ -62,6 +62,8 @@ Opens a =*mastodon-home*= buffer in the major mode so you can see toots. Keybind
 | =?= | Open context menu (if =discover= is available) |
 | =F= | Open federated timeline                        |
 | =H= | Open home timeline                             |
+| =j= | Go to next toot                                |
+| =k= | Go to previous toot                            |
 | =L= | Open local timeline                            |
 | =n= | Switch to =mastodon-toot= buffer               |
 | =q= | Quit mastodon buffer. Leave window open.       |
