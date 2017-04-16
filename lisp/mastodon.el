@@ -102,7 +102,8 @@
     (define-key map (kbd "n") #'mastodon-toot)
     (define-key map (kbd "q") #'kill-this-buffer)
     (define-key map (kbd "Q") #'kill-buffer-and-window)
-    (define-key map (kbd "T") #'mastodon-tl--get-tag-timeline)))
+    (define-key map (kbd "T") #'mastodon-tl--get-tag-timeline)
+    (define-key map (kbd "u") #'mastodon-tl--update)))
 
 (with-eval-after-load 'mastodon
   (when (require 'discover nil :noerror)
@@ -113,16 +114,16 @@
      :context-menu '(mastodon
                      (description "Mastodon feed viewer")
                      (actions
-                      ("Navigation"
-                       ("j" "Go to next toot" mastodon-tl--goto-next-toot)
-                       ("k" "Go to previous toot" mastodon-tl--goto-prev-toot))
-                      ("Feed switch"
-                       ("F" "Open federated timeline" mastodon-tl--get-federated-timeline)
-                       ("H" "Open home timeline" mastodon-tl--get-home-timeline)
-                       ("L" "Open local timeline" mastodon-tl--get-local-timeline)
-                       ("T" "Prompt for tag and open its timeline" mastodon-tl--get-tag-timeline))
-                      ("Toot"
-                       ("n" "Switch to 'mastodon-toot' buffer" mastodon-toot))
+                      ("Toots"
+                       ("j" "Next" mastodon-tl--goto-next-toot)
+                       ("k" "Prev" mastodon-tl--goto-prev-toot)
+                       ("n" "Send" mastodon-toot)
+                       ("u" "Update" mastodon-tl--update))
+                      ("Timelines"
+                       ("F" "Federated" mastodon-tl--get-federated-timeline)
+                       ("H" "Home" mastodon-tl--get-home-timeline)
+                       ("L" "Local" mastodon-tl--get-local-timeline)
+                       ("T" "Tag" mastodon-tl--get-tag-timeline))
                       ("Quit"
                        ("q" "Quit mastodon buffer. Leave window open." kill-this-buffer)
                        ("Q" "Quit mastodon buffer and kill window." kill-buffer-and-window)))))))

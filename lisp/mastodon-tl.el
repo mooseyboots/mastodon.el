@@ -119,16 +119,31 @@
       'toot-url url))))
 
 (defun mastodon-tl--render-timeline (buffer json)
-  (with-output-to-temp-buffer buffer
-    (switch-to-buffer buffer)
-    (mapcar 'mastodon-tl--render-toot json))
+  (switch-to-buffer buffer)
+  (mapcar 'mastodon-tl--render-toot json)
   (html2text))
+
+(defun mastodon-tl--timeline-name ()
+  (replace-regexp-in-string "\*" ""
+                            (replace-regexp-in-string "mastodon-" "" (buffer-name))))
+
+(defun mastodon-tl--update ()
+  (interactive)
+  (let* ((tl (mastodon-tl--timeline-name))
+         (id (get-text-property (point-min) 'toot-id))
+         (url (mastodon--api-for (concat "timelines/" tl "?since_id=" id))))
+    (with-current-buffer (current-buffer)
+      (let ((inhibit-read-only t)
+            (json (mastodon-http--get-json url)))
+        (goto-char (point-min))
+        (mastodon-tl--render-timeline (current-buffer) json)))))
 
 (defun mastodon-tl--get (timeline)
   (let* ((url (mastodon--api-for (concat "timelines/" timeline)))
          (tl-buff (concat "*mastodon-" timeline "*"))
          (tl-json (mastodon-http--get-json url)))
-    (mastodon-tl--render-timeline tl-buff tl-json)
+    (with-output-to-temp-buffer tl-buff
+      (mastodon-tl--render-timeline tl-buff tl-json))
     (mastodon-mode)))
 
 (provide 'mastodon-tl)
