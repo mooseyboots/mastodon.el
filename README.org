@@ -16,16 +16,21 @@ Then, require it and go.
     (require 'mastodon)
 #+END_SRC
 
+*** use-package
+
+#+BEGIN_SRC emacs-lisp
+  (use-package mastodon
+    :load-path "/path/to/mastodon.el/lisp")
+#+END_SRC
+
+*** MELPA
 I'll make mastdon.el available on MELPA when I feel like it's reached a
 stable state.
 
-Mastodon mode provides a overview of it's shortcuts through [[https://github.com/mickeynp/discover.el][Discover mode]].
-To activate Discover mode locally for Mastodon mode buffers add this to your emacs configuration:
-#+BEGIN_SRC emacs-lisp
-    (add-hook 'mastodon-mode-hook 'discover-mode-turn-on)
-#+END_SRC
+*** Discover
 
-The context menu is then activated by pressing '?'.
+=mastodon-mode= will provide a context menu for its keybindings if =discover=
+is installed. It is not required.
 
 ** Usage
 
@@ -51,19 +56,18 @@ This value can be customized too, and defaults to
 
 Opens a =*mastodon-home*= buffer in the major mode so you can see toots. Keybindings:
 
-|-----+------------------------------------------|
-| Key | Action                                   |
-|-----+------------------------------------------|
-| =F= | Open federated timeline                  |
-| =H= | Open home timeline                       |
-| =L= | Open local timeline                      |
-| =n= | Switch to =mastodon-toot= buffer         |
-| =q= | Quit mastodon buffer. Leave window open. |
-| =Q= | Quit mastodon buffer and kill window.    |
-| =T= | Prompt for tag and open its timeline     |
-|-----+------------------------------------------|
-
-
+|-----+------------------------------------------------|
+| Key | Action                                         |
+|-----+------------------------------------------------|
+| =?= | Open context menu (if =discover= is available) |
+| =F= | Open federated timeline                        |
+| =H= | Open home timeline                             |
+| =L= | Open local timeline                            |
+| =n= | Switch to =mastodon-toot= buffer               |
+| =q= | Quit mastodon buffer. Leave window open.       |
+| =Q= | Quit mastodon buffer and kill window.          |
+| =T= | Prompt for tag and open its timeline           |
+|-----+------------------------------------------------|
 
 *** Toot toot
 

@@ -102,10 +102,8 @@
     (define-key map (kbd "Q") #'kill-buffer-and-window)
     (define-key map (kbd "T") #'mastodon-tl--get-tag-timeline)))
 
-(defun provide-discover-context-menu ()
-  "Provides a shortcut overview through Discover mode.
-Press '?' to activate it."
-  (when (bound-and-true-p discover-mode)
+(with-eval-after-load 'mastodon
+  (when (require 'discover nil :noerror)
     (discover-add-context-menu
      :bind "?"
      :mode 'mastodon-mode
@@ -123,8 +121,6 @@ Press '?' to activate it."
                       ("Quit"
                        ("q" "Quit mastodon buffer. Leave window open." kill-this-buffer)
                        ("Q" "Quit mastodon buffer and kill window." kill-buffer-and-window)))))))
-
-(add-hook 'mastodon-mode-hook 'provide-discover-context-menu t)
 
 (provide 'mastodon)
 ;;; mastodon.el ends here
