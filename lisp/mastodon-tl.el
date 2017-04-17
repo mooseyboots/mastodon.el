@@ -109,10 +109,10 @@
 (defun mastodon-tl--byline (toot)
   (let ((id (cdr (assoc 'id toot))))
     (propertize
-     (concat (propertize "\n | " 'face 'fringe)
+     (concat (propertize "\n | " 'face 'default)
              (mastodon-tl--byline-author toot)
              (mastodon-tl--byline-boosted toot)
-             (propertize "\n  ------------" 'face 'fringe))
+             (propertize "\n  ------------" 'face 'default))
      'toot-id id)))
 
 (defun mastodon-tl--content (toot)
