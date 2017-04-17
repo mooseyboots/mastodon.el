@@ -34,14 +34,6 @@
   :prefix "mastodon-tl-"
   :group 'mastodon)
 
-(defface mastodon-tl-toot-text-face
-  '((t (:foreground "LightGray")))
-  "Toot content face.")
-
-(defface mastodon-tl-toot-display-name-face
-  '((t (:foreground "cyan")))
-  "Mastodon user handle face.")
-
 (defun mastodon-tl--get-federated-timeline ()
   "Opens federated timeline."
   (interactive)
@@ -99,7 +91,7 @@
          (handle (cdr (assoc 'acct account)))
          (name (cdr (assoc 'display_name account))))
     (concat
-     (propertize name 'face 'mastodon-tl-toot-display-name-face)
+     (propertize name 'face 'warning)
      " (@"
      handle
      ")")))
@@ -109,16 +101,18 @@
   (let ((reblog (cdr (assoc 'reblog toot))))
     (when reblog
       (concat
-       " Boosted "
+       " "
+       (propertize "Boosted" 'face 'highlight)
+       " "
        (mastodon-tl--byline-author reblog)))))
 
 (defun mastodon-tl--byline (toot)
   (let ((id (cdr (assoc 'id toot))))
     (propertize
-     (concat "\n | "
+     (concat (propertize "\n | " 'face 'fringe)
              (mastodon-tl--byline-author toot)
              (mastodon-tl--byline-boosted toot)
-             "\n  ------------")
+             (propertize "\n  ------------" 'face 'fringe))
      'toot-id id)))
 
 (defun mastodon-tl--content (toot)
@@ -127,8 +121,7 @@
                       (cdr (assoc 'content reblog))
                     (cdr (assoc 'content toot)))))
     (propertize (mastodon-tl--remove-html content)
-                'face
-                'mastodon-tl-toot-text-face)))
+                'face 'default)))
 
 (defun mastodon-tl--toot (toot)
   (insert
