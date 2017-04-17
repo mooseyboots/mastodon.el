@@ -63,10 +63,6 @@
   (let ((tag (read-string "Tag: ")))
     (mastodon-tl--get (concat "tag/" tag))))
 
-(defun mastodon-tl--from-toot (key toot)
-  "Return value for KEY in TOOT."
-  (cdr (assoc key toot)))
-
 (defun mastodon-tl--goto-toot-pos (find-pos &optional pos)
   "Search for toot with FIND-POS. Optionally stat from POS."
   (let* ((npos (funcall find-pos
@@ -87,78 +83,73 @@
   (interactive)
   (mastodon-tl--goto-toot-pos 'previous-single-property-change))
 
-(defun mastodon-tl--header (handle name id)
-  "Create header string with toot properties.
-
-HANDLE is the username.
-NAME is the display name.
-ID is the toot id."
-  (propertize
-   (concat "=== "
-           (propertize name 'face 'mastodon-tl-toot-display-name-face)
-           " @"
-           handle
-           "\n")
-   'toot-id id))
-
-(defun mastodon-tl--remove-html (toot)
-  "Remove HTML from TOOT."
-  (let* ((t1 (replace-regexp-in-string "<\/p>" "\n\n" toot))
-         (t2 (replace-regexp-in-string "<\/?span>" "" t1))
-         (t3 (replace-regexp-in-string "<span class=\"h-card\">" "" t2)))
-    t3))
-
-(defun mastodon-tl--content (toot)
-  "Distill content to display from TOOT."
-  (let* ((content (mastodon-tl--remove-html toot)))
-     (propertize content
-                 'face 'mastodon-tl-toot-text-face)))
-
-(defun mastodon-tl--render-toot (toot)
-  "Display TOOT with header and content sections."
-  (let ((id (number-to-string (mastodon-tl--from-toot 'id toot)))
-        (handle (mastodon-tl--from-toot 'acct (mastodon-tl--from-toot 'account toot)))
-        (name (mastodon-tl--from-toot 'display_name (mastodon-tl--from-toot 'account toot)))
-        (text (mastodon-tl--from-toot 'content toot))
-        (url (mastodon-tl--from-toot 'url toot)))
-    (insert
-     (propertize
-      (concat
-       (mastodon-tl--header handle name id)
-       (mastodon-tl--content text)
-       "\n")
-      'toot-url url))))
-
-(defun mastodon-tl--render-timeline (buffer json)
-  "Display toots in BUFFER. Data taken from JSON."
-  (switch-to-buffer buffer)
-  (mapcar 'mastodon-tl--render-toot json)
-  (html2text))
-
 (defun mastodon-tl--timeline-name ()
   "Determine timeline from `buffer-name'."
   (replace-regexp-in-string "\*" ""
                             (replace-regexp-in-string "mastodon-" "" (buffer-name))))
 
-(defun mastodon-tl--update ()
-  "Update timeline with new toots."
-  (interactive)
-  (let* ((tl (mastodon-tl--timeline-name))
-         (id (get-text-property (point-min) 'toot-id))
-         (url (mastodon--api-for (concat "timelines/" tl "?since_id=" id))))
-    (with-current-buffer (current-buffer)
-      (let ((inhibit-read-only t)
-            (json (mastodon-http--get-json url)))
-        (goto-char (point-min))
-        (mastodon-tl--render-timeline (current-buffer) json)))))
+(defun mastodon-tl--remove-html (toot)
+  (let* ((t1 (replace-regexp-in-string "<\/p>" "\n\n" toot))
+         (t2 (replace-regexp-in-string "<\/?span>" "" t1)))
+    (replace-regexp-in-string "<span class=\"h-card\">" "" t2)))
+
+(defun mastodon-tl--byline-author (toot)
+  "Propertize author of TOOT."
+  (let* ((account (cdr (assoc 'account toot)))
+         (handle (cdr (assoc 'acct account)))
+         (name (cdr (assoc 'display_name account))))
+    (concat
+     (propertize name 'face 'mastodon-tl-toot-display-name-face)
+     " (@"
+     handle
+     ")")))
+
+(defun mastodon-tl--byline-boosted (toot)
+  "Add byline for boosted data from TOOT."
+  (let ((reblog (cdr (assoc 'reblog toot))))
+    (when reblog
+      (concat
+       " Boosted "
+       (mastodon-tl--byline-author reblog)))))
+
+(defun mastodon-tl--byline (toot)
+  (let ((id (cdr (assoc 'id toot))))
+    (propertize
+     (concat "\n | "
+             (mastodon-tl--byline-author toot)
+             (mastodon-tl--byline-boosted toot)
+             "\n  ------------")
+     'toot-id id)))
+
+(defun mastodon-tl--content (toot)
+  (let* ((reblog (cdr (assoc 'reblog toot)))
+         (content (if reblog
+                      (cdr (assoc 'content reblog))
+                    (cdr (assoc 'content toot)))))
+    (propertize (mastodon-tl--remove-html content)
+                'face
+                'mastodon-tl-toot-text-face)))
+
+(defun mastodon-tl--toot (toot)
+  (insert
+   (concat
+    (mastodon-tl--content toot)
+    (mastodon-tl--byline toot)
+    "\n\n")))
+
+(defun mastodon-tl--timeline (toots)
+  (mapcar 'mastodon-tl--toot toots)
+  (html2text)
+  (replace-regexp "\n\n\n" "\n" nil (point-min) (point-max)))
 
 (defun mastodon-tl--get (timeline)
-  "Display toots for TIMELINE in new buffer."
+  "Display TIMELINE in buffer."
   (let* ((url (mastodon--api-for (concat "timelines/" timeline)))
-         (tl-buff (concat "*mastodon-" timeline "*"))
-         (tl-json (mastodon-http--get-json url)))
-    (with-output-to-temp-buffer tl-buff
-      (mastodon-tl--render-timeline tl-buff tl-json))
+         (buffer (concat "*mastodon-" timeline "*"))
+         (json (mastodon-http--get-json url)))
+    (with-output-to-temp-buffer buffer
+      (switch-to-buffer buffer)
+      (mastodon-tl--timeline json))
     (mastodon-mode)))
 
 (provide 'mastodon-tl)
