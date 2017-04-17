@@ -135,6 +135,34 @@
   (html2text)
   (replace-regexp "\n\n\n" "\n" nil (point-min) (point-max)))
 
+;; TODO
+;; Look into the JSON returned here by Local
+(defun mastodon-tl--updated-json (timeline id)
+  "Return JSON for TIMELINE since ID."
+  (let ((url (mastodon--api-for (concat "timelines/"
+                                        timeline
+                                        "?since_id="
+                                        (number-to-string id)))))
+    (mastodon-http--get-json url)))
+
+(defun mastodon-tl--newest-id ()
+  "Return toot-id from the top of the buffer."
+  (goto-char (point-min))
+  (mastodon-tl--goto-next-toot)
+  (get-text-property (point) 'toot-id))
+
+(defun mastodon-tl--update ()
+  "Update timeline with new toots."
+  (interactive)
+  (let* ((tl (mastodon-tl--timeline-name))
+         (id (mastodon-tl--newest-id))
+         (json (mastodon-tl--updated-json tl id)))
+    (when json
+      (with-current-buffer (current-buffer)
+        (let ((inhibit-read-only t))
+          (goto-char (point-min))
+          (mastodon-tl--timeline json))))))
+
 (defun mastodon-tl--get (timeline)
   "Display TIMELINE in buffer."
   (let* ((url (mastodon--api-for (concat "timelines/" timeline)))
