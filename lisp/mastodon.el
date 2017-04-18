@@ -95,6 +95,7 @@
   :group 'mastodon
   (let ((map mastodon-mode-map))
     (define-key map (kbd "b") #'mastodon-toot--boost)
+    (define-key map (kbd "f") #'mastodon-toot--favourite)
     (define-key map (kbd "F") #'mastodon-tl--get-federated-timeline)
     (define-key map (kbd "H") #'mastodon-tl--get-home-timeline)
     (define-key map (kbd "j") #'mastodon-tl--goto-next-toot)
@@ -117,6 +118,7 @@
                      (actions
                       ("Toots"
                        ("b" "Boost" mastodon-toot--boost)
+                       ("f" "Favourite" mastodon-toot--favourite)
                        ("j" "Next" mastodon-tl--goto-next-toot)
                        ("k" "Prev" mastodon-tl--goto-prev-toot)
                        ("n" "Send" mastodon-toot)
