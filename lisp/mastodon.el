@@ -75,12 +75,15 @@
   (mastodon-tl--get "home"))
 
 ;;;###autoload
-(defun mastodon-toot ()
+(defun mastodon-toot (&optional user reply-to-id)
   "Update a Mastodon instance with new toot. Content is captured in a new buffer."
   (interactive)
   (require 'mastodon-toot)
   (progn
     (switch-to-buffer-other-window (get-buffer-create "*new toot*"))
+    (when user
+      (insert (format "@%s " user))
+      (setq mastodon-toot--reply-to-id reply-to-id))
     (mastodon-toot-mode t)))
 
 ;;;###autoload

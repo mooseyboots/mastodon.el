@@ -35,6 +35,8 @@
   :prefix "mastodon-toot-"
   :group 'mastodon)
 
+(defvar mastodon-toot--reply-to-id nil)
+
 (defun mastodon-toot--send-triage (status)
   "Callback function to triage toot POST.
 
@@ -45,13 +47,16 @@ STATUS is passed by `url-retrieve'."
 (defun mastodon-toot-send ()
   "Kill new-toot buffer/window and POST contents to the Mastodon instance."
   (interactive)
-  (let ((toot (buffer-string))
-        (endpoint (mastodon--api-for "statuses")))
+  (let* ((toot (buffer-string))
+         (endpoint (mastodon--api-for "statuses"))
+         (args `(("status" . ,toot)
+                 ("in_reply_to_id" . ,mastodon-toot--reply-to-id))))
     (progn
       (kill-buffer-and-window)
+      (setq mastodon-toot--reply-to-id nil)
       (mastodon--http-post endpoint
                            'mastodon-toot--send-triage
-                           `(("status" . ,toot))
+                           args
                            `(("Authorization" . ,(concat
                                                   "Bearer "
                                                   (mastodon--access-token))))))))
@@ -59,6 +64,7 @@ STATUS is passed by `url-retrieve'."
 (defun mastodon-toot-cancel ()
   "Kill new-toot buffer/window. Does not POST content to Mastodon."
   (interactive)
+  (setq mastodon-toot--reply-to-id nil)
   (kill-buffer-and-window))
 
 (defun mastodon-toot--action-success (marker)
@@ -101,6 +107,15 @@ Execute CALLBACK function if response was OK."
   (interactive)
   (let ((callback (lambda () (mastodon-toot--action-success "F"))))
     (mastodon-toot--action "favourite" callback)))
+
+(defun mastodon-toot--reply ()
+  "Reply to toot at `point'."
+  (interactive)
+  (let* ((toot (mastodon-tl--property 'toot-json))
+         (id (number-to-string (mastodon-tl--field 'id toot)))
+         (account (mastodon-tl--field 'account toot))
+         (user (cdr (assoc 'username account))))
+    (mastodon-toot user id)))
 
 (defvar mastodon-toot-mode-map
   (let ((map (make-sparse-keymap)))
