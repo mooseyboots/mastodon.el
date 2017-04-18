@@ -70,23 +70,37 @@ STATUS is passed by `url-retrieve'."
                     (propertize marker
                                 'face 'success)))))
 
-(defun mastodon-toot--boost-triage (response)
-  "Parse response code from RESPONSE buffer."
+(defun mastodon-toot--action-triage (response callback)
+  "Parse response code from RESPONSE buffer.
+
+Execute CALLBACK function if response was OK."
   (let ((status (with-current-buffer response
                   (mastodon--response-code))))
     (if (string-prefix-p "2" status)
-        (mastodon-toot--action-success "B")
+        (funcall callback)
       (switch-to-buffer response))))
 
-(defun mastodon-toot--boost ()
-  "Boost toot at point."
-  (interactive)
+(defun mastodon-toot--action (action callback)
+  "Take action on toot at point."
   (let* ((id (mastodon-tl--property 'toot-id))
          (url (mastodon--api-for (concat "statuses/"
                                          (number-to-string id)
-                                         "/reblog"))))
+                                         "/"
+                                         action))))
     (let ((response (mastodon-http--post url nil nil)))
-      (mastodon-toot--boost-triage response))))
+      (mastodon-toot--action-triage response callback))))
+
+(defun mastodon-toot--boost ()
+  "Boost toot at `point'."
+  (interactive)
+  (let ((callback (lambda () (mastodon-toot--action-success "B"))))
+    (mastodon-toot--action "reblog" callback)))
+
+(defun mastodon-toot--favourite ()
+  "Favourite toot at `point'."
+  (interactive)
+  (let ((callback (lambda () (mastodon-toot--action-success "F"))))
+    (mastodon-toot--action "favourite" callback)))
 
 (defvar mastodon-toot-mode-map
   (let ((map (make-sparse-keymap)))
