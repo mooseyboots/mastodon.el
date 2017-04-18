@@ -169,6 +169,22 @@ Return value from boosted content if available."
   (goto-char (point-min))
   (mastodon-tl--property 'toot-id))
 
+(defun mastodon-tl--thread ()
+  "Open thread buffer for toot under `point'."
+  (interactive)
+  (let* ((id (number-to-string (mastodon-tl--property 'toot-id)))
+         (url (mastodon--api-for (format "statuses/%s/context" id)))
+         (buffer (format "*mastodon-thread-%s*" id))
+         (toot (mastodon-tl--property 'toot-json))
+         (context (mastodon-http--get-json url)))
+    (with-output-to-temp-buffer buffer
+      (switch-to-buffer buffer)
+      (mastodon-tl--timeline (vconcat
+                              (cdr (assoc 'ancestors context))
+                              `(,toot)
+                              (cdr (assoc 'descendants context)))))
+    (mastodon-mode)))
+
 (defun mastodon-tl--update ()
   "Update timeline with new toots."
   (interactive)
