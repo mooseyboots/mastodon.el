@@ -108,6 +108,25 @@ If response code is not 2XX, switches to the response buffer created by `url-ret
       (funcall success)
     (switch-to-buffer (current-buffer))))
 
+(defun mastodon-http--post (url args headers)
+  "POST synchronously to URL with ARGS and HEADERS.
+
+Authorization header is included by default."
+  (let ((url-request-method "POST")
+        (url-request-data
+         (when args
+           (mapconcat (lambda (arg)
+                        (concat (url-hexify-string (car arg))
+                                "="
+                                (url-hexify-string (cdr arg))))
+                      args
+                      "&")))
+        (url-request-extra-headers
+         `(("Authorization" . ,(concat "Bearer " (mastodon--access-token)))
+           ,headers)))
+    (with-temp-buffer
+      (url-retrieve-synchronously url))))
+
 (defun mastodon-http--get (url)
   "Make GET request to URL.
 
