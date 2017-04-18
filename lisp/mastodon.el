@@ -107,6 +107,7 @@
     (define-key map (kbd "n") #'mastodon-toot)
     (define-key map (kbd "q") #'kill-this-buffer)
     (define-key map (kbd "Q") #'kill-buffer-and-window)
+    (define-key map (kbd "r") #'mastodon-toot--reply)
     (define-key map (kbd "T") #'mastodon-tl--get-tag-timeline)
     (define-key map (kbd "u") #'mastodon-tl--update)))
 
@@ -125,6 +126,7 @@
                        ("j" "Next" mastodon-tl--goto-next-toot)
                        ("k" "Prev" mastodon-tl--goto-prev-toot)
                        ("n" "Send" mastodon-toot)
+                       ("r" "Reply" mastodon-toot--reply)
                        ("u" "Update" mastodon-tl--update))
                       ("Timelines"
                        ("F" "Federated" mastodon-tl--get-federated-timeline)
