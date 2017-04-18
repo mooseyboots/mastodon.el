@@ -61,6 +61,27 @@ STATUS is passed by `url-retrieve'."
   (interactive)
   (kill-buffer-and-window))
 
+(defun mastodon-toot--property (prop)
+  "Get property PROP for toot at point."
+  (or (get-text-property (point) prop)
+      (progn
+        (mastodon-tl--goto-next-toot)
+        (get-text-property (point) prop))))
+
+;; TODO extract success callback
+(defun mastodon-toot--boost ()
+  "Boost toot at point."
+  (interactive)
+  (let* ((id (mastodon-toot--property 'toot-id))
+         (url (mastodon--api-for (concat "statuses/"
+                                         (number-to-string id)
+                                         "/reblog"))))
+    (let ((response (mastodon-http--post url nil nil)))
+      (with-current-buffer response
+        (if (string-prefix-p "2" (mastodon--response-code))
+            (message "Boosted!")
+          (switch-to-buffer response))))))
+
 (defvar mastodon-toot-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-c") #'mastodon-toot-send)

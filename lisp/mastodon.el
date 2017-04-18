@@ -94,6 +94,7 @@
   "Major mode for Mastodon, the federated microblogging network."
   :group 'mastodon
   (let ((map mastodon-mode-map))
+    (define-key map (kbd "b") #'mastodon-toot--boost)
     (define-key map (kbd "F") #'mastodon-tl--get-federated-timeline)
     (define-key map (kbd "H") #'mastodon-tl--get-home-timeline)
     (define-key map (kbd "j") #'mastodon-tl--goto-next-toot)
@@ -115,6 +116,7 @@
                      (description "Mastodon feed viewer")
                      (actions
                       ("Toots"
+                       ("b" "Boost" mastodon-toot--boost)
                        ("j" "Next" mastodon-tl--goto-next-toot)
                        ("k" "Prev" mastodon-tl--goto-prev-toot)
                        ("n" "Send" mastodon-toot)
