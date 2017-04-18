@@ -61,6 +61,7 @@ Opens a =*mastodon-home*= buffer in the major mode so you can see toots.
 |-----+------------------------------------------------|
 | =?= | Open context menu (if =discover= is available) |
 | =b= | Boost toot under =point=                       |
+| =f= | Favourite toot under =point=                   |
 | =F= | Open federated timeline                        |
 | =H= | Open home timeline                             |
 | =j= | Go to next toot                                |
@@ -74,11 +75,12 @@ Opens a =*mastodon-home*= buffer in the major mode so you can see toots.
 
 **** Legend
 
-|--------+----------------------|
-| Marker | Meaning              |
-|--------+----------------------|
-| =(B)=  | I boosted this toot. |
-|--------+----------------------|
+|--------+-------------------------|
+| Marker | Meaning                 |
+|--------+-------------------------|
+| =(B)=  | I boosted this toot.    |
+| =(F)=  | I favourited this toot. |
+|--------+-------------------------|
 
 *** Toot toot
 
