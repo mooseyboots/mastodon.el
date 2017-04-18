@@ -71,6 +71,7 @@ Opens a =*mastodon-home*= buffer in the major mode so you can see toots.
 | =q= | Quit mastodon buffer. Leave window open.       |
 | =Q= | Quit mastodon buffer and kill window.          |
 | =r= | Reply to toot under =point=.                   |
+| =t= | Open thread buffer for toot under =point=.     |
 | =T= | Prompt for tag and open its timeline           |
 |-----+------------------------------------------------|
 
