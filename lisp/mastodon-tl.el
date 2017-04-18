@@ -107,9 +107,14 @@
        (mastodon-tl--byline-author reblog)))))
 
 (defun mastodon-tl--byline (toot)
-  (let ((id (cdr (assoc 'id toot))))
+  (let ((id (cdr (assoc 'id toot)))
+        (boosted (or (cdr (assoc 'reblogged toot))
+                     (cdr (assoc 'reblogged
+                                 (cdr (assoc 'reblog toot)))))))
     (propertize
      (concat (propertize "\n | " 'face 'default)
+             (when boosted
+               (format "(%s) " (propertize "B" 'face 'success)))
              (mastodon-tl--byline-author toot)
              (mastodon-tl--byline-boosted toot)
              (propertize "\n  ------------" 'face 'default))

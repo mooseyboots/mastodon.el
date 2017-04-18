@@ -61,7 +61,23 @@ STATUS is passed by `url-retrieve'."
   (interactive)
   (kill-buffer-and-window))
 
-;; TODO extract success callback
+(defun mastodon-toot--action-success (marker)
+  "Insert MARKER with 'success face in byline."
+  (let ((inhibit-read-only t))
+    (mastodon-tl--property 'toot-id)
+    (goto-char (+ 3 (point)))
+    (insert (format "(%s) "
+                    (propertize marker
+                                'face 'success)))))
+
+(defun mastodon-toot--boost-triage (response)
+  "Parse response code from RESPONSE buffer."
+  (let ((status (with-current-buffer response
+                  (mastodon--response-code))))
+    (if (string-prefix-p "2" status)
+        (mastodon-toot--action-success "B")
+      (switch-to-buffer response))))
+
 (defun mastodon-toot--boost ()
   "Boost toot at point."
   (interactive)
@@ -70,10 +86,7 @@ STATUS is passed by `url-retrieve'."
                                          (number-to-string id)
                                          "/reblog"))))
     (let ((response (mastodon-http--post url nil nil)))
-      (with-current-buffer response
-        (if (string-prefix-p "2" (mastodon--response-code))
-            (message "Boosted!")
-          (switch-to-buffer response))))))
+      (mastodon-toot--boost-triage response))))
 
 (defvar mastodon-toot-mode-map
   (let ((map (make-sparse-keymap)))
