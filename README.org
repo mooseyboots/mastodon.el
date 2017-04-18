@@ -103,14 +103,9 @@ you will have to re-authenticate when you close/reopen Emacs.
 
 ** Roadmap
 
-TODOs for the =1.0.0= release are as far as I plan to roadmap. Repo
-issues track the roadmap via a label.
-Click [[https://github.com/jdenen/mastodon.el/issues?q=is%3Aopen+is%3Aissue+label%3A%22road+to+1.0.0%22][here]].
+[[https://github.com/jdenen/mastodon.el/issues?q=is%3Aissue+is%3Aopen+label%3A%22inb4+MELPA%22][Here]] are the features I plan to implement before putting mastodon.el on MELPA.
 
-Issues labeled as bugs should also be fixed before 1.0.0, but delievered
-is better than perfect, so I don't consider them blocking.
-
-Issues labeled as enhancements can happen whenever.
+[[https://github.com/jdenen/mastodon.el/issues?q=is%3Aopen+is%3Aissue+label%3A%22road+to+1.0.0%22][Here]] are the plans I have for the =1.0.0= release.
 
 ** Contributing
 
