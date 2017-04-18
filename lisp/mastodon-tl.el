@@ -145,11 +145,17 @@
                                         (number-to-string id)))))
     (mastodon-http--get-json url)))
 
+(defun mastodon-tl--property (prop)
+  "Get property PROP for toot at point."
+  (or (get-text-property (point) prop)
+      (progn
+        (mastodon-tl--goto-next-toot)
+        (get-text-property (point) prop))))
+
 (defun mastodon-tl--newest-id ()
   "Return toot-id from the top of the buffer."
   (goto-char (point-min))
-  (mastodon-tl--goto-next-toot)
-  (get-text-property (point) 'toot-id))
+  (mastodon-tl--property 'toot-id))
 
 (defun mastodon-tl--update ()
   "Update timeline with new toots."
