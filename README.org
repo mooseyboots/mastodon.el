@@ -54,12 +54,15 @@ This value can be customized too, and defaults to
 
 =M-x mastodon=
 
-Opens a =*mastodon-home*= buffer in the major mode so you can see toots. Keybindings:
+Opens a =*mastodon-home*= buffer in the major mode so you can see toots.
+
+**** Keybindings
 
 |-----+------------------------------------------------|
 | Key | Action                                         |
 |-----+------------------------------------------------|
 | =?= | Open context menu (if =discover= is available) |
+| =b= | Boost toot under =point=                       |
 | =F= | Open federated timeline                        |
 | =H= | Open home timeline                             |
 | =j= | Go to next toot                                |
@@ -70,6 +73,14 @@ Opens a =*mastodon-home*= buffer in the major mode so you can see toots. Keybind
 | =Q= | Quit mastodon buffer and kill window.          |
 | =T= | Prompt for tag and open its timeline           |
 |-----+------------------------------------------------|
+
+**** Legend
+
+|--------+----------------------|
+| Marker | Meaning              |
+|--------+----------------------|
+| =(B)=  | I boosted this toot. |
+|--------+----------------------|
 
 *** Toot toot
 
