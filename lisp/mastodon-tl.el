@@ -106,14 +106,17 @@
        " "
        (mastodon-tl--byline-author reblog)))))
 
+(defun mastodon-tl--field (field toot)
+  "Return FIELD from TOOT.
+
+Return value from boosted content if available."
+  (or (cdr (assoc field (cdr (assoc 'reblog toot))))
+      (cdr (assoc field toot))))
+
 (defun mastodon-tl--byline (toot)
   (let ((id (cdr (assoc 'id toot)))
-        (faved (or (cdr (assoc 'favourited toot))
-                   (cdr (assoc 'favourited
-                               (cdr (assoc 'reblog toot))))))
-        (boosted (or (cdr (assoc 'reblogged toot))
-                     (cdr (assoc 'reblogged
-                                 (cdr (assoc 'reblog toot)))))))
+        (faved (mastodon-tl--field 'favourited toot))
+        (boosted (mastodon-tl--field 'reblogged toot)))
     (propertize
      (concat (propertize "\n | " 'face 'default)
              (when boosted
@@ -123,13 +126,12 @@
              (mastodon-tl--byline-author toot)
              (mastodon-tl--byline-boosted toot)
              (propertize "\n  ------------" 'face 'default))
-     'toot-id id)))
+     'toot-id id
+     'toot-json toot)))
 
 (defun mastodon-tl--content (toot)
-  (let* ((reblog (cdr (assoc 'reblog toot)))
-         (content (if reblog
-                      (cdr (assoc 'content reblog))
-                    (cdr (assoc 'content toot)))))
+  "Retrieve text content from TOOT."
+  (let ((content (mastodon-tl--field 'content toot)))
     (propertize (mastodon-tl--remove-html content)
                 'face 'default)))
 
