@@ -70,11 +70,10 @@ STATUS is passed by `url-retrieve'."
 (defun mastodon-toot--action-success (marker)
   "Insert MARKER with 'success face in byline."
   (let ((inhibit-read-only t))
-    (mastodon-tl--property 'toot-id)
     (goto-char (+ 3 (point)))
     (insert (format "(%s) "
-                    (propertize marker
-                                'face 'success)))))
+                    (propertize marker 'face 'success)))
+    (mastodon-tl--goto-prev-toot)))
 
 (defun mastodon-toot--action-triage (response callback)
   "Parse response code from RESPONSE buffer.
@@ -99,14 +98,18 @@ Execute CALLBACK function if response was OK."
 (defun mastodon-toot--boost ()
   "Boost toot at `point'."
   (interactive)
-  (let ((callback (lambda () (mastodon-toot--action-success "B"))))
-    (mastodon-toot--action "reblog" callback)))
+  (let ((callback (lambda () (mastodon-toot--action-success "B")))
+        (id (mastodon-tl--property 'toot-id)))
+    (mastodon-toot--action "reblog" callback)
+    (message (format "Boosted #%s" id))))
 
 (defun mastodon-toot--favourite ()
   "Favourite toot at `point'."
   (interactive)
-  (let ((callback (lambda () (mastodon-toot--action-success "F"))))
-    (mastodon-toot--action "favourite" callback)))
+  (let ((callback (lambda () (mastodon-toot--action-success "F")))
+        (id (mastodon-tl--property 'toot-id)))
+    (mastodon-toot--action "favourite" callback)
+    (message (format "Favourited #%s" id))))
 
 (defun mastodon-toot--reply ()
   "Reply to toot at `point'."
