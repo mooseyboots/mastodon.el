@@ -37,6 +37,9 @@
   :prefix "mastodon-"
   :group 'external)
 
+(defconst mastodon-version "0.4.0"
+  "Current `mastodon' package version.")
+
 (defcustom mastodon-instance-url "https://mastodon.social"
   "Base URL for the Masto instance from which you toot."
   :group 'mastodon
@@ -63,10 +66,7 @@
 (defun mastodon-version ()
   "Message package version."
   (interactive)
-  (with-temp-buffer
-    (insert-file-contents "../.version")
-    (message
-     (concat "mastodon.el v" (buffer-string)))))
+  (message "Mastodon version %s" mastodon-version))
 
 ;;;###autoload
 (defun mastodon ()
