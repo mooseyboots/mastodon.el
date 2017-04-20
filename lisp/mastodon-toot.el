@@ -44,24 +44,7 @@ STATUS is passed by `url-retrieve'."
   (mastodon--http-response-triage status
                                   (lambda () (switch-to-buffer (current-buffer))))) ;; FIXME
 
-(defun mastodon-toot-send ()
-  "Kill new-toot buffer/window and POST contents to the Mastodon instance."
-  (interactive)
-  (let* ((toot (buffer-string))
-         (endpoint (mastodon--api-for "statuses"))
-         (args `(("status" . ,toot)
-                 ("in_reply_to_id" . ,mastodon-toot--reply-to-id))))
-    (progn
-      (kill-buffer-and-window)
-      (setq mastodon-toot--reply-to-id nil)
-      (mastodon--http-post endpoint
-                           'mastodon-toot--send-triage
-                           args
-                           `(("Authorization" . ,(concat
-                                                  "Bearer "
-                                                  (mastodon--access-token))))))))
-
-(defun mastodon-toot-cancel ()
+(defun mastodon-toot--cancel ()
   "Kill new-toot buffer/window. Does not POST content to Mastodon."
   (interactive)
   (setq mastodon-toot--reply-to-id nil)
@@ -94,6 +77,20 @@ Execute CALLBACK function if response was OK."
     (let ((response (mastodon-http--post url nil nil)))
       (mastodon-toot--action-triage response callback))))
 
+(defun mastodon-toot--send ()
+  "Kill new-toot buffer/window and POST contents to the Mastodon instance."
+  (interactive)
+  (let* ((toot (buffer-string))
+         (endpoint (mastodon--api-for "statuses"))
+         (args `(("status" . ,toot)
+                 ("in_reply_to_id" . ,mastodon-toot--reply-to-id))))
+    (progn
+      (kill-buffer-and-window)
+      (setq mastodon-toot--reply-to-id nil)
+      (let ((response (mastodon-http--post endpoint args nil)))
+        (mastodon-http--triage response
+                               (lambda () (message "Toot toot!")))))))
+
 (defun mastodon-toot--boost ()
   "Boost toot at `point'."
   (interactive)
@@ -121,8 +118,8 @@ Execute CALLBACK function if response was OK."
 
 (defvar mastodon-toot-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-c") #'mastodon-toot-send)
-    (define-key map (kbd "C-c C-k") #'mastodon-toot-cancel)
+    (define-key map (kbd "C-c C-c") #'mastodon-toot--send)
+    (define-key map (kbd "C-c C-k") #'mastodon-toot--cancel)
       map)
   "Keymap for `mastodon-toot-mode'.")
 

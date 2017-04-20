@@ -108,6 +108,13 @@ If response code is not 2XX, switches to the response buffer created by `url-ret
       (funcall success)
     (switch-to-buffer (current-buffer))))
 
+(defun mastodon-http--triage (response success)
+  (let ((status (with-current-buffer response
+                  (mastodon--response-code))))
+    (if (string-prefix-p "2" status)
+        (funcall success)
+      (switch-to-buffer response))))
+
 (defun mastodon-http--post (url args headers)
   "POST synchronously to URL with ARGS and HEADERS.
 
