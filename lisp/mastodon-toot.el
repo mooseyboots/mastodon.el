@@ -37,19 +37,6 @@
 
 (defvar mastodon-toot--reply-to-id nil)
 
-(defun mastodon-toot--send-triage (status)
-  "Callback function to triage toot POST.
-
-STATUS is passed by `url-retrieve'."
-  (mastodon--http-response-triage status
-                                  (lambda () (switch-to-buffer (current-buffer))))) ;; FIXME
-
-(defun mastodon-toot--cancel ()
-  "Kill new-toot buffer/window. Does not POST content to Mastodon."
-  (interactive)
-  (setq mastodon-toot--reply-to-id nil)
-  (kill-buffer-and-window))
-
 (defun mastodon-toot--action-success (marker)
   "Insert MARKER with 'success face in byline."
   (let ((inhibit-read-only t))
@@ -57,25 +44,21 @@ STATUS is passed by `url-retrieve'."
                     (propertize marker 'face 'success)))
     (mastodon-tl--goto-prev-toot)))
 
-(defun mastodon-toot--action-triage (response callback)
-  "Parse response code from RESPONSE buffer.
-
-Execute CALLBACK function if response was OK."
-  (let ((status (with-current-buffer response
-                  (mastodon--response-code))))
-    (if (string-prefix-p "2" status)
-        (funcall callback)
-      (switch-to-buffer response))))
-
 (defun mastodon-toot--action (action callback)
-  "Take action on toot at point."
+  "Take ACTION on toot at point, then execute CALLBACK."
   (let* ((id (mastodon-tl--property 'toot-id))
          (url (mastodon--api-for (concat "statuses/"
                                          (number-to-string id)
                                          "/"
                                          action))))
     (let ((response (mastodon-http--post url nil nil)))
-      (mastodon-toot--action-triage response callback))))
+      (mastodon-http--triage response callback))))
+
+(defun mastodon-toot--cancel ()
+  "Kill new-toot buffer/window. Does not POST content to Mastodon."
+  (interactive)
+  (setq mastodon-toot--reply-to-id nil)
+  (kill-buffer-and-window))
 
 (defun mastodon-toot--send ()
   "Kill new-toot buffer/window and POST contents to the Mastodon instance."

@@ -39,7 +39,9 @@
   (concat mastodon-instance-url "/api/" mastodon--api-version "/" endpoint))
 
 (defun mastodon--http-post (url callback args &optional headers)
-  "Make POST request to URL.
+  "This function should be phased out in favor of `mastodon-http--post'.
+
+Make POST request to URL.
 
 Response buffer is passed to CALLBACK function.
 ARGS and HEADERS alist arguments are part of the POST request."
