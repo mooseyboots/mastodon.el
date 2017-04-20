@@ -62,7 +62,6 @@
   :options '(provide-discover-context-menu)
   :group 'mastodon)
 
-;; FIXME #25
 (defun mastodon-version ()
   "Message package version."
   (interactive)

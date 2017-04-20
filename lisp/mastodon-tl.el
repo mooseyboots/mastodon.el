@@ -133,7 +133,10 @@ Return value from boosted content if available."
 (defun mastodon-tl--content (toot)
   "Retrieve text content from TOOT."
   (let ((content (mastodon-tl--field 'content toot)))
-    (propertize (mastodon-tl--remove-html content)
+    (propertize (with-temp-buffer
+                  (insert content)
+                  (shr-render-region (point-min) (point-max))
+                  (buffer-string))
                 'face 'default)))
 
 (defun mastodon-tl--toot (toot)
@@ -145,8 +148,7 @@ Return value from boosted content if available."
 
 (defun mastodon-tl--timeline (toots)
   (mapcar 'mastodon-tl--toot toots)
-  (html2text)
-  (replace-regexp "\n\n\n" "\n" nil (point-min) (point-max)))
+  (replace-regexp "\n\n\n | " "\n | " nil (point-min) (point-max)))
 
 ;; TODO
 ;; Look into the JSON returned here by Local

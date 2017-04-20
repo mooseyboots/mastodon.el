@@ -70,7 +70,6 @@ STATUS is passed by `url-retrieve'."
 (defun mastodon-toot--action-success (marker)
   "Insert MARKER with 'success face in byline."
   (let ((inhibit-read-only t))
-    (goto-char (+ 3 (point)))
     (insert (format "(%s) "
                     (propertize marker 'face 'success)))
     (mastodon-tl--goto-prev-toot)))
