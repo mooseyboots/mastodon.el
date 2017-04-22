@@ -104,7 +104,7 @@ filesystem, so
 you will have to re-authenticate when you close/reopen Emacs.
 
 ** Enabling Emojis
-By default no emojis will appear in any of the posts or user names. In order to enable emojis you can install the `emojify` package.
+By default no emojis will appear in any of the posts or user names. In order to enable emojis you can install the =emojify= package.
 
 Add [[http://melpa.org/#/emojify][MELPA]] to your list of package archives
 #+BEGIN_SRC elisp
@@ -113,15 +113,15 @@ Add [[http://melpa.org/#/emojify][MELPA]] to your list of package archives
 (package-initialize)
 #+END_SRC
 
-Update the contents of your package archive and download `emojify`
+Update the contents of your package archive and download =emojify=
 
-This only needs to be called once. i.e. you should not put it in your `.emacs` or `init.el` file.
+This only needs to be called once. i.e. you should not put it in your =.emacs= or =init.el= file.
 #+BEGIN_SRC elisp
 (package-refresh-contents)
 (package-install 'emojify)
 #+END_SRC
 
-If you would rather install `emojify` interactively you can do so by doing the following.
+If you would rather install =emojify= interactively you can do so by doing the following.
 
 Refresh the package index
 #+BEGIN_QUOTE
@@ -133,14 +133,13 @@ And then install it by doing
 M-x package-install RET emojify
 #+END_QUOTE
 
-Once installed you can define a hook for `mastodon-mode` that call  `emojify-mode`
+Once installed you can define a hook for =mastodon-mode= that call  =emojify-mode=
 #+BEGIN_SRC elisp
 (require 'emojify)
 (defun my-mastodon-hook-function ()
   (emojify-mode 't))
 (add-hook 'mastodon-mode-hook 'my-mastodon-hook-function)
 #+END_SRC
-
 
 ** Roadmap
 
