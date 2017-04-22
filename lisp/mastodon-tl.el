@@ -89,8 +89,11 @@
 (defun mastodon-tl--byline-author (toot)
   "Propertize author of TOOT."
   (let* ((account (cdr (assoc 'account toot)))
-         (handle (cdr (assoc 'acct account)))
-         (name (cdr (assoc 'display_name account))))
+	 ;; It may not be necissary to decode the handle
+         (handle (decode-coding-string
+		  (cdr (assoc 'acct account))'utf-8))
+	 (name (decode-coding-string
+		(cdr (assoc 'display_name account)) 'utf-8)))
     (concat
      (propertize name 'face 'warning)
      " (@"
@@ -134,7 +137,7 @@ Return value from boosted content if available."
   "Retrieve text content from TOOT."
   (let ((content (mastodon-tl--field 'content toot)))
     (propertize (with-temp-buffer
-                  (insert content)
+                  (insert (decode-coding-string content 'utf-8))
                   (shr-render-region (point-min) (point-max))
                   (buffer-string))
                 'face 'default)))
