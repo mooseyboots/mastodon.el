@@ -103,6 +103,45 @@ Authentication stores your access token in the
 filesystem, so
 you will have to re-authenticate when you close/reopen Emacs.
 
+** Enabling Emojis
+By default no emojis will appear in any of the posts or user names. In order to enable emojis you can install the `emojify` package.
+
+Add [[http://melpa.org/#/emojify][MELPA]] to your list of package archives
+#+BEGIN_SRC elisp
+(require 'package)
+(add-to-list 'package-archives ("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
+#+END_SRC
+
+Update the contents of your package archive and download `emojify`
+
+This only needs to be called once. i.e. you should not put it in your `.emacs` or `init.el` file.
+#+BEGIN_SRC elisp
+(package-refresh-contents)
+(package-install 'emojify)
+#+END_SRC
+
+If you would rather install `emojify` interactively you can do so by doing the following.
+
+Refresh the package index
+#+BEGIN_QUOTE
+M-x package-refresh-contents RET
+#+END_QUOTE
+
+And then install it by doing
+#+BEGIN_QUOTE
+M-x package-install RET emojify
+#+END_QUOTE
+
+Once installed you can define a hook for `mastodon-mode` that call  `emojify-mode`
+#+BEGIN_SRC elisp
+(require 'emojify)
+(defun my-mastodon-hook-function ()
+  (emojify-mode 't))
+(add-hook 'mastodon-mode-hook 'my-mastodon-hook-function)
+#+END_SRC
+
+
 ** Roadmap
 
 [[https://github.com/jdenen/mastodon.el/milestone/1][Here]] are the features I plan to implement before putting mastodon.el on MELPA.
