@@ -1,8 +1,10 @@
-* mastodon.el
+* mastodon.el 
 
-[[http://spacemacs.org][https://cdn.rawgit.com/syl20bnr/spacemacs/442d025779da2f62fc86c2082703697714db6514/assets/spacemacs-badge.svg]]
+[[http://waffle.io/jdenen/mastodon.el][https://badge.waffle.io/jdenen/mastodon.el.png?label=in%20progress&title=In%20Progress]]
 
 Emacs client for [[https://github.com/tootsuite/mastodon][Mastodon]]
+
+[[http://spacemacs.org][https://cdn.rawgit.com/syl20bnr/spacemacs/442d025779da2f62fc86c2082703697714db6514/assets/spacemacs-badge.svg]]
 
 ** Installation
 
