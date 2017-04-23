@@ -107,7 +107,7 @@ Both actions kill the buffer and window.
 If you have not previously authenticated, you will be prompted for your
 account email and password. *NOTE*: Email and password are NOT stored by mastodon.el.
 
-Authentication stores your access token in the =mastodon--api-token-string= 
+Authentication stores your access token in the =mastodon-auth--token= 
 variable. It is not stored on your filesystem, so you will have to 
 re-authenticate when you close/reopen Emacs.
 
