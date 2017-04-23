@@ -56,25 +56,32 @@
   (let ((tag (read-string "Tag: ")))
     (mastodon-tl--get (concat "tag/" tag))))
 
-(defun mastodon-tl--goto-toot-pos (find-pos &optional pos)
-  "Search for toot with FIND-POS. Optionally stat from POS."
+(defun mastodon-tl--goto-toot-pos (find-pos refresh &optional pos)
+  "Search for toot with FIND-POS.
+If search returns nil, execute REFRESH function.
+
+Optionally start from POS."
   (let* ((npos (funcall find-pos
                         (or pos (point))
                         'toot-id
                         (current-buffer))))
-    (when npos (if (not (get-text-property npos 'toot-id))
-                   (mastodon-tl--goto-toot-pos find-pos npos)
-                 (when npos (goto-char npos))))))
+    (if npos
+        (if (not (get-text-property npos 'toot-id))
+            (mastodon-tl--goto-toot-pos find-pos refresh npos)
+          (goto-char npos))
+      (funcall refresh))))
 
 (defun mastodon-tl--goto-next-toot ()
   "Jump to next toot header."
   (interactive)
-  (mastodon-tl--goto-toot-pos 'next-single-property-change))
+  (mastodon-tl--goto-toot-pos 'next-single-property-change
+                              'mastodon-tl--more))
 
 (defun mastodon-tl--goto-prev-toot ()
   "Jump to last toot header."
   (interactive)
-  (mastodon-tl--goto-toot-pos 'previous-single-property-change))
+  (mastodon-tl--goto-toot-pos 'previous-single-property-change
+                              'mastodon-tl--update))
 
 (defun mastodon-tl--timeline-name ()
   "Determine timeline from `buffer-name'."
@@ -153,6 +160,14 @@ Return value from boosted content if available."
   (mapcar 'mastodon-tl--toot toots)
   (replace-regexp "\n\n\n | " "\n | " nil (point-min) (point-max)))
 
+(defun mastodon-tl--more-json (timeline id)
+  "Return JSON for TIMELINE before ID."
+  (let ((url (mastodon-http--api (concat "timelines/"
+                                         timeline
+                                         "?max_id="
+                                         (number-to-string id)))))
+    (mastodon-http--get-json url)))
+
 ;; TODO
 ;; Look into the JSON returned here by Local
 (defun mastodon-tl--updated-json (timeline id)
@@ -163,17 +178,25 @@ Return value from boosted content if available."
                                         (number-to-string id)))))
     (mastodon-http--get-json url)))
 
-(defun mastodon-tl--property (prop)
+(defun mastodon-tl--property (prop &optional backward)
   "Get property PROP for toot at point."
   (or (get-text-property (point) prop)
       (progn
-        (mastodon-tl--goto-next-toot)
+        (if backward
+            (mastodon-tl--goto-prev-toot)
+          (mastodon-tl--goto-next-toot))
         (get-text-property (point) prop))))
 
 (defun mastodon-tl--newest-id ()
   "Return toot-id from the top of the buffer."
   (goto-char (point-min))
   (mastodon-tl--property 'toot-id))
+
+(defun mastodon-tl--oldest-id ()
+  "Return toot-id from the bottom of the buffer."
+  (progn
+    (goto-char (point-max))
+    (mastodon-tl--property 'toot-id t)))
 
 (defun mastodon-tl--thread ()
   "Open thread buffer for toot under `point'."
@@ -190,6 +213,18 @@ Return value from boosted content if available."
                               `(,toot)
                               (cdr (assoc 'descendants context)))))
     (mastodon-mode)))
+
+(defun mastodon-tl--more ()
+  "Append older toots to timeline."
+  (interactive)
+  (let* ((tl (mastodon-tl--timeline-name))
+         (id (mastodon-tl--oldest-id))
+         (json (mastodon-tl--more-json tl id)))
+    (when json
+      (with-current-buffer (current-buffer)
+        (let ((inhibit-read-only t))
+          (goto-char (point-max))
+          (mastodon-tl--timeline json))))))
 
 (defun mastodon-tl--update ()
   "Update timeline with new toots."
