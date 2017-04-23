@@ -17,7 +17,7 @@ Then, require it and go.
     (require 'mastodon)
 #+END_SRC
 
-*** use-package
+Or, with =use-package=:
 
 #+BEGIN_SRC emacs-lisp
   (use-package mastodon
@@ -25,13 +25,19 @@ Then, require it and go.
 #+END_SRC
 
 *** MELPA
+
 I'll make mastdon.el available on MELPA when I feel like it's reached a
 stable state.
 
+*** Emoji
+
+=mastodon-mode= will enable [[https://github.com/iqbalansari/emacs-emojify][Emojify]] if it is loaded in your Emacs environment, so
+there's no need to write your own hook anymore. =emojify-mode= is not required.
+
 *** Discover
 
-=mastodon-mode= will provide a context menu for its keybindings if =discover=
-is installed. It is not required.
+=mastodon-mode= will provide a context menu for its keybindings if [[https://github.com/mickeynp/discover.el][Discover]] is 
+installed. It is not required.
 
 ** Usage
 *** 2 Factor Auth
@@ -95,55 +101,15 @@ Opens a =*mastodon-home*= buffer in the major mode so you can see toots.
 =M-x mastodon-toot=
 
 Pops a new buffer/window with a =mastodon-toot= minor mode. Enter the
-contents of your toot here. =C-c C-c= sends the toot.
-=C-c C-k= cancels. Both actions kill the buffer and window.
+contents of your toot here. =C-c C-c= sends the toot. =C-c C-k= cancels. 
+Both actions kill the buffer and window.
 
 If you have not previously authenticated, you will be prompted for your
-account email and password. *NOTE*: Email and
-password are NOT stored by mastodon.el.
+account email and password. *NOTE*: Email and password are NOT stored by mastodon.el.
 
-Authentication stores your access token in the
-=mastodon--api-token-string= variable. It is not stored on your
-filesystem, so
-you will have to re-authenticate when you close/reopen Emacs.
-
-** Enabling Emojis
-By default no emojis will appear in any of the posts or user names. In order to enable emojis you can install the =emojify= package.
-
-Add [[http://melpa.org/#/emojify][MELPA]] to your list of package archives
-#+BEGIN_SRC elisp
-(require 'package)
-(add-to-list 'package-archives ("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)
-#+END_SRC
-
-Update the contents of your package archive and download =emojify=
-
-This only needs to be called once. i.e. you should not put it in your =.emacs= or =init.el= file.
-#+BEGIN_SRC elisp
-(package-refresh-contents)
-(package-install 'emojify)
-#+END_SRC
-
-If you would rather install =emojify= interactively you can do so by doing the following.
-
-Refresh the package index
-#+BEGIN_QUOTE
-M-x package-refresh-contents RET
-#+END_QUOTE
-
-And then install it by doing
-#+BEGIN_QUOTE
-M-x package-install RET emojify
-#+END_QUOTE
-
-Once installed you can define a hook for =mastodon-mode= that call  =emojify-mode=
-#+BEGIN_SRC elisp
-(require 'emojify)
-(defun my-mastodon-hook-function ()
-  (emojify-mode 't))
-(add-hook 'mastodon-mode-hook 'my-mastodon-hook-function)
-#+END_SRC
+Authentication stores your access token in the =mastodon--api-token-string= 
+variable. It is not stored on your filesystem, so you will have to 
+re-authenticate when you close/reopen Emacs.
 
 ** Roadmap
 
