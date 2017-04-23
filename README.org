@@ -1,5 +1,6 @@
 * mastodon.el 
 
+[[https://travis-ci.org/jdenen/mastodon.el][https://travis-ci.org/jdenen/mastodon.el.svg?branch=master]]
 [[http://waffle.io/jdenen/mastodon.el][https://badge.waffle.io/jdenen/mastodon.el.png?label=in%20progress&title=In%20Progress]]
 
 Emacs client for [[https://github.com/tootsuite/mastodon][Mastodon]]
@@ -34,9 +35,9 @@ is installed. It is not required.
 
 ** Usage
 *** 2 Factor Auth
-    2FA is not supported yet. It is in the [[https://github.com/jdenen/mastodon.el/milestone/2][plans]] for the `1.0.0` release.
+2FA is not supported yet. It is in the [[https://github.com/jdenen/mastodon.el/milestone/2][plans]] for the =1.0.0= release.
 
-    If you have 2FA enabled and try to use mastodon.el, your Emacs client will hang until you `C-g` your way out.
+If you have 2FA enabled and try to use mastodon.el, your Emacs client will hang until you `C-g` your way out.
 *** Instance
 
 Set =mastodon-instance-url= in your =.emacs= or =customize=. Defaults to the [[https://mastodon.social][flagship]].
