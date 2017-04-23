@@ -157,7 +157,7 @@ Return value from boosted content if available."
 ;; Look into the JSON returned here by Local
 (defun mastodon-tl--updated-json (timeline id)
   "Return JSON for TIMELINE since ID."
-  (let ((url (mastodon--api-for (concat "timelines/"
+  (let ((url (mastodon-http--api (concat "timelines/"
                                         timeline
                                         "?since_id="
                                         (number-to-string id)))))
@@ -179,7 +179,7 @@ Return value from boosted content if available."
   "Open thread buffer for toot under `point'."
   (interactive)
   (let* ((id (number-to-string (mastodon-tl--property 'toot-id)))
-         (url (mastodon--api-for (format "statuses/%s/context" id)))
+         (url (mastodon-http--api (format "statuses/%s/context" id)))
          (buffer (format "*mastodon-thread-%s*" id))
          (toot (mastodon-tl--property 'toot-json))
          (context (mastodon-http--get-json url)))
@@ -205,7 +205,7 @@ Return value from boosted content if available."
 
 (defun mastodon-tl--get (timeline)
   "Display TIMELINE in buffer."
-  (let* ((url (mastodon--api-for (concat "timelines/" timeline)))
+  (let* ((url (mastodon-http--api (concat "timelines/" timeline)))
          (buffer (concat "*mastodon-" timeline "*"))
          (json (mastodon-http--get-json url)))
     (with-output-to-temp-buffer buffer

@@ -34,7 +34,7 @@
   :prefix "mastodon-http-"
   :group 'mastodon)
 
-(defun mastodon--api-for (endpoint)
+(defun mastodon-http--api (endpoint)
   "Return Mastondon API URL for ENDPOINT."
   (concat mastodon-instance-url "/api/" mastodon--api-version "/" endpoint))
 

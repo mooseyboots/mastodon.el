@@ -41,7 +41,7 @@
 (defun mastodon-client--register ()
   "POST client to Mastodon."
   (mastodon-http--post
-   (mastodon--api-for "apps")
+   (mastodon-http--api "apps")
    '(("client_name" . "mastodon.el")
      ("redirect_uris" . "urn:ietf:wg:oauth:2.0:oob")
      ("scopes" . "read write follow")

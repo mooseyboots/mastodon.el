@@ -3,7 +3,7 @@
 (ert-deftest register ()
   "Should POST to /apps."
   (with-mock
-   (mock (mastodon--api-for "apps") => "https://instance.url/api/v1/apps")
+   (mock (mastodon-http--api "apps") => "https://instance.url/api/v1/apps")
    (mock (mastodon-http--post "https://instance.url/api/v1/apps"
                               '(("client_name" . "mastodon.el")
                                 ("redirect_uris" . "urn:ietf:wg:oauth:2.0:oob")
