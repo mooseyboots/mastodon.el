@@ -1,4 +1,4 @@
-;;; mastodon.el -- Mastodon client for Emacs
+;;; mastodon.el --- Mastodon client for Emacs
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
