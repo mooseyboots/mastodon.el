@@ -1,5 +1,4 @@
 (require 'el-mock)
-(load-file "../lisp/mastodon-client.el")
 
 (ert-deftest register ()
   "Should POST to /apps."

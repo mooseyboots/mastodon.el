@@ -1,9 +1,5 @@
 (require 'el-mock)
 
-(load-file "../lisp/mastodon.el")
-(load-file "../lisp/mastodon-http.el")
-(load-file "../lisp/mastodon-auth.el")
-
 (ert-deftest mastodon-auth:token-file ()
   "Should return `mastodon-token-file' value."
   (should (string= (mastodon-auth--token-file) "~/.emacs.d/mastodon.plstore")))

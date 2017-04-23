@@ -1,5 +1,4 @@
 (require 'el-mock)
-(load-file "../lisp/mastodon-tl.el")
 
 (ert-deftest mastodon-tl:from-toot ()
   "Should return the value for KEY in a list."

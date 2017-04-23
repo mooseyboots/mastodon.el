@@ -1,5 +1,4 @@
 (require 'el-mock)
-(load-file "../lisp/mastodon-toot.el")
 
 (ert-deftest mastodon-toot:cancel ()
   (with-mock
