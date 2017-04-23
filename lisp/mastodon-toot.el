@@ -46,7 +46,7 @@
 (defun mastodon-toot--action (action callback)
   "Take ACTION on toot at point, then execute CALLBACK."
   (let* ((id (mastodon-tl--property 'toot-id))
-         (url (mastodon--api-for (concat "statuses/"
+         (url (mastodon-http--api (concat "statuses/"
                                          (number-to-string id)
                                          "/"
                                          action))))
@@ -63,7 +63,7 @@
   "Kill new-toot buffer/window and POST contents to the Mastodon instance."
   (interactive)
   (let* ((toot (buffer-string))
-         (endpoint (mastodon--api-for "statuses"))
+         (endpoint (mastodon-http--api "statuses"))
          (args `(("status" . ,toot)
                  ("in_reply_to_id" . ,mastodon-toot--reply-to-id))))
     (progn
