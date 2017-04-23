@@ -5,5 +5,5 @@
   (let ((callback-double (lambda () "double")))
     (with-mock
       (mock (url-retrieve-synchronously "https://foo.bar/baz"))
-      (mock (mastodon--access-token) => "test-token")
+      (mock (mastodon-auth--access-token) => "test-token")
       (mastodon-http--get "https://foo.bar/baz"))))

@@ -10,7 +10,7 @@
     (stub mastodon--api-for => "https://instance/api/v/statuses")
     (stub buffer-string => "This is a test toot")
     (stub kill-buffer-and-window)
-    (stub mastodon--access-token => "access-token-string")
+    (stub mastodon-auth--access-token => "access-token-string")
     (mock (mastodon--http-post "https://instance/api/v/statuses"
                                'mastodon-toot--send-triage
                                '(("status" . "This is a test toot"))

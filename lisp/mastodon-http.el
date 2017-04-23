@@ -131,7 +131,7 @@ Authorization header is included by default."
                       args
                       "&")))
         (url-request-extra-headers
-         `(("Authorization" . ,(concat "Bearer " (mastodon--access-token)))
+         `(("Authorization" . ,(concat "Bearer " mastodon-auth--token))
            ,headers)))
     (with-temp-buffer
       (url-retrieve-synchronously url))))
@@ -143,7 +143,7 @@ Pass response buffer to CALLBACK function."
   (let ((url-request-method "GET")
         (url-request-extra-headers
          `(("Authorization" . ,(concat "Bearer "
-                                       (mastodon--access-token))))))
+                                       (mastodon-auth--access-token))))))
     (url-retrieve-synchronously url)))
 
 (defun mastodon-http--get-json (url)
