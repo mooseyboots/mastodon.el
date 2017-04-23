@@ -36,10 +36,10 @@
   :group 'mastodon)
 
 (defvar mastodon-auth--token nil
-  "")
+  "User access token.")
 
 (defun mastodon-auth--generate-token ()
-  ""
+  "Make POST to generate auth token."
   (mastodon-http--post
    (concat mastodon-instance-url "/oauth/token")
    `(("client_id" . ,(plist-get (mastodon-client) :client_id))
@@ -51,7 +51,7 @@
    nil))
 
 (defun mastodon-auth--get-token ()
-  ""
+  "Make auth token request and return JSON response."
   (with-current-buffer (mastodon-auth--generate-token)
     (goto-char (point-min))
     (re-search-forward "^$" nil 'move)
@@ -62,6 +62,9 @@
       (json-read-from-string json-string))))
 
 (defun mastodon-auth--access-token ()
+  "Return `mastodon-auth--token'.
+
+Generate token and set `mastodon-auth--token' if nil."
   (or mastodon-auth--token
       (progn
         (let* ((json (mastodon-auth--get-token))

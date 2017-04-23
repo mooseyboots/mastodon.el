@@ -1,7 +1,7 @@
 (require 'el-mock)
 
 (ert-deftest generate-token ()
-  ""
+  "Should make `mastdon-http--post' request to generate auth token."
   (with-mock
     (let ((mastodon-instance-url "https://instance.url"))
       (mock (mastodon-client) => '(:client_id "id" :client_secret "secret"))
@@ -18,7 +18,7 @@
       (mastodon-auth--generate-token))))
 
 (ert-deftest get-token ()
-  ""
+  "Should generate token and return JSON response."
   (with-temp-buffer
     (with-mock
       (mock (mastodon-auth--generate-token) => (progn
@@ -27,12 +27,12 @@
       (should (equal (mastodon-auth--get-token) '(:access_token "abcdefg"))))))
 
 (ert-deftest access-token-1 ()
-  ""
+  "Should return `mastodon-auth--token' if non-nil."
   (let ((mastodon-auth--token "foobar"))
     (should (string= (mastodon-auth--access-token) "foobar"))))
 
 (ert-deftest access-token-2 ()
-  ""
+  "Should set and return `mastodon-auth--token' if nil."
   (let ((mastodon-auth--token nil))
     (with-mock
       (mock (mastodon-auth--get-token) => '(:access_token "foobaz"))
