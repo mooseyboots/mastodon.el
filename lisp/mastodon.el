@@ -92,6 +92,11 @@
   (progn
     (mastodon--store-client-id-and-secret)))
 
+;;;###autoload
+(add-hook 'mastodon-mode-hook (lambda ()
+                                (when (require 'emojify nil :noerror)
+                                  (emojify-mode t))))
+
 (define-derived-mode mastodon-mode nil "Mastodon"
   "Major mode for Mastodon, the federated microblogging network."
   :group 'mastodon
