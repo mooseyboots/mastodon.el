@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.5.4
+;; Version: 0.5.5
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -98,11 +98,11 @@ Optionally start from POS."
 (defun mastodon-tl--byline-author (toot)
   "Propertize author of TOOT."
   (let* ((account (cdr (assoc 'account toot)))
-	 ;; It may not be necissary to decode the handle
+         ;; It may not be necissary to decode the handle
          (handle (decode-coding-string
-		  (cdr (assoc 'acct account))'utf-8))
-	 (name (decode-coding-string
-		(cdr (assoc 'display_name account)) 'utf-8)))
+                  (cdr (assoc 'acct account))'utf-8))
+         (name (decode-coding-string
+                (cdr (assoc 'display_name account)) 'utf-8)))
     (concat
      (propertize name 'face 'warning)
      " (@"
@@ -178,9 +178,9 @@ Return value from boosted content if available."
 (defun mastodon-tl--updated-json (timeline id)
   "Return JSON for TIMELINE since ID."
   (let ((url (mastodon-http--api (concat "timelines/"
-                                        timeline
-                                        "?since_id="
-                                        (number-to-string id)))))
+                                         timeline
+                                         "?since_id="
+                                         (number-to-string id)))))
     (mastodon-http--get-json url)))
 
 (defun mastodon-tl--property (prop &optional backward)
@@ -225,7 +225,7 @@ Move forward (down) the timeline unless BACKWARD is non-nil."
   "Append older toots to timeline."
   (interactive)
   (let* ((point-before (point))
-	 (tl (mastodon-tl--timeline-name))
+         (tl (mastodon-tl--timeline-name))
          (id (mastodon-tl--oldest-id))
          (json (mastodon-tl--more-json tl id)))
     (when json
@@ -233,8 +233,8 @@ Move forward (down) the timeline unless BACKWARD is non-nil."
         (let ((inhibit-read-only t))
           (goto-char (point-max))
           (mastodon-tl--timeline json)
-	  (goto-char point-before)
-	  (mastodon-tl--goto-next-toot))))))
+          (goto-char point-before)
+          (mastodon-tl--goto-next-toot))))))
 
 (defun mastodon-tl--update ()
   "Update timeline with new toots."
