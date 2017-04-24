@@ -83,9 +83,9 @@ Make `mastodon-client--fetch' call to determine client values."
       (delete "mastodon" mastodon))))
 
 (defun mastodon-client ()
-  "Return `mastodon-client' plist.
+  "Return variable `mastodon-client' plist.
 
-Read plist from `mastodon-token-file' if `mastodon-client' is nil.
+Read plist from `mastodon-token-file' if variable is nil.
 Fetch and store plist if `mastodon-client--read' returns nil."
   (or mastodon-client
       (setq mastodon-client

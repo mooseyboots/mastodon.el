@@ -60,6 +60,9 @@
       (match-string 0 status-line))))
 
 (defun mastodon-http--triage (response success)
+  "Determine if RESPONSE was successful. Call SUCCESS if successful.
+
+Open RESPONSE buffer if unsuccessful."
   (let ((status (with-current-buffer response
                   (mastodon-http--status))))
     (if (string-prefix-p "2" status)

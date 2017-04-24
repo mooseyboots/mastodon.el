@@ -90,6 +90,7 @@ Optionally start from POS."
                             (replace-regexp-in-string "mastodon-" "" (buffer-name))))
 
 (defun mastodon-tl--remove-html (toot)
+  "Remove unrendered tags from TOOT."
   (let* ((t1 (replace-regexp-in-string "<\/p>" "\n\n" toot))
          (t2 (replace-regexp-in-string "<\/?span>" "" t1)))
     (replace-regexp-in-string "<span class=\"h-card\">" "" t2)))
@@ -126,6 +127,7 @@ Return value from boosted content if available."
       (cdr (assoc field toot))))
 
 (defun mastodon-tl--byline (toot)
+  "Generate byline for TOOT."
   (let ((id (cdr (assoc 'id toot)))
         (faved (mastodon-tl--field 'favourited toot))
         (boosted (mastodon-tl--field 'reblogged toot)))
@@ -151,6 +153,7 @@ Return value from boosted content if available."
                 'face 'default)))
 
 (defun mastodon-tl--toot (toot)
+  "Display TOOT content and byline."
   (insert
    (concat
     (mastodon-tl--content toot)
@@ -158,6 +161,7 @@ Return value from boosted content if available."
     "\n\n")))
 
 (defun mastodon-tl--timeline (toots)
+  "Display each toot in TOOTS."
   (mapcar 'mastodon-tl--toot toots)
   (replace-regexp "\n\n\n | " "\n | " nil (point-min) (point-max)))
 
@@ -180,7 +184,9 @@ Return value from boosted content if available."
     (mastodon-http--get-json url)))
 
 (defun mastodon-tl--property (prop &optional backward)
-  "Get property PROP for toot at point."
+  "Get property PROP for toot at point.
+
+Move forward (down) the timeline unless BACKWARD is non-nil."
   (or (get-text-property (point) prop)
       (progn
         (if backward

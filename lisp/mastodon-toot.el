@@ -104,7 +104,7 @@
     (define-key map (kbd "C-c C-c") #'mastodon-toot--send)
     (define-key map (kbd "C-c C-k") #'mastodon-toot--cancel)
       map)
-  "Keymap for `mastodon-toot-mode'.")
+  "Keymap for `mastodon-toot'.")
 
 (define-minor-mode mastodon-toot-mode
   "Minor mode to capture Mastodon toots."
