@@ -29,6 +29,7 @@
 
 (require 'mastodon-http)
 (require 'mastodon-toot)
+(require 'mastodon-media)
 
 (defgroup mastodon-tl nil
   "Timelines in Mastodon."
@@ -198,7 +199,8 @@ also render the html"
 
 (defun mastodon-tl--timeline (toots)
   (mapcar 'mastodon-tl--toot toots)
-  (replace-regexp "\n\n\n | " "\n | " nil (point-min) (point-max)))
+  (replace-regexp "\n\n\n | " "\n | " nil (point-min) (point-max))
+  (mastodon-media--inline-images))
 
 (defun mastodon-tl--more-json (timeline id)
   "Return JSON for TIMELINE before ID."
