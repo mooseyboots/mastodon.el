@@ -143,7 +143,7 @@ Return value from boosted content if available."
 
 
 (defun mastodon-tl--set-face (string face render)
-  "Set the face of a string. If `render` is not 'nil
+  "Set the face of a string. If `render' is not 'nil
 also render the html"
   (propertize
    (with-temp-buffer
@@ -259,17 +259,14 @@ also render the html"
 (defun mastodon-tl--more ()
   "Append older toots to timeline."
   (interactive)
-  (let* ((point-before-update (point))
-	 (tl (mastodon-tl--timeline-name))
+  (let* ((tl (mastodon-tl--timeline-name))
          (id (mastodon-tl--oldest-id))
          (json (mastodon-tl--more-json tl id)))
     (when json
       (with-current-buffer (current-buffer)
         (let ((inhibit-read-only t))
           (goto-char (point-max))
-          (mastodon-tl--timeline json)
-	  (goto-char point-before-update)
-	  (mastodon-tl--goto-next-toot))))))
+	  (mastodon-tl--timeline json))))))
 
 (defun mastodon-tl--update ()
   "Update timeline with new toots."
