@@ -25,12 +25,16 @@
 
 ;; mastodon-media.el provides functions for inlining media.
 
+;; Known bug gnutls -12 when trying to access images on some systems.
+;; It looks like their may be a version mismatch between the encryption
+;; required by the server and client.
+
 ;;; Code:
 (require 'mastodon-http)
 
 (defun mastodon-media--image-from-url (url)
   "Takes a url and returns an image"
-  (let ((buffer (mastodon-http--get url)))
+  (let ((buffer (url-retrieve-synchronously url)))
     (unwind-protect
 	 (let ((data (with-current-buffer buffer
 		       (goto-char (point-min))

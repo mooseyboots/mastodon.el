@@ -146,7 +146,7 @@ Return value from boosted content if available."
 
 
 (defun mastodon-tl--set-face (string face render)
-  "Set the face of a string. If `render` is not 'nil
+  "Set the face of a string. If `render' is not 'nil
 also render the html"
   (propertize
    (with-temp-buffer
