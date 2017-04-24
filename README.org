@@ -52,19 +52,11 @@ Set =mastodon-instance-url= in your =.emacs= or =customize=. Defaults to the [[h
     (setq mastodon-instance-url "https://my.instance.url")
 #+END_SRC
 
-*** App registration
-
-=M-x mastodon-register=
-
-Retrieves =client_id= and =client_secret= tokens. They're stored in the =mastdon-token-file=.
-This value can be customized too, and defaults to
-=${EMACS_HOME_DIRECTORY}/mastodon.plstore=.
-
 *** Timelines
 
 =M-x mastodon=
 
-Opens a =*mastodon-home*= buffer in the major mode so you can see toots.
+Opens a =*mastodon-home*= buffer in the major mode so you can see toots. You will be prompted for email and password. The app registration process will take place if your =mastodon-token-file= does not contain =:client_id= and =:client_secret=.
 
 **** Keybindings
 
