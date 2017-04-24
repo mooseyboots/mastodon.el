@@ -217,7 +217,7 @@ Return value from boosted content if available."
 (defun mastodon-tl--more ()
   "Append older toots to timeline."
   (interactive)
-  (let* ((point-before-update (point))
+  (let* ((point-before (point))
 	 (tl (mastodon-tl--timeline-name))
          (id (mastodon-tl--oldest-id))
          (json (mastodon-tl--more-json tl id)))
@@ -226,7 +226,7 @@ Return value from boosted content if available."
         (let ((inhibit-read-only t))
           (goto-char (point-max))
           (mastodon-tl--timeline json)
-	  (goto-char point-before-update)
+	  (goto-char point-before)
 	  (mastodon-tl--goto-next-toot))))))
 
 (defun mastodon-tl--update ()
