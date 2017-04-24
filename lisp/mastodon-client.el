@@ -29,7 +29,7 @@
 ;;; Code:
 
 (require 'plstore)
-(require 'mastodon-http)
+(require 'mastodon-http nil t)
 
 (defgroup mastodon-client nil
   "Register your client with Mastodon."

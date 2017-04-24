@@ -29,7 +29,7 @@
 ;;; Code:
 
 (require 'plstore)
-(require 'mastodon-client)
+(require 'mastodon-client nil t)
 
 (defgroup mastodon-auth nil
   "Authenticate with Mastodon."

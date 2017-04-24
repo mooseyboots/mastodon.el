@@ -28,8 +28,8 @@
 
 ;;; Code:
 
-(require 'mastodon-http)
-(require 'mastodon-toot)
+(require 'mastodon-http nil t)
+(require 'mastodon-toot nil t)
 
 (defgroup mastodon-tl nil
   "Timelines in Mastodon."

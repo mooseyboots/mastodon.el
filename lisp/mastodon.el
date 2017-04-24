@@ -31,7 +31,7 @@
 
 ;;; Code:
 
-(require 'mastodon-auth)
+(require 'mastodon-auth nil t)
 
 (defgroup mastodon nil
   "Interface with Mastodon."
@@ -72,7 +72,7 @@
 (defun mastodon ()
   "Connect Mastodon client to `mastodon-instance-url' instance."
   (interactive)
-  (require 'mastodon-tl)
+  (require 'mastodon-tl nil t)
   (mastodon-tl--get "home"))
 
 ;;;###autoload
@@ -82,7 +82,7 @@
 If USER is non-nil, insert after @ symbol to begin new toot.
 If REPLY-TO-ID is non-nil, attach new toot to a conversation."
   (interactive)
-  (require 'mastodon-toot)
+  (require 'mastodon-toot nil t)
   (progn
     (switch-to-buffer-other-window (get-buffer-create "*new toot*"))
     (when user

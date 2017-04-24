@@ -28,7 +28,7 @@
 
 ;;; Code:
 
-(require 'mastodon-auth)
+(require 'mastodon-auth nil t)
 
 (defgroup mastodon-toot nil
   "Capture Mastodon toots."
