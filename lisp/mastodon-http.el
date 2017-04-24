@@ -2,6 +2,8 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
+;; Version: 0.5.1
+;; Package-Requires: ((emacs "24.4"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -50,7 +52,7 @@
       (string-match pattern resp)
       (match-string 0 resp))))
 
-(defun mastdon-http--status ()
+(defun mastodon-http--status ()
   "Return HTTP Response Status Code from `mastodon-http--response'."
   (let* ((status-line (mastodon-http--response-body "^HTTP/1.*$")))
     (progn
@@ -59,7 +61,7 @@
 
 (defun mastodon-http--triage (response success)
   (let ((status (with-current-buffer response
-                  (mastdon-http--status))))
+                  (mastodon-http--status))))
     (if (string-prefix-p "2" status)
         (funcall success)
       (switch-to-buffer response))))

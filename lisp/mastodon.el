@@ -1,8 +1,9 @@
-;;; mastodon.el --- Mastodon client for Emacs
+;;; mastodon.el --- Client for Mastodon
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
 ;; Version: 0.5.1
+;; Package-Requires: ((emacs "24.4"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.
