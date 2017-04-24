@@ -26,17 +26,18 @@
 ;; mastodon-media.el provides functions for inlining media.
 
 ;;; Code:
+(require 'mastodon-http)
 
 (defun mastodon-media--image-from-url (url)
   "Takes a url and returns an image"
-  (let ((buffer (url-retrieve-synchronously url)))
+  (let ((buffer (mastodon-http--get url)))
     (unwind-protect
-         (let ((data (with-current-buffer buffer
-                       (goto-char (point-min))
-                       (search-forward "\n\n")
-                       (buffer-substring (point) (point-max)))))
+	 (let ((data (with-current-buffer buffer
+		       (goto-char (point-min))
+		       (search-forward "\n\n")
+		       (buffer-substring (point) (point-max)))))
 	   (insert "\n")
-           (insert-image (create-image data nil t)))
+	   (insert-image (create-image data nil t)))
       (kill-buffer buffer))))
 
 (defun mastodon-media--select-media-line(start)
@@ -53,12 +54,11 @@ contains `Media_Links::'"
   (mastodon-media--select-media-line 1))
 
 (defun mastodon-media--check-missing(link)
-  "Checks to make sure that the missing string has 
+  "Checks to make sure that the missing string has
 
 not been returned."
   (let((missing "/files/small/missing.png"))
-    (not(equal link missing)))
-  t)
+    (not(equal link missing))))
 
 (defun mastodon-media--select-next-media-line()
   (mastodon-media--select-media-line '()))
