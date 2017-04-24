@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
+;; Version: 0.5.5
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -28,7 +29,7 @@
 ;;; Code:
 
 (require 'plstore)
-(require 'mastodon-client)
+(require 'mastodon-client nil t)
 
 (defgroup mastodon-auth nil
   "Authenticate with Mastodon."

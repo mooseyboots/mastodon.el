@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
+;; Version: 0.5.5
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -27,9 +28,10 @@
 
 ;;; Code:
 
-(require 'mastodon-http)
-(require 'mastodon-toot)
-(require 'mastodon-media)
+(require 'mastodon-http nil t)
+(require 'mastodon-toot nil t)
+(require 'mastodon-media nil t)
+
 
 (defgroup mastodon-tl nil
   "Timelines in Mastodon."
@@ -90,6 +92,7 @@ Optionally start from POS."
                             (replace-regexp-in-string "mastodon-" "" (buffer-name))))
 
 (defun mastodon-tl--remove-html (toot)
+  "Remove unrendered tags from TOOT."
   (let* ((t1 (replace-regexp-in-string "<\/p>" "\n\n" toot))
          (t2 (replace-regexp-in-string "<\/?span>" "" t1)))
     (replace-regexp-in-string "<span class=\"h-card\">" "" t2)))
@@ -97,11 +100,11 @@ Optionally start from POS."
 (defun mastodon-tl--byline-author (toot)
   "Propertize author of TOOT."
   (let* ((account (cdr (assoc 'account toot)))
-	 ;; It may not be necissary to decode the handle
+         ;; It may not be necissary to decode the handle
          (handle (decode-coding-string
-		  (cdr (assoc 'acct account))'utf-8))
-	 (name (decode-coding-string
-		(cdr (assoc 'display_name account)) 'utf-8)))
+                  (cdr (assoc 'acct account))'utf-8))
+         (name (decode-coding-string
+                (cdr (assoc 'display_name account)) 'utf-8)))
     (concat
      (propertize name 'face 'warning)
      " (@"
@@ -126,6 +129,7 @@ Return value from boosted content if available."
       (cdr (assoc field toot))))
 
 (defun mastodon-tl--byline (toot)
+  "Generate byline for TOOT."
   (let ((id (cdr (assoc 'id toot)))
         (faved (mastodon-tl--field 'favourited toot))
         (boosted (mastodon-tl--field 'reblogged toot)))
@@ -189,6 +193,7 @@ also render the html"
                 'face 'default)))
 
 (defun mastodon-tl--toot (toot)
+  "Display TOOT content and byline."
   (insert
    (concat
     (mastodon-tl--spoiler toot)
@@ -198,6 +203,7 @@ also render the html"
     "\n\n")))
 
 (defun mastodon-tl--timeline (toots)
+  "Display each toot in TOOTS."
   (mapcar 'mastodon-tl--toot toots)
   (replace-regexp "\n\n\n | " "\n | " nil (point-min) (point-max))
   (mastodon-media--inline-images))
@@ -215,13 +221,15 @@ also render the html"
 (defun mastodon-tl--updated-json (timeline id)
   "Return JSON for TIMELINE since ID."
   (let ((url (mastodon-http--api (concat "timelines/"
-                                        timeline
-                                        "?since_id="
-                                        (number-to-string id)))))
+                                         timeline
+                                         "?since_id="
+                                         (number-to-string id)))))
     (mastodon-http--get-json url)))
 
 (defun mastodon-tl--property (prop &optional backward)
-  "Get property PROP for toot at point."
+  "Get property PROP for toot at point.
+
+Move forward (down) the timeline unless BACKWARD is non-nil."
   (or (get-text-property (point) prop)
       (progn
         (if backward
@@ -259,14 +267,17 @@ also render the html"
 (defun mastodon-tl--more ()
   "Append older toots to timeline."
   (interactive)
-  (let* ((tl (mastodon-tl--timeline-name))
+  (let* ((point-before (point))
+         (tl (mastodon-tl--timeline-name))
          (id (mastodon-tl--oldest-id))
          (json (mastodon-tl--more-json tl id)))
     (when json
       (with-current-buffer (current-buffer)
         (let ((inhibit-read-only t))
           (goto-char (point-max))
-	  (mastodon-tl--timeline json))))))
+          (mastodon-tl--timeline json)
+          (goto-char point-before)
+          (mastodon-tl--goto-next-toot))))))
 
 (defun mastodon-tl--update ()
   "Update timeline with new toots."

@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
+;; Version: 0.5.5
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -27,7 +28,7 @@
 
 ;;; Code:
 
-(require 'mastodon-auth)
+(require 'mastodon-auth nil t)
 
 (defgroup mastodon-toot nil
   "Capture Mastodon toots."
@@ -103,7 +104,7 @@
     (define-key map (kbd "C-c C-c") #'mastodon-toot--send)
     (define-key map (kbd "C-c C-k") #'mastodon-toot--cancel)
       map)
-  "Keymap for `mastodon-toot-mode'.")
+  "Keymap for `mastodon-toot'.")
 
 (define-minor-mode mastodon-toot-mode
   "Minor mode to capture Mastodon toots."

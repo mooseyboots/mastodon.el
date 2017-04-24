@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
+;; Version: 0.5.5
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -28,7 +29,7 @@
 ;;; Code:
 
 (require 'plstore)
-(require 'mastodon-http)
+(require 'mastodon-http nil t)
 
 (defgroup mastodon-client nil
   "Register your client with Mastodon."
@@ -82,9 +83,9 @@ Make `mastodon-client--fetch' call to determine client values."
       (delete "mastodon" mastodon))))
 
 (defun mastodon-client ()
-  "Return `mastodon-client' plist.
+  "Return variable `mastodon-client' plist.
 
-Read plist from `mastodon-token-file' if `mastodon-client' is nil.
+Read plist from `mastodon-token-file' if variable is nil.
 Fetch and store plist if `mastodon-client--read' returns nil."
   (or mastodon-client
       (setq mastodon-client

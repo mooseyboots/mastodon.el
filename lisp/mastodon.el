@@ -1,8 +1,9 @@
-;;; mastodon.el --- Mastodon client for Emacs
+;;; mastodon.el --- Client for Mastodon
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.5.1
+;; Version: 0.5.5
+;; Package-Requires: ((emacs "24.4"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -30,14 +31,14 @@
 
 ;;; Code:
 
-(require 'mastodon-auth)
+(require 'mastodon-auth nil t)
 
 (defgroup mastodon nil
   "Interface with Mastodon."
   :prefix "mastodon-"
   :group 'external)
 
-(defconst mastodon-version "0.5.1"
+(defconst mastodon-version "0.5.5"
   "Current `mastodon' package version.")
 
 (defcustom mastodon-instance-url "https://mastodon.social"
@@ -69,15 +70,19 @@
 
 ;;;###autoload
 (defun mastodon ()
+  "Connect Mastodon client to `mastodon-instance-url' instance."
   (interactive)
-  (require 'mastodon-tl)
+  (require 'mastodon-tl nil t)
   (mastodon-tl--get "home"))
 
 ;;;###autoload
 (defun mastodon-toot (&optional user reply-to-id)
-  "Update a Mastodon instance with new toot. Content is captured in a new buffer."
+  "Update instance with new toot. Content is captured in a new buffer.
+
+If USER is non-nil, insert after @ symbol to begin new toot.
+If REPLY-TO-ID is non-nil, attach new toot to a conversation."
   (interactive)
-  (require 'mastodon-toot)
+  (require 'mastodon-toot nil t)
   (progn
     (switch-to-buffer-other-window (get-buffer-create "*new toot*"))
     (when user
