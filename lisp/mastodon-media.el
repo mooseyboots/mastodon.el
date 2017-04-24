@@ -57,7 +57,8 @@ contains `Media_Links::'"
 
 not been returned."
   (let((missing "/files/small/missing.png"))
-    (not(equal link missing))))
+    (not(equal link missing)))
+  t)
 
 (defun mastodon-media--select-next-media-line()
   (mastodon-media--select-media-line '()))
@@ -75,14 +76,14 @@ just a url"
   "Deletes the current media line"
   (delete-region (car line) (cadr line)))
 
-(defun mastodon-media--inline-images-aux ( not-first)
+(defun mastodon-media--inline-images-aux (first)
   "Recursivly goes through all of the `Media_Links:' in the buffer"
-  (let* ((line (mastodon-media--select-media-line (not not-first)))
+  (let* ((line (mastodon-media--select-media-line first))
 	(link (mastodon-media--line-to-link line)))
     (when (mastodon-media--check-missing link)
       (progn (mastodon-media--image-from-url link)
 	     (mastodon-media--delete-line line))))
-  (mastodon-inline-images-aux 1))
+  (mastodon-media--inline-images-aux '()))
 
 (defun mastodon-media--inline-images()
   "A wrapper for the `mastodon-media--inline-images-aux' that catches
@@ -90,7 +91,7 @@ just a url"
 errors thrown by reaching the end of the buffer"
   (interactive)
   (condition-case nil
-      (progn (mastodon-media--inline-images-aux '()) t)
+      (progn (mastodon-media--inline-images-aux t))
   (error nil)))
 
 (provide 'mastodon-media)
