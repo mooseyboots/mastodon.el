@@ -91,13 +91,6 @@ If REPLY-TO-ID is non-nil, attach new toot to a conversation."
     (mastodon-toot-mode t)))
 
 ;;;###autoload
-(defun mastodon-register ()
-  "Registers mastodon.el with the Mastodon instance."
-  (interactive)
-  (progn
-    (mastodon--store-client-id-and-secret)))
-
-;;;###autoload
 (add-hook 'mastodon-mode-hook (lambda ()
                                 (when (require 'emojify nil :noerror)
                                   (emojify-mode t))))
