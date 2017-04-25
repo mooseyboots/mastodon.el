@@ -1,4 +1,4 @@
-;;; mastodon-tl.el --- HTTP request/response functions for mastodon.el
+;;; mastodon-media.el --- Functions for inlining Mastodon media
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
@@ -32,8 +32,13 @@
 ;;; Code:
 (require 'mastodon-http)
 
+(defgroup mastodon-media nil
+  "Inline Mastadon media"
+  :prefix "mastodon-media-"
+  :group 'mastodon)
+
 (defun mastodon-media--image-from-url (url)
-  "Takes a url and returns an image"
+  "Takes a URL and return an image."
   (let ((buffer (url-retrieve-synchronously url)))
     (unwind-protect
 	 (let ((data (with-current-buffer buffer
@@ -44,55 +49,51 @@
 	   (insert-image (create-image data nil t)))
       (kill-buffer buffer))))
 
-(defun mastodon-media--select-media-line(start)
+(defun mastodon-media--select-media-line (start)
   "Returns the list of line coordinates of a line that
 
-contains `Media_Links::'"
+contains `Media_Links::'."
   (when start (goto-char (point-min)))
   (search-forward-regexp "Media_Link::" nil nil nil)
   (let ((start (progn (move-beginning-of-line '()) (point)))
 	(end (progn (move-end-of-line '()) (point))))
     (list start end)))
 
-(defun mastodon-media--select-first-media-line()
-  (mastodon-media--select-media-line 1))
-
-(defun mastodon-media--check-missing(link)
+(defun mastodon-media--valid-link-p (link)
   "Checks to make sure that the missing string has
 
 not been returned."
   (let((missing "/files/small/missing.png"))
     (not(equal link missing))))
 
-(defun mastodon-media--select-next-media-line()
-  (mastodon-media--select-media-line '()))
-
-(defun mastodon-media--line-to-link(line)
+(defun mastodon-media--line-to-link (line)
     "Removes the identifier from the media line leaving
 
-just a url"
+just a url."
   (replace-regexp-in-string "Media_Link:: " ""
 			    (buffer-substring
 			     (car line)
 			     (cadr line))))
 
-(defun mastodon-media--delete-line(line)
+(defun mastodon-media--delete-line (line)
   "Deletes the current media line"
   (delete-region (car line) (cadr line)))
 
 (defun mastodon-media--inline-images-aux (first)
-  "Recursivly goes through all of the `Media_Links:' in the buffer"
+  "Recursivly go through all of the `Media_Links:' in the buffer.
+
+Argument FIRST a boolean if t set the point to (point-min) before proceding."
   (let* ((line (mastodon-media--select-media-line first))
 	(link (mastodon-media--line-to-link line)))
-    (when (mastodon-media--check-missing link)
+    (when (mastodon-media--valid-link-p link)
       (progn (mastodon-media--image-from-url link)
 	     (mastodon-media--delete-line line))))
   (mastodon-media--inline-images-aux '()))
 
-(defun mastodon-media--inline-images()
+(defun mastodon-media--inline-images ()
   "A wrapper for the `mastodon-media--inline-images-aux' that catches
 
-errors thrown by reaching the end of the buffer"
+errors thrown by reaching the end of the buffer."
   (interactive)
   (condition-case nil
       (progn (mastodon-media--inline-images-aux t))
