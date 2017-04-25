@@ -116,6 +116,16 @@ Authentication stores your access token in the =mastodon-auth--token=
 variable. It is not stored on your filesystem, so you will have to 
 re-authenticate when you close/reopen Emacs.
 
+**** Keybindings
+
+|-----------+---------------------|
+| Key       | Action              |
+|-----------+---------------------|
+| =C-c C-c= | Send toot           |
+| =C-c C-k= | Cancel toot         |
+| =C-c C-w= | Add content warning |
+|-----------+---------------------|
+
 ** Roadmap
 
 [[https://github.com/jdenen/mastodon.el/milestone/1][Here]] are the features I plan to implement before putting mastodon.el on MELPA.
