@@ -103,9 +103,9 @@
     (message (format "Favourited #%s" id))))
 
 (defun mastodon-toot--unfavourite ()
-  "Favourite toot at `point'."
+  "Unfavourite toot at `point'."
   (interactive)
-  (let ((callback (lambda () ( mastodon-toot--action-success-undo "F")))
+  (let ((callback (lambda () (mastodon-toot--action-success-undo "F")))
         (id (mastodon-tl--property 'toot-id)))
     (mastodon-toot--action "unfavourite" callback)
     (message (format "unfavourited #%s" id))))
