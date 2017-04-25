@@ -28,9 +28,14 @@
 
 ;;; Code:
 
+<<<<<<< HEAD
 (require 'mastodon-http)
 (require 'mastodon-toot)
 (require 'mastodon-media)
+=======
+(require 'mastodon-http nil t)
+(require 'mastodon-toot nil t)
+>>>>>>> 3cb5a6a9be2811b63a254d1c00b7ba30460d7629
 
 (defgroup mastodon-tl nil
   "Timelines in Mastodon."
@@ -171,9 +176,9 @@ also render the html"
 
 
 (defun mastodon-tl--media (toot)
-  "Retreive a media attachment link if one exists."
+  "Retreive a media attachment link if one exits"
   (let ((media (mastodon-tl--field 'media_attachments toot)))
-    (if (> (length media) 0 )
+    (if(> (length media) 0 )
 	;; Extract the preview_url, other options here
 	;; are url and remote_url
 	(let ((link (cdr(assoc 'preview_url (elt media 0)))))
@@ -274,9 +279,13 @@ Move forward (down) the timeline unless BACKWARD is non-nil."
       (with-current-buffer (current-buffer)
         (let ((inhibit-read-only t))
           (goto-char (point-max))
+<<<<<<< HEAD
+	  (mastodon-tl--timeline json))))))
+=======
           (mastodon-tl--timeline json)
           (goto-char point-before)
           (mastodon-tl--goto-next-toot))))))
+>>>>>>> 3cb5a6a9be2811b63a254d1c00b7ba30460d7629
 
 (defun mastodon-tl--update ()
   "Update timeline with new toots."
