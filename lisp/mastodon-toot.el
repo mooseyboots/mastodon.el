@@ -62,15 +62,16 @@ Remove MARKER if RM is non-nil."
     (let ((response (mastodon-http--post url nil nil)))
       (mastodon-http--triage response callback))))
 
-(defun mastodon-toot--toggle-favourite (faved)
+(defun mastodon-toot--toggle-favourite ()
   "Favourite/unfavourite toot based on current state.
 
 If FAVED is nil, favourite the toot.
 If FAVED is non-nil, unfavourite the toot."
   (interactive)
-  (let ((action (if faved "unfavourite" "favourite"))
-        (remove (when faved t))
-        (id (mastodon-tl--property 'toot-id)))
+  (let* ((id (mastodon-tl--property 'toot-id))
+         (faved (get-text-property (point) 'favourite-p))
+         (action (if faved "unfavourite" "favourite"))
+         (remove (when faved t)))
     (mastodon-toot--action action (lambda () (mastodon-toot--action-success "F" remove)))
     (message (format "%sd #%s" action id))))
 
