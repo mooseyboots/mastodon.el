@@ -103,6 +103,7 @@ If REPLY-TO-ID is non-nil, attach new toot to a conversation."
     (define-key map (kbd "f") #'mastodon-toot--favourite)
     (define-key map (kbd "F") #'mastodon-tl--get-federated-timeline)
     (define-key map (kbd "H") #'mastodon-tl--get-home-timeline)
+    (define-key map (kbd "U") #'mastodon-profiles--get-next-author)
     (define-key map (kbd "j") #'mastodon-tl--goto-next-toot)
     (define-key map (kbd "k") #'mastodon-tl--goto-prev-toot)
     (define-key map (kbd "L") #'mastodon-tl--get-local-timeline)
@@ -136,7 +137,8 @@ If REPLY-TO-ID is non-nil, attach new toot to a conversation."
                        ("F" "Federated" mastodon-tl--get-federated-timeline)
                        ("H" "Home" mastodon-tl--get-home-timeline)
                        ("L" "Local" mastodon-tl--get-local-timeline)
-                       ("T" "Tag" mastodon-tl--get-tag-timeline))
+                       ("T" "Tag" mastodon-tl--get-tag-timeline)
+                       ("U" "User" mastodon-profiles--get-next-author))
                       ("Quit"
                        ("q" "Quit mastodon buffer. Leave window open." kill-this-buffer)
                        ("Q" "Quit mastodon buffer and kill window." kill-buffer-and-window)))))))
