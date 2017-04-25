@@ -1,4 +1,4 @@
-;;; mastodon-tl.el --- HTTP request/response functions for mastodon.el
+;;; mastodon-notifications.el --- Notification functions for mastodon.el
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
@@ -40,13 +40,13 @@
 ;;   "can work for both oldert toots and newest toots"
 ;;   (interactive)
 ;;   (let* ((tl (mastodon-tl--timeline-name))
-;;	 (id (funcall id-fun))
-;;	 (json (funcall more-function tl id)))
+;;       (id (funcall id-fun))
+;;       (json (funcall more-function tl id)))
 ;;     (when json
 ;;       (with-current-buffer (current-buffer)
-;;	(let ((inhibit-read-only t))
-;;	  (goto-char (funcall goto-fun))
-;;	  (funcall processing-function json))))))
+;;      (let ((inhibit-read-only t))
+;;        (goto-char (funcall goto-fun))
+;;        (funcall processing-function json))))))
 ;;
 ;; ;; Equivelent to the mastodon-tl--more
 ;; (mastodon-tl--get-more 'mastodon-tl--more-json 'mastodon-tl--oldest-id
@@ -63,12 +63,17 @@
 (require 'mastodon-http)
 (require 'mastodon-tl)
 
+(defgroup mastodon-notifications nil
+  "Mastodon Notifications."
+  :prefix "mastodon-notifications-"
+  :group 'mastodon)
+
 (defvar mastodon-notifications--types
   '("mention" "follow" "favourite" "reblog" )
-  "A list of notification types that have been implemented")
+  "A list of notification types that have been implemented.")
 
 (defun mastodon-notifications--byline-concat (toot message)
-  "Add byline for message type from TOOT."
+  "Add byline for TOOT with MESSAGE."
       (concat
        " "
        (propertize message 'face 'highlight)
@@ -76,32 +81,32 @@
        "You!"))
 
 (defun mastodon-notifications--byline (toot message)
-  "Generate byline for notification."
+  "Generate byline from TOOT based on MESSAGE for notification."
   (let ((id (cdr (assoc 'id toot)))
-	(faved (mastodon-tl--field 'favourited toot))
-	(boosted (mastodon-tl--field 'reblogged toot)))
+        (faved (mastodon-tl--field 'favourited toot))
+        (boosted (mastodon-tl--field 'reblogged toot)))
     (propertize
      (concat (propertize "\n | " 'face 'default)
-	     (when boosted
-	       (format "(%s) " (propertize "B" 'face 'success)))
-	     (when faved
-	       (format "(%s) " (propertize "F" 'face 'success)))
-	     (mastodon-tl--byline-author toot)
-	     (mastodon-notifications--byline-concat toot message)
-	     (propertize "\n  ------------" 'face 'default))
+             (when boosted
+               (format "(%s) " (propertize "B" 'face 'success)))
+             (when faved
+               (format "(%s) " (propertize "F" 'face 'success)))
+             (mastodon-tl--byline-author toot)
+             (mastodon-notifications--byline-concat toot message)
+             (propertize "\n  ------------" 'face 'default))
      'toot-id id
      'toot-json toot)))
 
-(defun mastodon-notifications--mention(note)
-  "Format for a `mention' notification"
+(defun mastodon-notifications--mention (note)
+  "Format for a `mention' NOTE."
   (let ((toot (mastodon-tl--field 'status note)))
     (insert
      (concat (mastodon-tl--content toot)
-	     (mastodon-notifications--byline toot "Mentioned")
-	     "\n\n"))))
+             (mastodon-notifications--byline toot "Mentioned")
+             "\n\n"))))
 
-(defun mastodon-notifications--follow(note)
-  "Format for a `follow' notification"
+(defun mastodon-notifications--follow (note)
+  "Format for a `follow' NOTE."
   (let ((toot (mastodon-tl--field 'status note)))
   (insert
    (concat
@@ -111,51 +116,53 @@
 
 
 (defun mastodon-notifications--favorite(note)
-  "Format for a `favorite' notification"
+  "Format for a `favorite' NOTE."
   (let ((toot (mastodon-tl--field 'status note)))
     (insert
      (concat (mastodon-tl--content toot)
-	     (mastodon-notifications--byline note "Favorited")
-	     "\n\n"))))
+             (mastodon-notifications--byline note "Favorited")
+             "\n\n"))))
 
-(defun mastodon-notifications--reblog(note)
-  "Format for a `boost' notification"
+(defun mastodon-notifications--reblog (note)
+  "Format for a `boost' NOTE."
   (let ((toot (mastodon-tl--field 'status note)))
     (insert
      (concat (mastodon-tl--content toot)
-	     (mastodon-notifications--byline note "Boosted")
-	     "\n\n"))))
+             (mastodon-notifications--byline note "Boosted")
+             "\n\n"))))
 
 (defun mastodon-notifications--caller (type note)
-  "Calls the apprpriate function bassed on notification type."
+  "Call the apprpriate function bassed on notification TYPE.
+
+It then processes NOTE."
   (cond ((equal type "mention") (mastodon-notifications--mention note))
-	((equal type "follow") (mastodon-notifications--follow note))
-	((equal type "favourite") (mastodon-notifications--favorite note))
-	((equal type "reblog") (mastodon-notifications--reblog note))))
+        ((equal type "follow") (mastodon-notifications--follow note))
+        ((equal type "favourite") (mastodon-notifications--favorite note))
+        ((equal type "reblog") (mastodon-notifications--reblog note))))
 
 (defun mastodon-notifications--note (note)
-  "Filters the notifications for those that are listed in
+  "Filters NOTE for those listed in `mastodon-notifications--types'.
 
-`mastodon-notifications--types'. It then passes the results to the `caller'"
+  It then passes the results to the `caller'"
   (let ((type (mastodon-tl--field 'type note)))
     (when (member type mastodon-notifications--types)
       (mastodon-notifications--caller type note))))
 
 (defun mastodon-notifications--notifications (json)
-  "Format json in emacs buffer."
+  "Format JSON in Emacs buffer."
   (mapcar #'mastodon-notifications--note json)
   (replace-regexp "\n\n\n | " "\n | " nil (point-min) (point-max)))
 
-(defun mastodon-notifications--get()
+(defun mastodon-notifications--get ()
   "Display NOTIFICATIONS in buffer."
   (interactive)
   (let* ((url (mastodon-http--api "notifications"))
-	 (buffer "*mastodon-notifications*")
-	 (json (mastodon-http--get-json url)))
+         (buffer "*mastodon-notifications*")
+         (json (mastodon-http--get-json url)))
     (with-output-to-temp-buffer buffer
       (switch-to-buffer buffer)
       (mastodon-notifications--notifications json))
     (mastodon-mode)))
 
-(provide 'mastodon-tl)
-;;; mastodon-tl.el ends here
+(provide 'mastodon-notifications)
+;;; mastodon-notifications.el ends here
