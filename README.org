@@ -1,5 +1,7 @@
 * mastodon.el 
 
+[[https://melpa.org/#/mastodon][file:https://melpa.org/packages/mastodon-badge.svg]]
+
 [[https://travis-ci.org/jdenen/mastodon.el][https://travis-ci.org/jdenen/mastodon.el.svg?branch=master]]
 [[http://waffle.io/jdenen/mastodon.el][https://badge.waffle.io/jdenen/mastodon.el.png?label=in%20progress&title=In%20Progress]]
 
@@ -26,8 +28,19 @@ Or, with =use-package=:
 
 *** MELPA
 
-I'll make mastdon.el available on MELPA when I feel like it's reached a
-stable state.
+Add =MELPA= to your archives:
+
+#+BEGIN_SRC emacs-lisp
+  (require 'package)
+  (add-to-list 'package-archives
+               '("melpa" . "http://melpa.org/packages/") t)
+#+END_SRC
+
+Update and install:
+
+=M-x package-refresh-contents RET=
+
+=M-x package-install RET mastodon RET=
 
 *** Emoji
 
