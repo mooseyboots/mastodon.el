@@ -56,7 +56,7 @@
       (mastodon-http--triage response callback))))
 
 (defun mastodon-toot--kill ()
-  "Kill `toot-mode' buffer and window.
+  "Kill `mastodon-toot-mode' buffer and window.
 
 Set `mastodon-toot--reply-to-id' to nil.
 Set `mastodon-toot--content-warning' to nil."
