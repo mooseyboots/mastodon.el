@@ -38,24 +38,19 @@
 (defvar mastodon-toot--reply-to-id nil)
 (defvar mastodon-toot--content-warning nil)
 
-(defun mastodon-toot--action-success (marker)
-  "Insert MARKER with 'success face in byline."
-  (let ((inhibit-read-only t))
+(defun mastodon-toot--action-success (marker &optional rm)
+  "Insert MARKER with 'success face in byline.
+
+Remove MARKER if RM is non-nil."
+  (let ((inhibit-read-only t)
+        (bol (progn (move-beginning-of-line '()) (point)))
+        (eol (progn (move-end-of-line '()) (point))))
+    (when rm (replace-regexp (format "(%s) " marker) "" '() bol eol))
     (move-beginning-of-line '())
     (mastodon-tl--goto-next-toot)
-    (insert (format "(%s) "
-                    (propertize marker 'face 'success)))))
-
-(defun mastodon-toot--action-success-undo (marker)
-  "Remove MARKER from byline."
-  (let ((inhibit-read-only t)
-        (start (progn (move-beginning-of-line '())
-                      (point)))
-        (end (progn (move-end-of-line '())
-                    (point))))
-    (replace-regexp (format "(%s) " marker) "" '() start end)
-    (move-beginning-of-line '())
-    (mastodon-tl--goto-next-toot)))
+    (unless rm
+      (insert (format "(%s) "
+                      (propertize marker 'face 'success))))))
 
 (defun mastodon-toot--action (action callback)
   "Take ACTION on toot at point, then execute CALLBACK."
@@ -66,6 +61,18 @@
                                          action))))
     (let ((response (mastodon-http--post url nil nil)))
       (mastodon-http--triage response callback))))
+
+(defun mastodon-toot--toggle-favourite (faved)
+  "Favourite/unfavourite toot based on current state.
+
+If FAVED is nil, favourite the toot.
+If FAVED is non-nil, unfavourite the toot."
+  (interactive)
+  (let ((action (if faved "unfavourite" "favourite"))
+        (remove (when faved t))
+        (id (mastodon-tl--property 'toot-id)))
+    (mastodon-toot--action action (lambda () (mastodon-toot--action-success "F" remove)))
+    (message (format "%sd #%s" action id))))
 
 (defun mastodon-toot--kill ()
   "Kill `mastodon-toot-mode' buffer and window.
@@ -106,22 +113,6 @@ Set `mastodon-toot--content-warning' to nil."
         (id (mastodon-tl--property 'toot-id)))
     (mastodon-toot--action "reblog" callback)
     (message (format "Boosted #%s" id))))
-
-(defun mastodon-toot--favourite ()
-  "Favourite toot at `point'."
-  (interactive)
-  (let ((callback (lambda () (mastodon-toot--action-success "F")))
-        (id (mastodon-tl--property 'toot-id)))
-    (mastodon-toot--action "favourite" callback)
-    (message (format "Favourited #%s" id))))
-
-(defun mastodon-toot--unfavourite ()
-  "Unfavourite toot at `point'."
-  (interactive)
-  (let ((callback (lambda () (mastodon-toot--action-success-undo "F")))
-        (id (mastodon-tl--property 'toot-id)))
-    (mastodon-toot--action "unfavourite" callback)
-    (message (format "unfavourited #%s" id))))
 
 (defun mastodon-toot--reply ()
   "Reply to toot at `point'."
