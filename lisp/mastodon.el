@@ -100,7 +100,7 @@ If REPLY-TO-ID is non-nil, attach new toot to a conversation."
   :group 'mastodon
   (let ((map mastodon-mode-map))
     (define-key map (kbd "b") #'mastodon-toot--boost)
-    (define-key map (kbd "f") #'mastodon-toot--favourite)
+    (define-key map (kbd "f") #'mastodon-toot--toggle-favourite)
     (define-key map (kbd "F") #'mastodon-tl--get-federated-timeline)
     (define-key map (kbd "H") #'mastodon-tl--get-home-timeline)
     (define-key map (kbd "j") #'mastodon-tl--goto-next-toot)
