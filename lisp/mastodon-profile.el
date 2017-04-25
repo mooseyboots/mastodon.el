@@ -35,12 +35,13 @@
   :prefix "mastodon-profile-"
   :group 'mastodon)
 
-
 (defun mastodon-profile--toot-proporties ()
   "Get the next by-line plist."
   (interactive)
   (elt (text-properties-at   (mastodon-tl--goto-next-toot)) 5))
 
+;; TODO: split this function up so it can handle also showing
+;; followers and those they follow
 (defun mastodon-profile--make-author-buffer (status)
   "Takes a the STATUS (the by-line plist) and extracts account info."
   (let* ((id (mastodon-profile--field status 'id))
@@ -53,15 +54,23 @@
          (buffer (concat "*mastodon-" acct  "*"))
          (account (cdr(assoc 'account status)))
          (note (mastodon-profile--field status 'note))
-         (json (mastodon-http--get-json url)))
+         (json (mastodon-http--get-json url))
+         )
     (with-output-to-temp-buffer buffer
       (switch-to-buffer buffer)
       (mastodon-profile--image-from-status account)
-      (insert "\n\n")
+      (insert "\n | ")
+      (insert (mastodon-tl--byline-author status))
+      (insert "\n ------------\n")
       (insert (mastodon-profile--process-text note))
-      (goto-char (max-char))
+      (insert (mastodon-tl--set-face
+       (concat " ------------\n"
+               "     TOOTS   \n"
+               " ------------\n")
+       'success 'nil))
       (mastodon-tl--timeline json))
-    (mastodon-mode)))
+    (mastodon-mode)
+    (mastodon-tl--goto-next-toot)))
 
 (defun mastodon-profile--process-text (text)
   "Retrieve TEXT content from TOOT."
