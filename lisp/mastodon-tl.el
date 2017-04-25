@@ -54,7 +54,10 @@
 (defun mastodon-tl--get-tag-timeline ()
   "Prompts for tag and opens its timeline."
   (interactive)
-  (let ((tag (read-string "Tag: ")))
+  (let* ((word (word-at-point))
+	 (input (read-string (format "Tag(%s): " word)))
+	 (tag (if (equal input "") word input)))
+    (print tag)
     (mastodon-tl--get (concat "tag/" tag))))
 
 (defun mastodon-tl--goto-toot-pos (find-pos refresh &optional pos)
