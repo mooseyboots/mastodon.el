@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.5.5
+;; Version: 0.6.0
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -36,6 +36,7 @@
   :group 'mastodon)
 
 (defvar mastodon-toot--reply-to-id nil)
+(defvar mastodon-toot--content-warning nil)
 
 (defun mastodon-toot--action-success (marker)
   "Insert MARKER with 'success face in byline."
@@ -54,22 +55,34 @@
     (let ((response (mastodon-http--post url nil nil)))
       (mastodon-http--triage response callback))))
 
+(defun mastodon-toot--kill ()
+  "Kill `mastodon-toot-mode' buffer and window.
+
+Set `mastodon-toot--reply-to-id' to nil.
+Set `mastodon-toot--content-warning' to nil."
+  (kill-buffer-and-window)
+  (setq mastodon-toot--reply-to-id     nil
+        mastodon-toot--content-warning nil))
+
 (defun mastodon-toot--cancel ()
   "Kill new-toot buffer/window. Does not POST content to Mastodon."
   (interactive)
-  (setq mastodon-toot--reply-to-id nil)
-  (kill-buffer-and-window))
+  (mastodon-toot--kill))
 
 (defun mastodon-toot--send ()
   "Kill new-toot buffer/window and POST contents to the Mastodon instance."
   (interactive)
   (let* ((toot (buffer-string))
          (endpoint (mastodon-http--api "statuses"))
+         (spoiler (when mastodon-toot--content-warning
+                    (read-string "Warning: ")))
          (args `(("status" . ,toot)
-                 ("in_reply_to_id" . ,mastodon-toot--reply-to-id))))
+                 ("in_reply_to_id" . ,mastodon-toot--reply-to-id)
+                 ("sensitive" . ,(when mastodon-toot--content-warning
+                                   (symbol-name t)))
+                 ("spoiler_text" . ,spoiler))))
     (progn
-      (kill-buffer-and-window)
-      (setq mastodon-toot--reply-to-id nil)
+      (mastodon-toot--kill)
       (let ((response (mastodon-http--post endpoint args nil)))
         (mastodon-http--triage response
                                (lambda () (message "Toot toot!")))))))
@@ -99,10 +112,17 @@
          (user (cdr (assoc 'username account))))
     (mastodon-toot user id)))
 
+(defun mastodon-toot--toggle-warning ()
+  "Toggle `mastodon-toot--content-warning'."
+  (interactive)
+  (setq mastodon-toot--content-warning
+        (not mastodon-toot--content-warning)))
+
 (defvar mastodon-toot-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-c") #'mastodon-toot--send)
     (define-key map (kbd "C-c C-k") #'mastodon-toot--cancel)
+    (define-key map (kbd "C-c C-w") #'mastodon-toot--toggle-warning)
       map)
   "Keymap for `mastodon-toot'.")
 

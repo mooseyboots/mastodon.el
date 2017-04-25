@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.5.5
+;; Version: 0.6.0
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -28,8 +28,9 @@
 
 ;;; Code:
 
-(require 'mastodon-http nil t)
-(require 'mastodon-toot nil t)
+(require 'mastodon-http)
+(require 'mastodon-toot)
+(require 'mastodon-media)
 
 (defgroup mastodon-tl nil
   "Timelines in Mastodon."
@@ -143,6 +144,44 @@ Return value from boosted content if available."
      'toot-id id
      'toot-json toot)))
 
+
+(defun mastodon-tl--set-face (string face render)
+  "Set the face of a string. If `render' is not 'nil
+also render the html"
+  (propertize
+   (with-temp-buffer
+     (insert (decode-coding-string string 'utf-8))
+     (when render
+       (shr-render-region (point-min) (point-max)))
+     (buffer-string))
+   'face face))
+       
+(defun mastodon-tl--spoiler (toot)
+  "Retrieve spoiler message from TOOT."
+  (let* ((spoiler (mastodon-tl--field 'spoiler_text toot))
+         (string (mastodon-tl--set-face spoiler 'default t))
+         (message (concat "\n ---------------"
+                          "\n Content Warning"
+                          "\n ---------------\n"))
+         (cw (mastodon-tl--set-face message 'success 'nil)))
+    (if (> (length string) 0)
+        (replace-regexp-in-string "\n\n\n ---------------"
+                                  "\n ---------------" (concat string cw))
+      "")))
+
+
+(defun mastodon-tl--media (toot)
+  "Retreive a media attachment link if one exists."
+  (let ((media (mastodon-tl--field 'media_attachments toot)))
+    (if (> (length media) 0 )
+        ;; Extract the preview_url, other options here
+        ;; are url and remote_url
+        (let ((link (cdr(assoc 'preview_url (elt media 0)))))
+          (concat "Media_Link:: "
+                  (mastodon-tl--set-face link 'mouse-face 'nil)))
+      ;; Otherwise return an empty string
+      "")))
+
 (defun mastodon-tl--content (toot)
   "Retrieve text content from TOOT."
   (let ((content (mastodon-tl--field 'content toot)))
@@ -156,14 +195,17 @@ Return value from boosted content if available."
   "Display TOOT content and byline."
   (insert
    (concat
+    (mastodon-tl--spoiler toot)
     (mastodon-tl--content toot)
+    (mastodon-tl--media toot)
     (mastodon-tl--byline toot)
     "\n\n")))
 
 (defun mastodon-tl--timeline (toots)
   "Display each toot in TOOTS."
   (mapcar 'mastodon-tl--toot toots)
-  (replace-regexp "\n\n\n | " "\n | " nil (point-min) (point-max)))
+  (replace-regexp "\n\n\n | " "\n | " nil (point-min) (point-max))
+  (mastodon-media--inline-images))
 
 (defun mastodon-tl--more-json (timeline id)
   "Return JSON for TIMELINE before ID."

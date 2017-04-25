@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.5.5
+;; Version: 0.6.0
 ;; Package-Requires: ((emacs "24.4"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
@@ -38,7 +38,7 @@
   :prefix "mastodon-"
   :group 'external)
 
-(defconst mastodon-version "0.5.5"
+(defconst mastodon-version "0.6.0"
   "Current `mastodon' package version.")
 
 (defcustom mastodon-instance-url "https://mastodon.social"
@@ -89,13 +89,6 @@ If REPLY-TO-ID is non-nil, attach new toot to a conversation."
       (insert (format "@%s " user))
       (setq mastodon-toot--reply-to-id reply-to-id))
     (mastodon-toot-mode t)))
-
-;;;###autoload
-(defun mastodon-register ()
-  "Registers mastodon.el with the Mastodon instance."
-  (interactive)
-  (progn
-    (mastodon--store-client-id-and-secret)))
 
 ;;;###autoload
 (add-hook 'mastodon-mode-hook (lambda ()
