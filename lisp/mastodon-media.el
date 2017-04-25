@@ -30,10 +30,10 @@
 ;; required by the server and client.
 
 ;;; Code:
-(require 'mastodon-http)
+(require 'mastodon-http  nil t)
 
 (defgroup mastodon-media nil
-  "Inline Mastadon media"
+  "Inline Mastadon media."
   :prefix "mastodon-media-"
   :group 'mastodon)
 
