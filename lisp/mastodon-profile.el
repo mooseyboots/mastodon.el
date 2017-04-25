@@ -38,7 +38,7 @@
 (defun mastodon-profile--toot-proporties ()
   "Get the next by-line plist."
   (interactive)
-  (elt (text-properties-at   (mastodon-tl--goto-next-toot)) 5))
+  (elt (text-properties-at (mastodon-tl--goto-next-toot)) 5))
 
 ;; TODO: split this function up so it can handle also showing
 ;; followers and those they follow
@@ -54,8 +54,7 @@
          (buffer (concat "*mastodon-" acct  "*"))
          (account (cdr(assoc 'account status)))
          (note (mastodon-profile--field status 'note))
-         (json (mastodon-http--get-json url))
-         )
+         (json (mastodon-http--get-json url)))
     (with-output-to-temp-buffer buffer
       (switch-to-buffer buffer)
       (mastodon-profile--image-from-status account)
@@ -87,7 +86,7 @@
 
 (defun mastodon-profile--image-from-status (status)
   "Generate an image from a STATUS."
-  (let   ((url (cdr(assoc 'avatar_static status))))
+  (let ((url (cdr(assoc 'avatar_static status))))
     (unless (equal url "/avatars/original/missing.png")
       (mastodon-media--image-from-url url))))
 
@@ -95,7 +94,7 @@
   "The STATUS is a nested alist.
 
 FIELD is used to identify regions under 'account"
-  (cdr(assoc field (assoc 'account status))))
+  (cdr (assoc field (assoc 'account status))))
 
 (defun mastodon-profile--get-next-authour-id ()
   "Get the author id of the next toot."
