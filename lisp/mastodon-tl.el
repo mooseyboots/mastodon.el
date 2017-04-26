@@ -141,9 +141,10 @@ Return value from boosted content if available."
              (mastodon-tl--byline-author toot)
              (mastodon-tl--byline-boosted toot)
              (propertize "\n  ------------" 'face 'default))
-     'toot-id id
-     'toot-json toot)))
-
+     'favourited-p faved
+     'boosted-p    boosted
+     'toot-id      id
+     'toot-json    toot)))
 
 (defun mastodon-tl--set-face (string face render)
   "Set the face of a string. If `render' is not 'nil
@@ -155,7 +156,7 @@ also render the html"
        (shr-render-region (point-min) (point-max)))
      (buffer-string))
    'face face))
-       
+
 (defun mastodon-tl--spoiler (toot)
   "Retrieve spoiler message from TOOT."
   (let* ((spoiler (mastodon-tl--field 'spoiler_text toot))
