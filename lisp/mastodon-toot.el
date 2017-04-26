@@ -69,7 +69,7 @@ If FAVED is nil, favourite the toot.
 If FAVED is non-nil, unfavourite the toot."
   (interactive)
   (let* ((id (mastodon-tl--property 'toot-id))
-         (faved (get-text-property (point) 'favourite-p))
+         (faved (get-text-property (point) 'favourited-p))
          (action (if faved "unfavourite" "favourite"))
          (remove (when faved t)))
     (mastodon-toot--action action (lambda () (mastodon-toot--action-success "F" remove)))
