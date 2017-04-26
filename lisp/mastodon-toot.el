@@ -62,11 +62,19 @@ Remove MARKER if RM is non-nil."
     (let ((response (mastodon-http--post url nil nil)))
       (mastodon-http--triage response callback))))
 
-(defun mastodon-toot--toggle-favourite ()
-  "Favourite/unfavourite toot based on current state.
+(defun mastodon-toot--toggle-boost ()
+  "Boost/unboost toot at `point'."
+  (interactive)
+  (let* ((id (mastodon-tl--property 'toot-id))
+         (boosted (get-text-property (point) 'boosted-p))
+         (action (if boosted "unreblog" "reblog"))
+         (msg (if boosted "unboosted" "boosted"))
+         (remove (when boosted t)))
+    (mastodon-toot--action action (lambda () (mastodon-toot--action-success "B" remove)))
+    (message (format "%s #%s" msg id))))
 
-If FAVED is nil, favourite the toot.
-If FAVED is non-nil, unfavourite the toot."
+(defun mastodon-toot--toggle-favourite ()
+  "Favourite/unfavourite toot at `point'."
   (interactive)
   (let* ((id (mastodon-tl--property 'toot-id))
          (faved (get-text-property (point) 'favourited-p))
@@ -106,14 +114,6 @@ Set `mastodon-toot--content-warning' to nil."
       (let ((response (mastodon-http--post endpoint args nil)))
         (mastodon-http--triage response
                                (lambda () (message "Toot toot!")))))))
-
-(defun mastodon-toot--boost ()
-  "Boost toot at `point'."
-  (interactive)
-  (let ((callback (lambda () (mastodon-toot--action-success "B")))
-        (id (mastodon-tl--property 'toot-id)))
-    (mastodon-toot--action "reblog" callback)
-    (message (format "Boosted #%s" id))))
 
 (defun mastodon-toot--reply ()
   "Reply to toot at `point'."
