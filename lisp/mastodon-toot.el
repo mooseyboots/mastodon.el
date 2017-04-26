@@ -70,8 +70,10 @@ Remove MARKER if RM is non-nil."
          (action (if boosted "unreblog" "reblog"))
          (msg (if boosted "unboosted" "boosted"))
          (remove (when boosted t)))
-    (mastodon-toot--action action (lambda () (mastodon-toot--action-success "B" remove)))
-    (message (format "%s #%s" msg id))))
+    (mastodon-toot--action action
+                           (lambda ()
+                             (mastodon-toot--action-success "B" remove)
+                             (message (format "%s #%s" msg id))))))
 
 (defun mastodon-toot--toggle-favourite ()
   "Favourite/unfavourite toot at `point'."
@@ -80,8 +82,10 @@ Remove MARKER if RM is non-nil."
          (faved (get-text-property (point) 'favourited-p))
          (action (if faved "unfavourite" "favourite"))
          (remove (when faved t)))
-    (mastodon-toot--action action (lambda () (mastodon-toot--action-success "F" remove)))
-    (message (format "%sd #%s" action id))))
+    (mastodon-toot--action action
+                           (lambda ()
+                             (mastodon-toot--action-success "F" remove)
+                             (message (format "%sd #%s" action id))))))
 
 (defun mastodon-toot--kill ()
   "Kill `mastodon-toot-mode' buffer and window.
