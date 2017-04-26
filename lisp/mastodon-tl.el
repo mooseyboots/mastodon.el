@@ -58,6 +58,11 @@
   (let ((tag (read-string "Tag: ")))
     (mastodon-tl--get (concat "tag/" tag))))
 
+(defun mastodon-tl--get-favorites-timeline ()
+  "Opens 'timeline' of favorites."
+  (interactive)
+  (mastodon-tl--get-favorites))
+
 (defun mastodon-tl--goto-toot-pos (find-pos refresh &optional pos)
   "Search for toot with FIND-POS.
 If search returns nil, execute REFRESH function.
@@ -295,6 +300,16 @@ Move forward (down) the timeline unless BACKWARD is non-nil."
   (let* ((url (mastodon-http--api (concat "timelines/" timeline)))
          (buffer (concat "*mastodon-" timeline "*"))
          (json (mastodon-http--get-json url)))
+    (with-output-to-temp-buffer buffer
+      (switch-to-buffer buffer)
+      (mastodon-tl--timeline json))
+    (mastodon-mode)))
+
+(defun mastodon-tl--get-favorites ()
+  "Display favorites in buffer."
+  (let* ((url (mastodon-http--api "favourites"))
+	 (buffer "*mastodon-favorites*")
+	 (json (mastodon-http--get-json url)))
     (with-output-to-temp-buffer buffer
       (switch-to-buffer buffer)
       (mastodon-tl--timeline json))
