@@ -99,7 +99,7 @@ If REPLY-TO-ID is non-nil, attach new toot to a conversation."
   "Major mode for Mastodon, the federated microblogging network."
   :group 'mastodon
   (let ((map mastodon-mode-map))
-    (define-key map (kbd "b") #'mastodon-toot--boost)
+    (define-key map (kbd "b") #'mastodon-toot--toggle-boost)
     (define-key map (kbd "f") #'mastodon-toot--toggle-favourite)
     (define-key map (kbd "F") #'mastodon-tl--get-federated-timeline)
     (define-key map (kbd "H") #'mastodon-tl--get-home-timeline)
