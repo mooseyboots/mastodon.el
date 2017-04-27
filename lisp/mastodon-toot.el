@@ -101,10 +101,15 @@ Set `mastodon-toot--content-warning' to nil."
   (interactive)
   (mastodon-toot--kill))
 
+(defun mastodon-toot--remove-docs (toot-buffer-contents)
+  "Get the body of a toot from a TOOT-BUFFER-CONTENTS composed in a toot compose buffer."
+  (let ((re "^=+\\(\n\\|.\\)*=+\nToot Text:\n\n"))
+    (replace-regexp-in-string re "" toot-buffer-contents)))
+
 (defun mastodon-toot--send ()
   "Kill new-toot buffer/window and POST contents to the Mastodon instance."
   (interactive)
-  (let* ((toot (buffer-string))
+  (let* ((toot (mastodon-toot--remove-docs (buffer-string)))
          (endpoint (mastodon-http--api "statuses"))
          (spoiler (when mastodon-toot--content-warning
                     (read-string "Warning: ")))
@@ -133,6 +138,57 @@ Set `mastodon-toot--content-warning' to nil."
   (interactive)
   (setq mastodon-toot--content-warning
         (not mastodon-toot--content-warning)))
+
+(defun mastodon-toot--get-mode-kbinds ()
+  "Get a list of the keybindings in the mastodon-toot-mode."
+  (remove-if-not (lambda (x) (listp x))
+		 (cadr mastodon-toot-mode-map)))
+
+(defun mastodon-toot--format-kbind (kbind)
+  "Format a single keybinding, KBIND, for display in documentation."
+  (let ((key (help-key-description (vector (car kbind)) nil))
+	(command (cdr kbind)))
+    (format "\t%s - %s" key command)))
+
+(defun mastodon-toot--format-kbinds (kbinds)
+  "Format a list keybindings, KBINDS, for display in documentation."
+  (string-join (cons "" (mapcar #'mastodon-toot--format-kbind kbinds))
+	       "\n"))
+
+(defun mastodon-toot--make-mode-docs ()
+  "Create formatted documentation text for the mastodon-toot-mode."
+  (let ((kbinds (mastodon-toot--get-mode-kbinds)))
+    (concat
+     "=================================================================\n"
+     "Compose a new toot here. The following keybindings are available:"
+     (mastodon-toot--format-kbinds kbinds)
+     "\n=================================================================\n"
+     "Toot Text:\n\n")))
+
+(defun mastodon-toot--display-docs ()
+  "Display documentation about mastodon-toot mode."
+  (insert
+   (propertize
+    (mastodon-toot--make-mode-docs)
+    'face 'comment)))
+
+(defun mastodon-toot--setup-as-reply (reply-to-user reply-to-id)
+  "If REPLY-TO-USER is provided, inject their handle into the message.
+If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
+  (when reply-to-user
+    (insert (format "@%s " reply-to-user))
+    (setq mastodon-toot--reply-to-id reply-to-id)))
+
+(defun mastodon-toot--compose-buffer (reply-to-user reply-to-id)
+  "Create a new buffer to capture text for a new toot.
+If REPLY-TO-USER is provided, inject their handle into the message.
+If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
+  (let ((buffer (get-buffer-create "*new toot*")))
+    (switch-to-buffer-other-window buffer)
+    (mastodon-toot--display-docs)
+    (mastodon-toot--setup-as-reply reply-to-user reply-to-id)
+    (mastodon-toot-mode t)
+    ))
 
 (defvar mastodon-toot-mode-map
   (let ((map (make-sparse-keymap)))
