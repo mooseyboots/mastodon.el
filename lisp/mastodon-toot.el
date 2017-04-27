@@ -73,7 +73,7 @@ Remove MARKER if RM is non-nil."
     (mastodon-toot--action action
                            (lambda ()
                              (mastodon-toot--action-success "B" remove)
-                             (message (format "%s #%s" msg id))))))
+                             (message (format "%s #%d" msg id))))))
 
 (defun mastodon-toot--toggle-favourite ()
   "Favourite/unfavourite toot at `point'."
@@ -85,7 +85,7 @@ Remove MARKER if RM is non-nil."
     (mastodon-toot--action action
                            (lambda ()
                              (mastodon-toot--action-success "F" remove)
-                             (message (format "%sd #%s" action id))))))
+                             (message (format "%sd #%d" action id))))))
 
 (defun mastodon-toot--kill ()
   "Kill `mastodon-toot-mode' buffer and window.
