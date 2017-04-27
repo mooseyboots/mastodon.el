@@ -31,6 +31,7 @@
 (require 'mastodon-http)
 (require 'mastodon-toot)
 (require 'mastodon-media)
+(require 'time-date)
 
 (defgroup mastodon-tl nil
   "Timelines in Mastodon."
@@ -130,6 +131,7 @@ Return value from boosted content if available."
 (defun mastodon-tl--byline (toot)
   "Generate byline for TOOT."
   (let ((id (cdr (assoc 'id toot)))
+        (timestamp (mastodon-tl--field 'created_at toot))
         (faved (mastodon-tl--field 'favourited toot))
         (boosted (mastodon-tl--field 'reblogged toot)))
     (propertize
@@ -140,6 +142,8 @@ Return value from boosted content if available."
                (format "(%s) " (propertize "F" 'face 'success)))
              (mastodon-tl--byline-author toot)
              (mastodon-tl--byline-boosted toot)
+             " "
+             (format-time-string mastodon-toot-timestamp-format (date-to-time timestamp))
              (propertize "\n  ------------" 'face 'default))
      'favourited-p faved
      'boosted-p    boosted

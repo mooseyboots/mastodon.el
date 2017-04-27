@@ -51,6 +51,15 @@
   :group 'mastodon
   :type 'file)
 
+(defcustom mastodon-toot-timestamp-format "%F %T"
+  "Format to use for timestamps.
+
+For valid formatting options see `format-time-string`.
+The default value \"%F %T\" prints ISO8601-style YYYY-mm-dd HH:MM:SS.
+Use. e.g. \"%c\" for your locale's date and time format."
+  :group 'mastodon
+  :type 'string)
+
 (defvar mastodon-mode-map
   (make-sparse-keymap)
   "Keymap for `mastodon-mode'.")
