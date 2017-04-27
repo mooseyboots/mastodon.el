@@ -41,9 +41,21 @@
 (defun mastodon-toot--action-success (marker)
   "Insert MARKER with 'success face in byline."
   (let ((inhibit-read-only t))
+    (move-beginning-of-line '())
+    (mastodon-tl--goto-next-toot)
     (insert (format "(%s) "
-                    (propertize marker 'face 'success)))
-    (mastodon-tl--goto-prev-toot)))
+                    (propertize marker 'face 'success)))))
+
+(defun mastodon-toot--action-success-undo (marker)
+  "Remove MARKER from byline."
+  (let ((inhibit-read-only t)
+        (start (progn (move-beginning-of-line '())
+                      (point)))
+        (end (progn (move-end-of-line '())
+                    (point))))
+    (replace-regexp (format "(%s) " marker) "" '() start end)
+    (move-beginning-of-line '())
+    (mastodon-tl--goto-next-toot)))
 
 (defun mastodon-toot--action (action callback)
   "Take ACTION on toot at point, then execute CALLBACK."
@@ -102,6 +114,14 @@ Set `mastodon-toot--content-warning' to nil."
         (id (mastodon-tl--property 'toot-id)))
     (mastodon-toot--action "favourite" callback)
     (message (format "Favourited #%s" id))))
+
+(defun mastodon-toot--unfavourite ()
+  "Unfavourite toot at `point'."
+  (interactive)
+  (let ((callback (lambda () (mastodon-toot--action-success-undo "F")))
+        (id (mastodon-tl--property 'toot-id)))
+    (mastodon-toot--action "unfavourite" callback)
+    (message (format "unfavourited #%s" id))))
 
 (defun mastodon-toot--reply ()
   "Reply to toot at `point'."
