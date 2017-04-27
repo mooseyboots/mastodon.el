@@ -91,13 +91,8 @@ Use. e.g. \"%c\" for your locale's date and time format."
 If USER is non-nil, insert after @ symbol to begin new toot.
 If REPLY-TO-ID is non-nil, attach new toot to a conversation."
   (interactive)
-  (require 'mastodon-toot nil t)
-  (progn
-    (switch-to-buffer-other-window (get-buffer-create "*new toot*"))
-    (when user
-      (insert (format "@%s " user))
-      (setq mastodon-toot--reply-to-id reply-to-id))
-    (mastodon-toot-mode t)))
+  (require 'mastodon-toot nil t)  
+  (mastodon-toot--compose-buffer user reply-to-id))
 
 ;;;###autoload
 (add-hook 'mastodon-mode-hook (lambda ()
