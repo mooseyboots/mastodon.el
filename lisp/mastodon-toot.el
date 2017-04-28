@@ -186,10 +186,12 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
   "Create a new buffer to capture text for a new toot.
 If REPLY-TO-USER is provided, inject their handle into the message.
 If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
-  (let ((buffer (get-buffer-create "*new toot*")))
+  (let* ((buffer-exists (get-buffer "*new toot*"))
+	 (buffer (or buffer-exists (get-buffer-create "*new toot*"))))
     (switch-to-buffer-other-window buffer)
-    (mastodon-toot--display-docs)
-    (mastodon-toot--setup-as-reply reply-to-user reply-to-id)
+    (when (not buffer-exists)
+      (mastodon-toot--display-docs)
+      (mastodon-toot--setup-as-reply reply-to-user reply-to-id))
     (mastodon-toot-mode t)))
 
 (defvar mastodon-toot-mode-map
