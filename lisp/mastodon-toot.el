@@ -74,8 +74,7 @@ Set `mastodon-toot--content-warning' to nil."
   (let ((re "^|=+=|$"))
     (save-excursion
       (goto-char 0)
-      (re-search-forward re)
-      (re-search-forward re) ; end of the docs
+      (re-search-forward re nil nil 2)
       (buffer-substring (+ 2 (point)) (+ 1 (length (buffer-string)))))))
 
 (defun mastodon-toot--send ()
