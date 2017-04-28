@@ -146,8 +146,7 @@ Set `mastodon-toot--content-warning' to nil."
      "=================================================================\n"
      "Compose a new toot here. The following keybindings are available:"
      (mastodon-toot--format-kbinds kbinds)
-     "\n=================================================================\n"
-     "Toot Text:\n\n")))
+     "\n=================================================================\n\n")))
 
 (defun mastodon-toot--display-docs ()
   "Display documentation about mastodon-toot mode."
@@ -171,8 +170,7 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
     (switch-to-buffer-other-window buffer)
     (mastodon-toot--display-docs)
     (mastodon-toot--setup-as-reply reply-to-user reply-to-id)
-    (mastodon-toot-mode t)
-    ))
+    (mastodon-toot-mode t)))
 
 (defvar mastodon-toot-mode-map
   (let ((map (make-sparse-keymap)))
