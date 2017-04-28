@@ -101,15 +101,19 @@ Set `mastodon-toot--content-warning' to nil."
   (interactive)
   (mastodon-toot--kill))
 
-(defun mastodon-toot--remove-docs (toot-buffer-contents)
-  "Get the body of a toot from a TOOT-BUFFER-CONTENTS composed in a toot compose buffer."
-  (let ((re "^=+\\(\n\\|.\\)*=+\nToot Text:\n\n"))
-    (replace-regexp-in-string re "" toot-buffer-contents)))
+(defun mastodon-toot--remove-docs ()
+  "Get the body of a toot from the current compose buffer."
+  (let ((re "^|=+=|$"))
+    (save-excursion
+      (goto-char 0)
+      (re-search-forward re)
+      (re-search-forward re) ; end of the docs
+      (buffer-substring (+ 2 (point)) (length (buffer-string))))))
 
 (defun mastodon-toot--send ()
   "Kill new-toot buffer/window and POST contents to the Mastodon instance."
   (interactive)
-  (let* ((toot (mastodon-toot--remove-docs (buffer-string)))
+  (let* ((toot (mastodon-toot--remove-docs))
          (endpoint (mastodon-http--api "statuses"))
          (spoiler (when mastodon-toot--content-warning
                     (read-string "Warning: ")))
@@ -159,10 +163,10 @@ Set `mastodon-toot--content-warning' to nil."
   "Create formatted documentation text for the mastodon-toot-mode."
   (let ((kbinds (mastodon-toot--get-mode-kbinds)))
     (concat
-     "=================================================================\n"
-     "Compose a new toot here. The following keybindings are available:"
+     "|=================================================================|\n"
+     " Compose a new toot here. The following keybindings are available:"
      (mastodon-toot--format-kbinds kbinds)
-     "\n=================================================================\n\n")))
+     "\n|=================================================================|\n\n")))
 
 (defun mastodon-toot--display-docs ()
   "Display documentation about mastodon-toot mode."
