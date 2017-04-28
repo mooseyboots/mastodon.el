@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.6.0
+;; Version: 0.6.1
 ;; Package-Requires: ((emacs "24.4"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
@@ -38,7 +38,7 @@
   :prefix "mastodon-"
   :group 'external)
 
-(defconst mastodon-version "0.6.0"
+(defconst mastodon-version "0.6.1"
   "Current `mastodon' package version.")
 
 (defcustom mastodon-instance-url "https://mastodon.social"
