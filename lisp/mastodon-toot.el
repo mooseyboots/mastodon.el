@@ -108,7 +108,7 @@ Set `mastodon-toot--content-warning' to nil."
       (goto-char 0)
       (re-search-forward re)
       (re-search-forward re) ; end of the docs
-      (buffer-substring (+ 2 (point)) (length (buffer-string))))))
+      (buffer-substring (+ 2 (point)) (+ 1 (length (buffer-string)))))))
 
 (defun mastodon-toot--send ()
   "Kill new-toot buffer/window and POST contents to the Mastodon instance."
@@ -143,15 +143,34 @@ Set `mastodon-toot--content-warning' to nil."
   (setq mastodon-toot--content-warning
         (not mastodon-toot--content-warning)))
 
+;; we'll need to revisit this if the binds get
+;; more diverse than two-chord bindings
 (defun mastodon-toot--get-mode-kbinds ()
   "Get a list of the keybindings in the mastodon-toot-mode."
-  (remove-if-not (lambda (x) (listp x))
-		 (cadr mastodon-toot-mode-map)))
+  (let* ((binds (copy-tree mastodon-toot-mode-map))
+	 (prefix (caadr binds))
+	 (bindings (remove-if-not (lambda (x) (listp x))
+				  (cadr binds))))
+    (mapcar (lambda (b)
+	      (progn
+		(setf (car b) (vector prefix (car b)))
+		b))
+	    bindings)))
+
+(defun mastodon-toot--format-kbind-command (cmd)
+  "Format CMD to be more readable.
+e.g. mastodon-toot--send -> Send."
+  (let* ((str (symbol-name cmd))
+	 (re "--\\(.*\\)$")
+	 (str2 (save-match-data
+		 (string-match re str)
+		 (match-string 1 str))))
+    (capitalize (replace-regexp-in-string "-" " " str2))))
 
 (defun mastodon-toot--format-kbind (kbind)
   "Format a single keybinding, KBIND, for display in documentation."
-  (let ((key (help-key-description (vector (car kbind)) nil))
-	(command (cdr kbind)))
+  (let ((key (help-key-description (car kbind) nil))
+	(command (mastodon-toot--format-kbind-command (cdr kbind))))
     (format "\t%s - %s" key command)))
 
 (defun mastodon-toot--format-kbinds (kbinds)
