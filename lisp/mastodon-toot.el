@@ -35,42 +35,40 @@
   :prefix "mastodon-toot-"
   :group 'mastodon)
 
-(defvar mastodon-toot--reply-to-id nil)
-(defvar mastodon-toot--content-warning nil)
+(defcustom mastodon-toot-character-limit 500
+  "Maximum number of characters allowed in a toot."
+  :type 'number)
+
+(defun mastodon-toot--edit-info (&optional docs)
+  "Take an optional DOCS string and create an alist representing data about the edit buffer."
+  (let* ((d (if (stringp docs) docs ""))
+	 (s (length d))
+	 (e s)
+	 (c 0))
+    `((docs . ,d)
+      (start . ,s)
+      (end . ,e)
+      (count . ,c))))
+
+(defvar-local mastodon-toot--reply-to-id nil)
+(defvar-local mastodon-toot--content-warning nil)
+
+(defvar-local mastodon-toot--edit-data nil
+  "Buffer-local variable to store data about the toot being composed.")
 
 (defun mastodon-toot--action-success (marker &optional rm)
   "Insert MARKER with 'success face in byline.
 
 Remove MARKER if RM is non-nil."
   (let ((inhibit-read-only t)
-        (bol (progn (move-beginning-of-line nil) (point)))
-        (eol (progn (move-end-of-line nil) (point))))
-    (when rm (replace-regexp (format "(%s) " marker) "" nil bol eol))
-    (move-beginning-of-line nil)
+        (bol (progn (move-beginning-of-line '()) (point)))
+        (eol (progn (move-end-of-line '()) (point))))
+    (when rm (replace-match (format "(%s) " marker) "" '() bol eol))
+    (move-beginning-of-line '())
     (mastodon-tl--goto-next-toot)
     (unless rm
       (insert (format "(%s) "
                       (propertize marker 'face 'success))))))
-
-(defcustom mastodon-toot--character-limit 500
-  "Maximum number of characters allowed in a toot."
-  :type 'number)
-
-(defstruct mastodon-toot--edit-range
-  (start 0 (type number))
-  (end 0 (type number)))
-
-(defstruct mastodon-toot--edit-buffer
-  (body
-   (make-mastodon-toot--edit-range :start 0 :end 0)
-   (type mastodon-toot--edit-range))
-  (char-count
-   (make-mastodon-toot--edit-range
-    :start 0
-    :end
-    (length (concat "[0 /" (number-to-string mastodon-toot--character-limit) "]")))
-   (type mastodon-toot--edit-range)))
-
 
 (defun mastodon-toot--action (action callback)
   "Take ACTION on toot at point, then execute CALLBACK."
@@ -112,40 +110,31 @@ Remove MARKER if RM is non-nil."
 
 Set `mastodon-toot--reply-to-id' to nil.
 Set `mastodon-toot--content-warning' to nil."
-  (kill-buffer-and-window)
-  (setq mastodon-toot--reply-to-id     nil
-        mastodon-toot--content-warning nil))
+  (kill-all-local-variables)
+  (kill-buffer-and-window))
 
 (defun mastodon-toot--cancel ()
-  "Kill new-toot buffer/window. Does not POST content to Mastodon."
+  "Kill new-toot buffer/window.  Does not POST content to Mastodon."
   (interactive)
   (mastodon-toot--kill))
 
-(defun mastodon-toot--remove-docs ()
-  "Get the body of a toot from the current compose buffer."
-  (let ((re "^|=+=|$"))
-    (save-excursion
-      (goto-char 0)
-      (re-search-forward re nil nil 2)
-      (buffer-substring (+ 2 (point)) (+ 1 (length (buffer-string)))))))
-
-(defun mastodon-toot--prepare-toot (toot-string)
-  "Remove compose-view-related text from TOOT-STRING."
-  (reduce (lambda (str f) (funcall f str))
-	  '(mastodon-toot--remove-char-count)
-	  :initial-value toot-string))
+(defun mastodon-toot--get-from-buffer ()
+  "Use the data stored in MASTODON-TOOT--EDIT-DATA and the compose buffer to extract the toot text."
+  (let ((toot-start (alist-get 'start mastodon-toot--edit-data))
+	(toot-end (alist-get 'end mastodon-toot--edit-data)))
+    (buffer-substring toot-start toot-end)))
 
 (defun mastodon-toot--send ()
   "Kill new-toot buffer/window and POST contents to the Mastodon instance."
   (interactive)
-  (let* ((toot (mastodon-toot--prepare-toot (buffer-string)))
+  (let* ((toot (mastodon-toot--get-from-buffer))
          (endpoint (mastodon-http--api "statuses"))
          (spoiler (when mastodon-toot--content-warning
                     (read-string "Warning: ")))
          (args `(("status" . ,toot)
                  ("in_reply_to_id" . ,mastodon-toot--reply-to-id)
                  ("sensitive" . ,(when mastodon-toot--content-warning
-                                   (symbol-name t)))
+				   (symbol-name t)))
                  ("spoiler_text" . ,spoiler))))
     (mastodon-toot--kill)
     (let ((response (mastodon-http--post endpoint args nil)))
@@ -164,7 +153,7 @@ Set `mastodon-toot--content-warning' to nil."
 (defun mastodon-toot--toggle-warning ()
   "Toggle `mastodon-toot--content-warning'."
   (interactive)
-  (setq mastodon-toot--content-warning
+  (setq-local mastodon-toot--content-warning
         (not mastodon-toot--content-warning)))
 
 
@@ -218,30 +207,6 @@ e.g. mastodon-toot--send -> Send."
     (mastodon-toot--make-mode-docs)
     'face 'comment)))
 
-(defun mastodon-toot--setup-as-reply (reply-to-user reply-to-id)
-  "If REPLY-TO-USER is provided, inject their handle into the message.
-If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
-  (when reply-to-user
-    (insert (format "@%s " reply-to-user))
-    (setq mastodon-toot--reply-to-id reply-to-id)))
-
-(defun mastodon-toot--compose-buffer (reply-to-user reply-to-id)
-  "Create a new buffer to capture text for a new toot.
-If REPLY-TO-USER is provided, inject their handle into the message.
-If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
-  (let* ((buffer-exists (get-buffer "*new toot*"))
-	 (buffer (or buffer-exists (get-buffer-create "*new toot*"))))
-    (switch-to-buffer-other-window buffer)
-    (when (not buffer-exists)
-      (mastodon-toot--display-docs)
-      (mastodon-toot--setup-as-reply reply-to-user reply-to-id))
-    (mastodon-toot-mode t)))
-
-(defun mastodon-toot--remove-char-count (str)
-  "Remove the [current-char-count/maximum-chars] pattern from the end of STR."
-  (let ((re "\s[\\[0-9\/\\]+]$"))
-    (replace-regexp-in-string re "" str)))
-
 (defun mastodon-toot--format-char-count (current max)
   "Format the [CURRENT/MAX] character count pattern."
   (propertize
@@ -251,51 +216,102 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
        'warning
      'default)))
 
-(defun mastodon-toot--with-char-count (f)
-  "Execute F with a formatted char count string."
-  (let* ((max mastodon-toot--character-limit)
-	 (buf-str (buffer-string))
-	 (str (mastodon-toot--prepare-toot buf-str))
-	 (count-str (mastodon-toot--format-char-count (length str) max)))
-    (funcall f count-str)))
+(defun mastodon-toot--setup-as-reply (reply-to-user reply-to-id)
+  "If REPLY-TO-USER is provided, inject their handle into the message.
+If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
+  (when reply-to-user
+    (insert (format "@%s " reply-to-user))
+    (setq-local mastodon-toot--reply-to-id reply-to-id)))
 
-(defun mastodon-toot--update-char-count ()
-  "Append [num-chars/maximum-chars] to end of buffer."
-  (mastodon-toot--with-char-count
-   (lambda (count-str)
-     (save-mark-and-excursion
-      (save-match-data
-	(re-search-forward "\\([\\[0-9 \/ \\]+]$\\)") ; " [n/n]"
-	(let ((match-start (match-beginning 0)))
-	  (goto-char match-start)
-	  (replace-match count-str)))))))
+(defun mastodon-toot--init-data ()
+  "Initialize the buffer-local toot edit data."
+  (let* ((docs (mastodon-toot--make-mode-docs)))
+    (setq-local mastodon-toot--edit-data
+		(mastodon-toot--edit-info docs))))
 
-;;; rethink real hard
-(defun mastodon-toot--update-char-count-on-change (change-beg change-end x)
-  "Update the toot buffer and char count display with knowledge about the where the buffer CHANGE-BEG and CHANGE-END were."
+(defun mastodon-toot--draw-ui (edit-data)
+  "Render a compose ui in buffer using EDIT-DATA."
+  (let ((start  (alist-get 'start edit-data)))
+    (progn
+      (insert (alist-get 'docs edit-data))
+      (goto-char (alist-get 'end edit-data))
+      (insert (mastodon-toot--format-char-count
+	       (alist-get 'count edit-data)
+	       mastodon-toot-character-limit))
+      (goto-char start))))
+
+(defun mastodon-toot--compose-buffer (reply-to-user reply-to-id)
+  "Create a new buffer to capture text for a new toot.
+If REPLY-TO-USER is provided, inject their handle into the message.
+If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
+  (let* ((buffer-name (concat "*new " (mastodon-instance-name) " toot*"))
+	 (buffer-exists (get-buffer buffer-name))
+	 (buffer (or buffer-exists (get-buffer-create buffer-name))))
+    (switch-to-buffer-other-window buffer)
+    (mastodon-toot--init-data)
+    (mastodon-toot--draw-ui mastodon-toot--edit-data)
+    (mastodon-toot--setup-as-reply reply-to-user reply-to-id)
+    (mastodon-toot-mode t)))
+
+;;; hooks to make editing sensible
+(defun mastodon-toot--stay-in-bounds (change-start-pos change-end-pos)
+  "Use CHANGE-START-POS and CHANGE-END-POS to keep edits between the docs and the char count."
+  (let ((start-lim  (alist-get 'start mastodon-toot--edit-data))
+	(end-lim  (+ 1 (alist-get 'end mastodon-toot--edit-data))))
+    (message (format "%s:%s %s:%s"
+		     change-start-pos start-lim
+		     change-end-pos end-lim))
+    (cond
+     ((< change-start-pos start-lim)
+      (goto-char start-lim))
+     ((< end-lim change-start-pos)
+      (goto-char end-lim)))))
+
+(defun mastodon-toot--update-char-count (&rest _)
+  "Dah."
+  (let* ((raw-len (length (buffer-string)))
+	 (char-count-len (length (mastodon-toot--format-char-count
+				  (alist-get 'count mastodon-toot--edit-data)
+				  mastodon-toot-character-limit)))
+	 (doc-string-len (length (alist-get 'docs mastodon-toot--edit-data)))
+	 (final-len (- raw-len char-count-len doc-string-len))
+	 (start (alist-get 'start mastodon-toot--edit-data)))
+    (message (format "l:%s s:%s e:%s c:%s"
+		     final-len
+		     start
+		     (alist-get 'end mastodon-toot--edit-data)
+		     (alist-get 'count mastodon-toot--edit-data)))
+    (setf (alist-get 'end mastodon-toot--edit-data)
+	  (+ final-len start)
+
+	  (alist-get 'count mastodon-toot--edit-data)
+	  final-len)))
+
+(defun mastodon-toot--rerender-char-count (&rest _)
+  "Dah."
+  (let* ((count (alist-get 'count mastodon-toot--edit-data))
+	 (count-str (mastodon-toot--format-char-count
+		     count mastodon-toot-character-limit)))
+    (save-mark-and-excursion
+     (delete-region
+      (- (point-max) (+ 0 (length count-str)))
+      (point-max))
+     (goto-char (point-max))
+     (insert count-str))))
+
+(defun mastodon-toot--after-change (&rest _)
+  "Dah."
   (progn
-    (kill-region change-beg change-end)
-    (goto-char 0)
-    (save-match-data
-      (re-search-forward "\\([\\[0-9 \/ \\+]$\\)")
-      (let ((match-start (match-beginning 0)))
-	(goto-char match-start)
-	(yank)))))
-
-(defun mastodon-toot--setup-compose-ui ()
-  "Set up the ui for the compose view."
-  (progn
-    (mastodon-toot--with-char-count
-     (lambda (count-str)
-       (progn
-	 (insert count-str)
-	 (goto-char 0))))))
+    (mastodon-toot--update-char-count nil)
+    (mastodon-toot--rerender-char-count nil)))
 
 (defun mastodon-toot--mode-hooks ()
   "Set the hooks for mastodon-toot-mode."
   (progn
+    (add-hook 'before-change-functions
+	      #'mastodon-toot--stay-in-bounds nil t)
     (add-hook 'after-change-functions
-	      #'mastodon-toot--update-char-count-on-change nil t)))
+	      #'mastodon-toot--after-change nil t)))
 
 (defvar mastodon-toot-mode-map
   (let ((map (make-sparse-keymap)))
@@ -312,7 +328,6 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
   :global nil
   :after-hook
   (progn
-    (mastodon-toot--setup-compose-ui)
     (mastodon-toot--mode-hooks)))
 
 (provide 'mastodon-toot)

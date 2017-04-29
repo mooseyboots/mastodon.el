@@ -77,6 +77,11 @@ Use. e.g. \"%c\" for your locale's date and time format."
   (interactive)
   (message "Mastodon version %s" mastodon-version))
 
+(defun mastodon-instance-name ()
+  "Get the name of a mastodon instance.
+Traditionally this is the url - https://"
+  (replace-regexp-in-string "https://" "" mastodon-instance-url))
+
 ;;;###autoload
 (defun mastodon ()
   "Connect Mastodon client to `mastodon-instance-url' instance."
