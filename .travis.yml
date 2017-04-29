@@ -10,3 +10,4 @@ env:
 script:
   - emacs --version
   - cask exec ert-runner -l test/ert-helper.el test/*-tests.el
+  - cask build
