@@ -9,5 +9,7 @@ env:
   - EVM_EMACS=emacs-25.1-travis
 script:
   - emacs --version
-  - cask exec ert-runner -l test/ert-helper.el test/*-tests.el
   - cask build
+  - cask clean-elc
+  - cask exec ert-runner -l test/ert-helper.el test/*-tests.el
+  - cask emacs --batch -Q -l package-lint.el -f package-lint-batch-and-exit lisp/*.el
