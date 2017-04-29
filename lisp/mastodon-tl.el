@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.6.1
+;; Version: 0.6.2
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -56,7 +56,10 @@
 (defun mastodon-tl--get-tag-timeline ()
   "Prompts for tag and opens its timeline."
   (interactive)
-  (let ((tag (read-string "Tag: ")))
+  (let* ((word (or (word-at-point) ""))
+	 (input (read-string (format "Tag(%s): " word)))
+	 (tag (if (equal input "") word input)))
+    (print tag)
     (mastodon-tl--get (concat "tag/" tag))))
 
 (defun mastodon-tl--goto-toot-pos (find-pos refresh &optional pos)

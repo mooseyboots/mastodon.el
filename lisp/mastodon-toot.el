@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.6.1
+;; Version: 0.6.2
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -147,13 +147,13 @@ Set `mastodon-toot--content-warning' to nil."
 (defun mastodon-toot--get-mode-kbinds ()
   "Get a list of the keybindings in the mastodon-toot-mode."
   (let* ((binds (copy-tree mastodon-toot-mode-map))
-	 (prefix (caadr binds))
-	 (bindings (remove-if-not (lambda (x) (listp x))
-				  (cadr binds))))
+	       (prefix (car (cadr binds)))
+	       (bindings (remove nil (mapcar (lambda (i) (if (listp i) i))
+					                               (cadr binds)))))
     (mapcar (lambda (b)
 	      (progn
-		(setf (car b) (vector prefix (car b)))
-		b))
+		      (setf (car b) (vector prefix (car b)))
+		      b))
 	    bindings)))
 
 (defun mastodon-toot--format-kbind-command (cmd)
@@ -174,7 +174,7 @@ e.g. mastodon-toot--send -> Send."
 
 (defun mastodon-toot--format-kbinds (kbinds)
   "Format a list keybindings, KBINDS, for display in documentation."
-  (string-join (cons "" (mapcar #'mastodon-toot--format-kbind kbinds))
+  (mapconcat 'identity (cons "" (mapcar #'mastodon-toot--format-kbind kbinds))
 	       "\n"))
 
 (defun mastodon-toot--make-mode-docs ()
