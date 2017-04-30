@@ -43,7 +43,7 @@
   "Take an optional DOCS string and create an alist representing data about the edit buffer."
   (let* ((d (if (stringp docs) docs ""))
 	 (s (+ 1 (length d)))
-	 (e s)
+	 (e (+ 1 s))
 	 (c 0))
     `((docs . ,d)
       (start . ,s)
@@ -230,19 +230,17 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
   "Render a compose ui in buffer using EDIT-DATA."
   (let ((start (alist-get 'start edit-data))
 	(end (alist-get 'end edit-data)))
-    (progn
-      (insert
-       (propertize
-	"\n"
-	'read-only nil))
-      (goto-char (point-min))
-      (insert (alist-get 'docs edit-data))
-      (goto-char (+ 1 start))
-      (insert (mastodon-toot--format-char-count
-      	       (alist-get 'count edit-data)
-      	       mastodon-toot-character-limit))
-      (goto-char (+ 1 start))
-      )))
+    (save-mark-and-excursion
+      ;; this will be input area, need to make not read-only first
+     (insert (propertize "\n\n" 'read-only nil))
+
+     ;; set up our read-only doc section
+     (goto-char (point-min))
+     (insert (alist-get 'docs edit-data))
+     (mastodon-toot--render-char-count))
+
+    ;; go back to where the text-entry area is
+    (goto-char (+ 1 start))))
 
 (defun mastodon-toot--compose-buffer (reply-to-user reply-to-id)
   "Create a new buffer to capture text for a new toot.
@@ -252,6 +250,8 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
 	 (buffer-exists (get-buffer buffer-name))
 	 (buffer (or buffer-exists (get-buffer-create buffer-name))))
     (switch-to-buffer-other-window buffer)
+    
+    ;; prevent duplication of UI stuff
     (when (not mastodon-toot--edit-data)
       (mastodon-toot--init-data)
       (mastodon-toot--draw-ui mastodon-toot--edit-data)
@@ -294,19 +294,21 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
 
 (defun mastodon-toot--render-char-count (&rest _)
   "Clear and render the character counter from MASTODON-TOOT--EDIT-DATA."
-  (let* ((count (alist-get 'count mastodon-toot--edit-data))
+  (let* ((replace-start (+ 1 (alist-get 'end mastodon-toot--edit-data)))
+	 (replace-end (point-max))
+	 (count (alist-get 'count mastodon-toot--edit-data))
 	 (count-str (mastodon-toot--format-char-count
-		     count mastodon-toot-character-limit))
-	 (count-str-len (length count-str))
-	 (count-str-end (point-max))
-	 (count-str-start (- count-str-end count-str-len)))
+		     count mastodon-toot-character-limit)))
     (save-mark-and-excursion
+     ;; this is a "trick" from the emacs docs for deleting text
+     ;; that would otherwise be read only
+     ;; (we don't want it user editable, but we do need to update it)
      (setq-local inhibit-read-only t)
-     (remove-text-properties count-str-start count-str-end '(read-only))
-     (delete-region count-str-start count-str-end)
-     (goto-char (point-max))
-     (setq-local inhibit-read-only nil)
-     (insert count-str))))
+     (remove-text-properties replace-start replace-end '(read-only))
+     (delete-region (- replace-start 1) replace-end)
+     (goto-char replace-start)
+     (insert count-str)
+     (setq-local inhibit-read-only nil))))
 
 (defun mastodon-toot--after-change (&rest _)
   "Dah."
