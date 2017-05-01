@@ -178,20 +178,15 @@ also render the html"
       "")))
 
 (defun mastodon-tl--media (toot)
-  "Retreive a media attachment link for TOOT if one exists."
+  "Retrieve a media attachment link for TOOT if one exists."
   (let ((media (mastodon-tl--field 'media_attachments toot)))
-    (if (> (length media) 0 )
-        ;; Extract the preview_url, other options here
-        ;; are url and remote_url
         (mapconcat
-         (lambda (image)
+         (lambda (media-preview)
            (concat "Media_Link:: "
                    (mastodon-tl--set-face
-                    (cdr (assoc 'preview_url image))
+                    (cdr (assoc 'preview_url media-preview))
                     'mouse-face 'nil)))
-         media "\n")
-      ;; Otherwise return an empty string
-      "")))
+         media "\n")))
 
 (defun mastodon-tl--content (toot)
   "Retrieve text content from TOOT."
