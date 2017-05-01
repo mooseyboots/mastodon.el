@@ -57,8 +57,8 @@
   "Prompts for tag and opens its timeline."
   (interactive)
   (let* ((word (or (word-at-point) ""))
-	 (input (read-string (format "Tag(%s): " word)))
-	 (tag (if (equal input "") word input)))
+         (input (read-string (format "Tag(%s): " word)))
+         (tag (if (equal input "") word input)))
     (print tag)
     (mastodon-tl--get (concat "tag/" tag))))
 
@@ -177,16 +177,19 @@ also render the html"
                                   "\n ---------------" (concat string cw))
       "")))
 
-
 (defun mastodon-tl--media (toot)
-  "Retreive a media attachment link if one exists."
+  "Retreive a media attachment link for TOOT if one exists."
   (let ((media (mastodon-tl--field 'media_attachments toot)))
     (if (> (length media) 0 )
         ;; Extract the preview_url, other options here
         ;; are url and remote_url
-        (let ((link (cdr(assoc 'preview_url (elt media 0)))))
-          (concat "Media_Link:: "
-                  (mastodon-tl--set-face link 'mouse-face 'nil)))
+        (mapconcat
+         (lambda (image)
+           (concat "Media_Link:: "
+                   (mastodon-tl--set-face
+                    (cdr (assoc 'preview_url image))
+                    'mouse-face 'nil)))
+         media "\n")
       ;; Otherwise return an empty string
       "")))
 
