@@ -42,23 +42,24 @@
   "Takes a URL and return an image."
   (let ((buffer (url-retrieve-synchronously url)))
     (unwind-protect
-	 (let ((data (with-current-buffer buffer
-		       (goto-char (point-min))
-		       (search-forward "\n\n")
-		       (buffer-substring (point) (point-max)))))
-	   (insert "\n")
-	   (insert-image (create-image data nil t)))
+        (let ((data (with-current-buffer buffer
+                      (goto-char (point-min))
+                      (search-forward "\n\n")
+                      (buffer-substring (point) (point-max)))))
+          (insert "\n")
+          (insert-image (create-image data nil t)))
       (kill-buffer buffer))))
 
-(defun mastodon-media--select-media-line (start)
-  "Returns the list of line coordinates of a line that
+(defun mastodon-media--select-next-media-line ()
+  "Find coordinates of a line that contains `Media_Links::'
 
-contains `Media_Links::'."
-  (when start (goto-char (point-min)))
-  (search-forward-regexp "Media_Link::" nil nil nil)
-  (let ((start (progn (move-beginning-of-line '()) (point)))
-	(end (progn (move-end-of-line '()) (point))))
-    (list start end)))
+Returns the cons of (`start' . `end') points of that line or nil no
+more media links were found."
+  (let ((foundp (search-forward-regexp "Media_Link::" nil t)))
+    (when foundp
+      (let ((start (progn (move-beginning-of-line '()) (point)))
+            (end (progn (move-end-of-line '()) (point))))
+        (cons start end)))))
 
 (defun mastodon-media--valid-link-p (link)
   "Checks to make sure that the missing string has
@@ -67,38 +68,30 @@ not been returned."
   (let((missing "/files/small/missing.png"))
     (not(equal link missing))))
 
-(defun mastodon-media--line-to-link (line)
-    "Removes the identifier from the media line leaving
+(defun mastodon-media--line-to-link (line-points)
+  "Returns the url of the media link given at the given point.
 
-just a url."
+`LINE-POINTS' is a cons of (`start' . `end') positions of the line with
+the `Media_Link:: <url>' text."
   (replace-regexp-in-string "Media_Link:: " ""
-			    (buffer-substring
-			     (car line)
-			     (cadr line))))
+                            (buffer-substring
+                             (car line-points)
+                             (cdr line-points))))
 
 (defun mastodon-media--delete-line (line)
   "Deletes the current media line"
-  (delete-region (car line) (cadr line)))
-
-(defun mastodon-media--inline-images-aux (first)
-  "Recursivly go through all of the `Media_Links:' in the buffer.
-
-Argument FIRST a boolean if t set the point to (point-min) before proceding."
-  (let* ((line (mastodon-media--select-media-line first))
-	(link (mastodon-media--line-to-link line)))
-    (when (mastodon-media--valid-link-p link)
-      (progn (mastodon-media--image-from-url link)
-	     (mastodon-media--delete-line line))))
-  (mastodon-media--inline-images-aux '()))
+  (delete-region (car line) (cdr line)))
 
 (defun mastodon-media--inline-images ()
-  "A wrapper for the `mastodon-media--inline-images-aux' that catches
-
-errors thrown by reaching the end of the buffer."
+  "Find all `Media_Links:' in the buffer replacing them with the referenced image."
   (interactive)
-  (condition-case nil
-      (progn (mastodon-media--inline-images-aux t))
-  (error nil)))
+  (goto-char (point-min))
+  (let (line-coordinates)
+    (while (setq line-coordinates (mastodon-media--select-next-media-line))
+      (let ((link (mastodon-media--line-to-link line-coordinates)))
+        (when (mastodon-media--valid-link-p link)
+          (mastodon-media--image-from-url link)
+          (mastodon-media--delete-line line-coordinates))))))
 
 (provide 'mastodon-media)
 ;;; mastodon-media.el ends here
