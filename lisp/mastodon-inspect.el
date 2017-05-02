@@ -55,5 +55,29 @@
            "*")
   (mastodon-tl--property 'toot-json)))
 
+(defun mastodon-inspect--download-single-toot (toot-id)
+  "Download the toot/status represented by TOOT-ID."
+  (mastodon-http--get-json
+   (mastodon-http--api (concat "statuses/" toot-id))))
+
+(defun mastodon-inspect--view-single-toot (toot-id)
+  "View the toot/status represented by TOOT-ID."
+  (interactive "s Toot ID: ")
+  (let ((buffer (get-buffer-create(concat "*mastodon-status-" toot-id "*"))))
+    (with-current-buffer buffer
+      (let ((toot (mastodon-inspect--download-single-toot toot-id )))
+        (mastodon-tl--toot toot)
+            (replace-regexp "\n\n\n | " "\n | " nil (point-min) (point-max))
+            (mastodon-media--inline-images)))
+    (switch-to-buffer-other-window buffer)
+    (mastodon-mode)))
+
+(defun mastodon-inspect--view-single-toot-source (toot-id)
+  "View the ess source of a toot/status represented by TOOT-ID."
+  (interactive "s Toot ID: ")
+  (mastodon-inspect--dump-json-in-buffer
+   (concat "*mastodon-status-raw-" toot-id "*")
+   (mastodon-inspect--download-single-toot toot-id)))
+
 (provide 'mastodon-inspect)
 ;;; mastodon-inspect.el ends here
