@@ -151,7 +151,7 @@ Return value from boosted content if available."
      'toot-json    toot)))
 
 (defun mastodon-tl--set-face (string face render)
-  "Set the face of a string. If `render' is not 'nil
+  "Set the face of a string. If `render' is not nil
 also render the html"
   (propertize
    (with-temp-buffer
@@ -169,7 +169,7 @@ also render the html"
          (message (concat "\n ---------------"
                           "\n Content Warning"
                           "\n ---------------\n"))
-         (cw (mastodon-tl--set-face message 'success 'nil)))
+         (cw (mastodon-tl--set-face message 'success nil)))
     (if (> (length string) 0)
         (replace-regexp-in-string "\n\n\n ---------------"
                                   "\n ---------------" (concat string cw))
@@ -183,7 +183,7 @@ also render the html"
            (concat "Media_Link:: "
                    (mastodon-tl--set-face
                     (cdr (assoc 'preview_url media-preview))
-                    'mouse-face 'nil)))
+                    'mouse-face nil)))
          media "\n")))
 
 (defun mastodon-tl--content (toot)
