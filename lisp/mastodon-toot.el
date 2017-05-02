@@ -43,10 +43,10 @@
 
 Remove MARKER if RM is non-nil."
   (let ((inhibit-read-only t)
-        (bol (progn (move-beginning-of-line '()) (point)))
-        (eol (progn (move-end-of-line '()) (point))))
-    (when rm (replace-regexp (format "(%s) " marker) "" '() bol eol))
-    (move-beginning-of-line '())
+        (bol (progn (move-beginning-of-line nil) (point)))
+        (eol (progn (move-end-of-line nil) (point))))
+    (when rm (replace-regexp (format "(%s) " marker) "" nil bol eol))
+    (move-beginning-of-line nil)
     (mastodon-tl--goto-next-toot)
     (unless rm
       (insert (format "(%s) "
