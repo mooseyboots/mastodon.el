@@ -251,9 +251,8 @@ Move forward (down) the timeline unless BACKWARD is non-nil."
 
 (defun mastodon-tl--oldest-id ()
   "Return toot-id from the bottom of the buffer."
-  (progn
-    (goto-char (point-max))
-    (mastodon-tl--property 'toot-id t)))
+  (goto-char (point-max))
+  (mastodon-tl--property 'toot-id t))
 
 (defun mastodon-tl--thread ()
   "Open thread buffer for toot under `point'."

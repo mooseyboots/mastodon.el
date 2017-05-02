@@ -67,10 +67,9 @@
 
 Generate token and set `mastodon-auth--token' if nil."
   (or mastodon-auth--token
-      (progn
-        (let* ((json (mastodon-auth--get-token))
-               (token (plist-get json :access_token)))
-          (setq mastodon-auth--token token)))))
+      (let* ((json (mastodon-auth--get-token))
+             (token (plist-get json :access_token)))
+        (setq mastodon-auth--token token))))
 
 (provide 'mastodon-auth)
 ;;; mastodon-auth.el ends here

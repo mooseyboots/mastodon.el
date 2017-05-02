@@ -121,11 +121,10 @@ Set `mastodon-toot--content-warning' to nil."
                  ("sensitive" . ,(when mastodon-toot--content-warning
                                    (symbol-name t)))
                  ("spoiler_text" . ,spoiler))))
-    (progn
-      (mastodon-toot--kill)
-      (let ((response (mastodon-http--post endpoint args nil)))
-        (mastodon-http--triage response
-                               (lambda () (message "Toot toot!")))))))
+    (mastodon-toot--kill)
+    (let ((response (mastodon-http--post endpoint args nil)))
+      (mastodon-http--triage response
+                             (lambda () (message "Toot toot!"))))))
 
 (defun mastodon-toot--reply ()
   "Reply to toot at `point'."
@@ -151,9 +150,8 @@ Set `mastodon-toot--content-warning' to nil."
          (bindings (remove nil (mapcar (lambda (i) (if (listp i) i))
                                        (cadr binds)))))
     (mapcar (lambda (b)
-	      (progn
-		      (setf (car b) (vector prefix (car b)))
-		      b))
+              (setf (car b) (vector prefix (car b)))
+              b)
 	    bindings)))
 
 (defun mastodon-toot--format-kbind-command (cmd)
