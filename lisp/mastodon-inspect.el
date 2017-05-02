@@ -39,12 +39,12 @@
 (defun mastodon-inspect--dump-json-in-buffer (name json)
   "Buffer NAME is opened and JSON in printed into it."
   (switch-to-buffer-other-window name)
-  (progn (setf print-level nil
-            print-length nil)
-         (insert (pp json t))
-         (goto-char 1)
-         (emacs-lisp-mode)
-         (message "success")))
+  (setf print-level nil
+        print-length nil)
+  (insert (pp json t))
+  (goto-char 1)
+  (emacs-lisp-mode)
+  (message "success"))
 
 (defun mastodon-inspect--toot ()
   "Find next toot and dump its meta data into new buffer."
