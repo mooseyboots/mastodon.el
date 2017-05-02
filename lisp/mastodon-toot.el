@@ -147,9 +147,9 @@ Set `mastodon-toot--content-warning' to nil."
 (defun mastodon-toot--get-mode-kbinds ()
   "Get a list of the keybindings in the mastodon-toot-mode."
   (let* ((binds (copy-tree mastodon-toot-mode-map))
-	       (prefix (car (cadr binds)))
-	       (bindings (remove nil (mapcar (lambda (i) (if (listp i) i))
-					                               (cadr binds)))))
+         (prefix (car (cadr binds)))
+         (bindings (remove nil (mapcar (lambda (i) (if (listp i) i))
+                                       (cadr binds)))))
     (mapcar (lambda (b)
 	      (progn
 		      (setf (car b) (vector prefix (car b)))

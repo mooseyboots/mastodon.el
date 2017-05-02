@@ -65,8 +65,8 @@ more media links were found."
   "Checks to make sure that the missing string has
 
 not been returned."
-  (let((missing "/files/small/missing.png"))
-    (not(equal link missing))))
+  (let ((missing "/files/small/missing.png"))
+    (not (equal link missing))))
 
 (defun mastodon-media--line-to-link (line-points)
   "Returns the url of the media link given at the given point.
