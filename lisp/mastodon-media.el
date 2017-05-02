@@ -57,8 +57,8 @@ Returns the cons of (`start' . `end') points of that line or nil no
 more media links were found."
   (let ((foundp (search-forward-regexp "Media_Link::" nil t)))
     (when foundp
-      (let ((start (progn (move-beginning-of-line '()) (point)))
-            (end (progn (move-end-of-line '()) (point))))
+      (let ((start (progn (move-beginning-of-line nil) (point)))
+            (end (progn (move-end-of-line nil) (point))))
         (cons start end)))))
 
 (defun mastodon-media--valid-link-p (link)
