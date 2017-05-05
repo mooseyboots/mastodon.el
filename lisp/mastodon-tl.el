@@ -57,8 +57,8 @@
   "Prompts for tag and opens its timeline."
   (interactive)
   (let* ((word (or (word-at-point) ""))
-	 (input (read-string (format "Tag(%s): " word)))
-	 (tag (if (equal input "") word input)))
+         (input (read-string (format "Tag(%s): " word)))
+         (tag (if (equal input "") word input)))
     (print tag)
     (mastodon-tl--get (concat "tag/" tag))))
 
@@ -160,8 +160,7 @@ also render the html"
    (with-temp-buffer
      (insert (decode-coding-string string 'utf-8))
      (when render
-       (progn
-         (customize-set-value 'shr-use-fonts nil)
+       (let ((shr-use-fonts nil))
          (shr-render-region (point-min) (point-max))))
      (buffer-string))
    'face face))
@@ -197,8 +196,8 @@ also render the html"
   (let ((content (mastodon-tl--field 'content toot)))
     (propertize (with-temp-buffer
                   (insert (decode-coding-string content 'utf-8))
-                  (customize-set-value 'shr-use-fonts nil)
-                  (shr-render-region (point-min) (point-max))
+                  (let ((shr-use-fonts nil))
+                    (shr-render-region (point-min) (point-max)))
                   (buffer-string))
                 'face 'default)))
 
