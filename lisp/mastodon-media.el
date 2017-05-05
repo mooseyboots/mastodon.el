@@ -43,25 +43,51 @@
   (image-type-available-p 'imagemagick)
   "A boolean value stating whether to show avatars in timelines.")
 
-(defun mastodon-media--image-from-url (url media-type)
+(defun mastodon-media--process-image-response (status-plist marker image-options region-length image-url)
+  "Callback function processing the url retrieve response for URL.
+
+STATUS-PLIST is the usual plist of status events as per `url-retrieve'.
+IMAGE-OPTIONS are the precomputed options to apply to the image.
+MARKER is the marker to where the response should be visible.
+REGION-LENGTH is the length of the region that should be replaced with the image.
+IMAGE-URL is the URL that was retrieved.
+"
+  (let ((url-buffer (current-buffer))
+        (is-error-response-p (eq :error (car status-plist))))
+    (unwind-protect
+        (let* ((data (unless is-error-response-p
+                       (goto-char (point-min))
+                       (search-forward "\n\n")
+                       (buffer-substring (point) (point-max))))
+               (image (when data
+                        (apply #'create-image data (when image-options 'imagemagick)
+                               t image-options))))
+          (switch-to-buffer (marker-buffer marker))
+          ;; Save narrowing in our buffer
+          (let ((inhibit-read-only t))
+            (save-restriction
+              (widen)
+              (put-text-property marker (+ marker region-length) 'media-state 'loaded)
+              (put-text-property marker (+ marker region-length)
+                                 'display (or
+                                           image
+                                           (format "Failed to load %s" image-url)))
+              ;; We are done with the marker; release it:
+              (set-marker marker nil)))
+          (kill-buffer url-buffer)))))
+
+(defun mastodon-media--load-image-from-url (url media-type start region-length)
   "Takes a URL and MEDIA-TYPE and return an image.
 
 MEDIA-TYPE is a symbol and either 'avatar or 'media-link."
-  ;; TODO: Cache the avatars 
-  (let* ((url-automatic-caching t)
-         (buffer (url-retrieve-synchronously url))
-         (image-options (when (image-type-available-p 'imagemagick)
-                          (case media-type
-                            ('avatar `(:height ,mastodon-avatar-height))
-                            ('media-link `(:max-height ,mastodon-preview-max-height))))))
-    (unwind-protect
-        (let ((data (with-current-buffer buffer
-                      (goto-char (point-min))
-                      (search-forward "\n\n")
-                      (buffer-substring (point) (point-max)))))
-          (apply #'create-image data (when image-options 'imagemagick)
-                 t image-options))
-      (kill-buffer buffer))))
+  ;; TODO: Cache the avatars
+  (let ((image-options (when (image-type-available-p 'imagemagick)
+                         (pcase media-type
+                           ('avatar `(:height ,mastodon-avatar-height))
+                           ('media-link `(:max-height ,mastodon-preview-max-height))))))
+    (url-retrieve url
+                  #'mastodon-media--process-image-response
+                  (list (copy-marker start) image-options region-length url))))
 
 (defun mastodon-media--select-next-media-line ()
   "Find coordinates of the next media to load.
@@ -77,7 +103,7 @@ found."
       ;; do nothing - the loop will proceed
       )
     (when next-pos
-      (case (get-text-property next-pos 'media-type)
+      (pcase (get-text-property next-pos 'media-type)
         ;; Avatars are just one character in the buffer
         ('avatar (list next-pos (+ next-pos 1) 'avatar))
         ;; Media links are 5 character ("[img]")
@@ -101,16 +127,12 @@ not been returned."
              (end (cadr line-details))
              (media-type (caddr line-details))
              (image-url (get-text-property start 'media-url)))
-       
         (if (not (mastodon-media--valid-link-p image-url))
+            ;; mark it at least as not needing loading any more
             (put-text-property start end 'media-state 'invalid-url)
+          ;; proceed to load this image asynchronously
           (put-text-property start end 'media-state 'loading)
-          (let ((image (mastodon-media--image-from-url image-url media-type)))
-            (put-text-property start end 'media-state 'loaded)
-            (put-text-property start end
-                               'display (or
-                                         image
-                                         (format "Failed to load %s" image-url)))))))))
+          (mastodon-media--load-image-from-url image-url media-type start (- end start)))))))
 
 (provide 'mastodon-media)
 ;;; mastodon-media.el ends here
