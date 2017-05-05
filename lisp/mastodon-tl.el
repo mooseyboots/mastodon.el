@@ -103,11 +103,8 @@ Optionally start from POS."
 (defun mastodon-tl--byline-author (toot)
   "Propertize author of TOOT."
   (let* ((account (cdr (assoc 'account toot)))
-         ;; It may not be necissary to decode the handle
-         (handle (decode-coding-string
-                  (cdr (assoc 'acct account))'utf-8))
-         (name (decode-coding-string
-                (cdr (assoc 'display_name account)) 'utf-8)))
+         (handle (cdr (assoc 'acct account)))
+         (name (cdr (assoc 'display_name account))))
     (concat
      (propertize name 'face 'warning)
      " (@"
@@ -158,7 +155,7 @@ Return value from boosted content if available."
 also render the html"
   (propertize
    (with-temp-buffer
-     (insert (decode-coding-string string 'utf-8))
+     (insert string)
      (when render
        (let ((shr-use-fonts nil))
          (shr-render-region (point-min) (point-max))))
@@ -194,7 +191,7 @@ also render the html"
   (let ((content (mastodon-tl--field 'content toot))
         (shr-use-fonts nil))
     (propertize (with-temp-buffer
-                  (insert (decode-coding-string content 'utf-8))
+                  (insert content)
                   (shr-render-region (point-min) (point-max))
                   (buffer-string))
                 'face 'default)))
