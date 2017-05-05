@@ -50,12 +50,12 @@
           (insert-image (create-image data nil t)))
       (kill-buffer buffer))))
 
-(defun mastodon-media--select-next-media-line ()
+(defun mastodon-media--select-next-media-line (&optional end)
   "Find coordinates of a line that contains `Media_Links::'
 
 Returns the cons of (`start' . `end') points of that line or nil no
 more media links were found."
-  (let ((foundp (search-forward-regexp "Media_Link::" nil t)))
+  (let ((foundp (search-forward-regexp "Media_Link::" end t)))
     (when foundp
       (let ((start (progn (move-beginning-of-line '()) (point)))
             (end (progn (move-end-of-line '()) (point))))
