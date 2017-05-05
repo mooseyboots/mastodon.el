@@ -193,11 +193,11 @@ also render the html"
 
 (defun mastodon-tl--content (toot)
   "Retrieve text content from TOOT."
-  (let ((content (mastodon-tl--field 'content toot)))
+  (let ((content (mastodon-tl--field 'content toot))
+        (shr-use-fonts nil))
     (propertize (with-temp-buffer
                   (insert (decode-coding-string content 'utf-8))
-                  (let ((shr-use-fonts nil))
-                    (shr-render-region (point-min) (point-max)))
+                  (shr-render-region (point-min) (point-max))
                   (buffer-string))
                 'face 'default)))
 
