@@ -1,9 +1,10 @@
-;;; mastodon-toot.el --- Minor mode for sending Mastodon toots
+;;; mastodon-toot.el --- Minor mode for sending Mastodon toots  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
 ;; Version: 0.6.2
 ;; Homepage: https://github.com/jdenen/mastodon.el
+;; Package-Requires: ((emacs "24.4"))
 
 ;; This file is not part of GNU Emacs.
 
