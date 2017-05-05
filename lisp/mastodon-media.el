@@ -51,10 +51,12 @@
       (kill-buffer buffer))))
 
 (defun mastodon-media--select-next-media-line (&optional end)
-  "Find coordinates of a line that contains `Media_Links::'
+  "Find coordinates of a line that contains `Media_Links::'.
 
-Returns the cons of (`start' . `end') points of that line or nil no
-more media links were found."
+END is an optional parameter that can be used to set the maximum
+bound durring `search-forward-regexp'. Returns the cons of 
+(`start' . `end') points of that line or nil no more media links 
+were found."
   (let ((foundp (search-forward-regexp "Media_Link::" end t)))
     (when foundp
       (let ((start (progn (move-beginning-of-line '()) (point)))
