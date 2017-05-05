@@ -1,4 +1,4 @@
-;;; mastodon-auth.el --- Auth functions for mastodon.el
+;;; mastodon-auth.el --- Auth functions for mastodon.el  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>

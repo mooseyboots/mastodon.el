@@ -1,4 +1,4 @@
-;;; mastodon-toot.el --- Minor mode for sending Mastodon toots
+;;; mastodon-toot.el --- Minor mode for sending Mastodon toots  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>

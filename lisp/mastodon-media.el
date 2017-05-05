@@ -1,4 +1,4 @@
-;;; mastodon-media.el --- Functions for inlining Mastodon media
+;;; mastodon-media.el --- Functions for inlining Mastodon media  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>

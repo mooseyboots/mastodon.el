@@ -1,4 +1,4 @@
-;;; mastodon-tl.el --- HTTP request/response functions for mastodon.el
+;;; mastodon-tl.el --- HTTP request/response functions for mastodon.el  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
