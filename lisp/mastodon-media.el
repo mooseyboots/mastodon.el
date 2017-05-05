@@ -1,4 +1,4 @@
-;;; mastodon-media.el --- Functions for inlining Mastodon media
+;;; mastodon-media.el --- Functions for inlining Mastodon media  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
@@ -32,66 +32,85 @@
 
 ;;; Code:
 (require 'mastodon-http  nil t)
+(require 'mastodon)
 
 (defgroup mastodon-media nil
   "Inline Mastadon media."
   :prefix "mastodon-media-"
   :group 'mastodon)
 
-(defun mastodon-media--image-from-url (url)
-  "Takes a URL and return an image."
-  (let ((buffer (url-retrieve-synchronously url)))
+(defvar mastodon-media-show-avatars-p
+  (image-type-available-p 'imagemagick)
+  "A boolean value stating whether to show avatars in timelines.")
+
+(defun mastodon-media--image-from-url (url media-type)
+  "Takes a URL and MEDIA-TYPE and return an image.
+
+MEDIA-TYPE is a symbol and either 'avatar or 'media-link."
+  ;; TODO: Cache the avatars 
+  (let* ((url-automatic-caching t)
+         (buffer (url-retrieve-synchronously url))
+         (image-options (when (image-type-available-p 'imagemagick)
+                          (case media-type
+                            ('avatar `(:height ,mastodon-avatar-height))
+                            ('media-link `(:max-height ,mastodon-preview-max-height))))))
     (unwind-protect
         (let ((data (with-current-buffer buffer
                       (goto-char (point-min))
                       (search-forward "\n\n")
                       (buffer-substring (point) (point-max)))))
-          (insert "\n")
-          (insert-image (create-image data nil t)))
+          (apply #'create-image data (when image-options 'imagemagick)
+                 t image-options))
       (kill-buffer buffer))))
 
 (defun mastodon-media--select-next-media-line ()
-  "Find coordinates of a line that contains `Media_Links::'
+  "Find coordinates of the next media to load.
 
-Returns the cons of (`start' . `end') points of that line or nil no
-more media links were found."
-  (let ((foundp (search-forward-regexp "Media_Link::" nil t)))
-    (when foundp
-      (let ((start (progn (move-beginning-of-line nil) (point)))
-            (end (progn (move-end-of-line nil) (point))))
-        (cons start end)))))
+Returns the list of (`start' . `end', `media-symbol') points of
+that line and string found or nil no more media links were
+found."
+  (let ((next-pos (point)))
+    (while (and (setq next-pos (next-single-property-change next-pos 'media-state))
+                (or (not (eq 'needs-loading (get-text-property next-pos 'media-state)))
+                    (null (get-text-property next-pos 'media-url))
+                    (null (get-text-property next-pos 'media-type))))
+      ;; do nothing - the loop will proceed
+      )
+    (when next-pos
+      (case (get-text-property next-pos 'media-type)
+        ;; Avatars are just one character in the buffer
+        ('avatar (list next-pos (+ next-pos 1) 'avatar))
+        ;; Media links are 5 character ("[img]")
+        ('media-link (list next-pos (+ next-pos 5) 'media-link))))))
 
 (defun mastodon-media--valid-link-p (link)
   "Checks to make sure that the missing string has
 
 not been returned."
   (let ((missing "/files/small/missing.png"))
-    (not (equal link missing))))
-
-(defun mastodon-media--line-to-link (line-points)
-  "Returns the url of the media link given at the given point.
-
-`LINE-POINTS' is a cons of (`start' . `end') positions of the line with
-the `Media_Link:: <url>' text."
-  (replace-regexp-in-string "Media_Link:: " ""
-                            (buffer-substring
-                             (car line-points)
-                             (cdr line-points))))
-
-(defun mastodon-media--delete-line (line)
-  "Deletes the current media line"
-  (delete-region (car line) (cdr line)))
+    (and link
+         (not (equal link missing)))))
 
 (defun mastodon-media--inline-images ()
   "Find all `Media_Links:' in the buffer replacing them with the referenced image."
   (interactive)
   (goto-char (point-min))
-  (let (line-coordinates)
-    (while (setq line-coordinates (mastodon-media--select-next-media-line))
-      (let ((link (mastodon-media--line-to-link line-coordinates)))
-        (when (mastodon-media--valid-link-p link)
-          (mastodon-media--image-from-url link)
-          (mastodon-media--delete-line line-coordinates))))))
+  (let (line-details)
+    (while (setq line-details (mastodon-media--select-next-media-line))
+      (let* ((start (car line-details))
+             (end (cadr line-details))
+             (media-type (caddr line-details))
+             (image-url (get-text-property start 'media-url)))
+       
+        (if (not (mastodon-media--valid-link-p image-url))
+            (put-text-property start end 'media-state 'invalid-url)
+          (put-text-property start end 'media-state 'loading)
+          (let ((image (mastodon-media--image-from-url image-url media-type)))
+            (put-text-property start end 'media-state 'loaded)
+            (put-text-property start end
+                               'display (or
+                                         image
+                                         (format "Failed to load %s" image-url)))))))))
 
 (provide 'mastodon-media)
 ;;; mastodon-media.el ends here
