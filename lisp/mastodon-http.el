@@ -104,8 +104,7 @@ Pass response buffer to CALLBACK function."
          (with-current-buffer (mastodon-http--get url)
            (goto-char (point-min))
            (re-search-forward "^$" nil 'move)
-           (let ((json-string (buffer-substring-no-properties (point) (point-max))))
-             (json-read-from-string json-string)))))
+           (json-read))))
     json-vector))
 
 (provide 'mastodon-http)

@@ -58,9 +58,8 @@
     (re-search-forward "^$" nil 'move)
     (let ((json-object-type 'plist)
           (json-key-type 'keyword)
-          (json-array-type 'vector)
-          (json-string (buffer-substring-no-properties (point) (point-max))))
-      (json-read-from-string json-string))))
+          (json-array-type 'vector))
+      (json-read))))
 
 (defun mastodon-auth--access-token ()
   "Return `mastodon-auth--token'.
