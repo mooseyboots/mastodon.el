@@ -104,8 +104,18 @@ Optionally start from POS."
   "Propertize author of TOOT."
   (let* ((account (cdr (assoc 'account toot)))
          (handle (cdr (assoc 'acct account)))
-         (name (cdr (assoc 'display_name account))))
+         (name (cdr (assoc 'display_name account)))
+         (avatar-url (cdr (assoc 'avatar account))))
     (concat
+     (when mastodon-media-show-avatars-p
+       ;; We use just an empty space as the textual representation.
+       ;; This is what a user will see on a non-graphical display
+       ;; where not showing an avatar at all is preferable.
+       (concat (propertize " "
+                           'media-url avatar-url
+                           'media-state 'needs-loading
+                           'media-type 'avatar)
+               " "))     
      (propertize name 'face 'warning)
      " (@"
      handle
@@ -177,14 +187,16 @@ also render the html"
 
 (defun mastodon-tl--media (toot)
   "Retrieve a media attachment link for TOOT if one exists."
-  (let ((media (mastodon-tl--field 'media_attachments toot)))
-        (mapconcat
-         (lambda (media-preview)
-           (concat "Media_Link:: "
-                   (mastodon-tl--set-face
-                    (cdr (assoc 'preview_url media-preview))
-                    'mouse-face nil)))
-         media "\n")))
+  (let ((media-attachements (mastodon-tl--field 'media_attachments toot)))
+    (mapconcat
+     (lambda (media-attachement)
+       (let ((preview-url (cdr (assoc 'preview_url media-attachement))))
+         (concat (propertize "[img]"
+                             'media-url preview-url
+                             'media-state 'needs-loading
+                             'media-type 'media-link)
+                 " ")))
+     media-attachements "")))
 
 (defun mastodon-tl--content (toot)
   "Retrieve text content from TOOT."
