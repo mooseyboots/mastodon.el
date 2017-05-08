@@ -108,14 +108,7 @@ Optionally start from POS."
          (avatar-url (cdr (assoc 'avatar account))))
     (concat
      (when mastodon-media-show-avatars-p
-       ;; We use just an empty space as the textual representation.
-       ;; This is what a user will see on a non-graphical display
-       ;; where not showing an avatar at all is preferable.
-       (concat (propertize " "
-                           'media-url avatar-url
-                           'media-state 'needs-loading
-                           'media-type 'avatar)
-               " "))     
+       (mastodon-media--get-avatar-rendering avatar-url))
      (propertize name 'face 'warning)
      " (@"
      handle
@@ -191,11 +184,7 @@ also render the html"
     (mapconcat
      (lambda (media-attachement)
        (let ((preview-url (cdr (assoc 'preview_url media-attachement))))
-         (concat (propertize "[img]"
-                             'media-url preview-url
-                             'media-state 'needs-loading
-                             'media-type 'media-link)
-                 " ")))
+         (mastodon-media--get-media-link-rendering preview-url)))
      media-attachements "")))
 
 (defun mastodon-tl--content (toot)
