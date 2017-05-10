@@ -1,4 +1,4 @@
-;;; mastodon-media.el --- Functions for inlining Mastodon media  -*- lexical-binding: t -*-
+;;; mastodon-media.el --- Functions for inlining Mastodon media
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
@@ -161,9 +161,11 @@ IMAGE-URL is the URL that was retrieved.
 MEDIA-TYPE is a symbol and either 'avatar or 'media-link."
   ;; TODO: Cache the avatars
   (let ((image-options (when (image-type-available-p 'imagemagick)
-                         (pcase media-type
-                           ('avatar `(:height ,mastodon-avatar-height))
-                           ('media-link `(:max-height ,mastodon-preview-max-height))))))
+                         (cond
+                          ((eq media-type 'avatar)
+                           `(:height ,mastodon-avatar-height))
+                          ((eq media-type 'media-link)
+                           `(:max-height ,mastodon-preview-max-height))))))
     (url-retrieve url
                   #'mastodon-media--process-image-response
                   (list (copy-marker start) image-options region-length url))))
@@ -182,11 +184,14 @@ found."
       ;; do nothing - the loop will proceed
       )
     (when next-pos
-      (pcase (get-text-property next-pos 'media-type)
-        ;; Avatars are just one character in the buffer
-        ('avatar (list next-pos (+ next-pos 1) 'avatar))
+      (let ((media-type (get-text-property next-pos 'media-type)))
+        (cond
+         ;; Avatars are just one character in the buffer
+         ((eq media-type 'avatar)
+          (list next-pos (+ next-pos 1) 'avatar))
         ;; Media links are 5 character ("[img]")
-        ('media-link (list next-pos (+ next-pos 5) 'media-link))))))
+         ((eq media-type 'media-link)
+          (list next-pos (+ next-pos 5) 'media-link)))))))
 
 (defun mastodon-media--valid-link-p (link)
   "Checks to make sure that the missing string has
@@ -204,7 +209,7 @@ not been returned."
     (while (setq line-details (mastodon-media--select-next-media-line))
       (let* ((start (car line-details))
              (end (cadr line-details))
-             (media-type (caddr line-details))
+             (media-type (cadr (cdr line-details)))
              (image-url (get-text-property start 'media-url)))
         (if (not (mastodon-media--valid-link-p image-url))
             ;; mark it at least as not needing loading any more
