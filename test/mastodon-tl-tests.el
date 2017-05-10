@@ -122,6 +122,7 @@
   (let ((mastodon-media-show-avatars-p t)
         (timestamp (cdr (assoc 'created_at mastodon-tl-test-base-toot))))
     (with-mock
+      (stub create-image => '(image "fake data"))
       (mock (date-to-time timestamp) => '(22782 21551))
       (mock (format-time-string mastodon-toot-timestamp-format '(22782 21551)) => "2999-99-99 00:11:22")
 
@@ -204,6 +205,7 @@
     (with-mock
       ;; We don't expect to use the toot's timestamp but the timestamp of the
       ;; reblogged toot:
+      (stub create-image => '(image "fake data"))
       (mock (date-to-time timestamp) => '(1 2))
       (mock (format-time-string mastodon-toot-timestamp-format '(1 2)) => "reblogging time")
       (mock (date-to-time original-timestamp) => '(3 4))
