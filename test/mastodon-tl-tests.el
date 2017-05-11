@@ -101,7 +101,7 @@
   (let ((mastodon-instance-url "https://instance.url"))
     (with-mock
       (mock (mastodon-http--get-json "https://instance.url/api/v1/timelines/foo?max_id=12345"))
-      (mastodon-tl--more-json "foo" 12345))))
+      (mastodon-tl--more-json "timelines/foo" 12345))))
 
 (ert-deftest mastodon-tl--byline-regular ()
   "Should format the regular toot correctly."
@@ -236,3 +236,47 @@
  | (B) (F) Account 42 (@acct42@example.space) Boosted Account 43 (@acct43@example.space) original time
   ------------")))))
 
+(ert-deftest mastodon-tl--endpoint-notifications ()
+  "Should return the appropriate endpoint string and update function format
+
+notifications."
+  (should
+   (and
+    (equal
+     'mastodon-notifications--notifications
+     (plist-get  (mastodon-tl--get-endpoint "notifications")
+                 'update-function))
+    (equal
+     "notifications"
+     (plist-get  (mastodon-tl--get-endpoint "notifications")
+                 'endpoint)))))
+
+(ert-deftest mastodon-tl--endpoint-tag ()
+  "Should return the appropriate endpoint string and update function for
+
+tags."
+  (should
+   (and
+    (equal
+     'mastodon-tl--timeline
+     (plist-get  (mastodon-tl--get-endpoint "tag/test")
+                 'update-function))
+    (equal
+     "timelines/tag/test"
+     (plist-get  (mastodon-tl--get-endpoint "tag/test")
+                 'endpoint)))))
+
+(ert-deftest mastodon-tl--endpoint-local ()
+    "Should return the appropriate endpoint string and update function for
+
+the local timeline."
+  (should
+   (and
+    (equal
+     'mastodon-tl--timeline
+     (plist-get  (mastodon-tl--get-endpoint "public?local=true")
+                 'update-function))
+    (equal
+     "timelines/public?local=true"
+     (plist-get  (mastodon-tl--get-endpoint "public?local=true")
+                 'endpoint)))))
