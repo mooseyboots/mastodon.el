@@ -39,12 +39,13 @@
   "Maximum number of characters allowed in a toot."
   :type 'number)
 
-(defun mastodon-toot--edit-info (&optional docs)
-  "Take an optional DOCS string and create an alist representing data about the edit buffer."
+(defun mastodon-toot--edit-info (&optional docs user)
+  "Take an optional DOCS string and USER handle and create an alist representing data about the edit buffer."
   (let* ((d (if (stringp docs) docs ""))
+	 (user-len (if user (length user) 0))
 	 (s (+ 1 (length d)))
-	 (e (+ 1 s))
-	 (c 0))
+	 (e (+ 1 s user-len))
+	 (c user-len))
     `((docs . ,d)
       (start . ,s)
       (end . ,e)
@@ -55,6 +56,15 @@
 
 (defvar-local mastodon-toot--edit-data nil
   "Buffer-local variable to store data about the toot being composed.")
+
+(if (not #'alist-get)
+    (defun mastodon-toot--alist-get (&rest args)
+      "Wrapper around ALIST-GET that dispatches ARGS to ALIST-GET"
+      (apply #'alist-get args))
+  (defun mastodon-toot--alist-get (key alist &optional default)
+    "Simplified alist-get implementation that finds the value associated with KEY in ALIST and returns DEFAULT if KEY cannot be found."
+    (let ((x (assq key alist)))
+      (if x (cdr x) default))))
 
 (defun mastodon-toot--action-success (marker &optional rm)
   "Insert MARKER with 'success face in byline.
@@ -120,8 +130,8 @@ Set `mastodon-toot--content-warning' to nil."
 
 (defun mastodon-toot--get-from-buffer ()
   "Use the data stored in MASTODON-TOOT--EDIT-DATA and the compose buffer to extract the toot text."
-  (let ((toot-start (alist-get 'start mastodon-toot--edit-data))
-	(toot-end (alist-get 'end mastodon-toot--edit-data)))
+  (let ((toot-start (cdr (assq 'start mastodon-toot--edit-data)))
+	(toot-end (cdr (assq 'end mastodon-toot--edit-data))))
     (buffer-substring toot-start toot-end)))
 
 (defun mastodon-toot--send ()
@@ -220,27 +230,27 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
     (insert (format "@%s " reply-to-user))
     (setq-local mastodon-toot--reply-to-id reply-to-id)))
 
-(defun mastodon-toot--init-data ()
-  "Initialize the buffer-local toot edit data."
+(defun mastodon-toot--init-data (reply-to-user)
+  "Initialize the buffer-local toot edit data including the REPLY-TO-USER if it exists."
   (let* ((docs (mastodon-toot--make-mode-docs)))
     (setq-local mastodon-toot--edit-data
-		(mastodon-toot--edit-info docs))))
+		(mastodon-toot--edit-info docs reply-to-user))))
 
 (defun mastodon-toot--draw-ui (edit-data)
   "Render a compose ui in buffer using EDIT-DATA."
-  (let ((start (alist-get 'start edit-data))
-	(end (alist-get 'end edit-data)))
+  (let ((start (cdr (assq 'start edit-data)))
+	(end (cdr (assq 'end edit-data))))
     (save-mark-and-excursion
       ;; this will be input area, need to make not read-only first
      (insert (propertize "\n\n" 'read-only nil))
 
      ;; set up our read-only doc section
      (goto-char (point-min))
-     (insert (alist-get 'docs edit-data))
+     (insert (cdr (assq 'docs edit-data)))
      (mastodon-toot--render-char-count))
 
     ;; go back to where the text-entry area is
-    (goto-char (+ 1 start))))
+    (goto-char end)))
 
 (defun mastodon-toot--compose-buffer (reply-to-user reply-to-id)
   "Create a new buffer to capture text for a new toot.
@@ -253,16 +263,16 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
     
     ;; prevent duplication of UI stuff
     (when (not mastodon-toot--edit-data)
-      (mastodon-toot--init-data)
-      (mastodon-toot--draw-ui mastodon-toot--edit-data)
-      (mastodon-toot--setup-as-reply reply-to-user reply-to-id))
+      (mastodon-toot--init-data reply-to-user)
+      (mastodon-toot--setup-as-reply reply-to-user reply-to-id)
+      (mastodon-toot--draw-ui mastodon-toot--edit-data))
     (mastodon-toot-mode t)))
 
 ;;; hooks to make editing sensible
 (defun mastodon-toot--stay-in-bounds (change-start-pos change-end-pos)
   "Use CHANGE-START-POS and CHANGE-END-POS to keep edits between the docs and the char count."
-  (let ((start-lim  (alist-get 'start mastodon-toot--edit-data))
-	(end-lim  (+ 1 (alist-get 'end mastodon-toot--edit-data))))
+  (let ((start-lim  (cdr (assq 'start mastodon-toot--edit-data)))
+	(end-lim  (+ 1 (cdr (assq 'end mastodon-toot--edit-data)))))
     (message (format "%s:%s %s:%s"
 		     change-start-pos start-lim
 		     change-end-pos end-lim))
@@ -276,27 +286,27 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
   "Update the character count in MASTODON-TOOT--EDIT-DATA."
   (let* ((raw-len (length (buffer-string)))
 	 (char-count-len (length (mastodon-toot--format-char-count
-				  (alist-get 'count mastodon-toot--edit-data)
+				  (cdr (assq 'count mastodon-toot--edit-data))
 				  mastodon-toot-character-limit)))
-	 (doc-string-len (length (alist-get 'docs mastodon-toot--edit-data)))
+	 (doc-string-len (length (cdr (assq 'docs mastodon-toot--edit-data))))
 	 (final-len (- raw-len char-count-len doc-string-len))
-	 (start (alist-get 'start mastodon-toot--edit-data)))
+	 (start (cdr (assq 'start mastodon-toot--edit-data))))
     (message (format "l:%s s:%s e:%s c:%s"
 		     final-len
 		     start
-		     (alist-get 'end mastodon-toot--edit-data)
-		     (alist-get 'count mastodon-toot--edit-data)))
-    (setf (alist-get 'end mastodon-toot--edit-data)
+		     (cdr (assq 'end mastodon-toot--edit-data))
+		     (cdr (assq 'count mastodon-toot--edit-data))))
+    (setf (cdr (assq 'end mastodon-toot--edit-data))
 	  (+ final-len start)
 
-	  (alist-get 'count mastodon-toot--edit-data)
+	  (cdr (assq 'count mastodon-toot--edit-data))
 	  final-len)))
 
 (defun mastodon-toot--render-char-count (&rest _)
   "Clear and render the character counter from MASTODON-TOOT--EDIT-DATA."
-  (let* ((replace-start (+ 1 (alist-get 'end mastodon-toot--edit-data)))
+  (let* ((replace-start (+ 1 (cdr (assq 'end mastodon-toot--edit-data))))
 	 (replace-end (point-max))
-	 (count (alist-get 'count mastodon-toot--edit-data))
+	 (count (cdr (assq 'count mastodon-toot--edit-data)))
 	 (count-str (mastodon-toot--format-char-count
 		     count mastodon-toot-character-limit)))
     (save-mark-and-excursion
