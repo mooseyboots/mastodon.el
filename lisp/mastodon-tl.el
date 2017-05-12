@@ -177,14 +177,16 @@ also render the html"
 
 (defun mastodon-tl--media (toot)
   "Retrieve a media attachment link for TOOT if one exists."
-  (let ((media (mastodon-tl--field 'media_attachments toot)))
-        (mapconcat
-         (lambda (media-preview)
-           (concat "Media_Link:: "
-                   (mastodon-tl--set-face
-                    (cdr (assoc 'preview_url media-preview))
-                    'mouse-face nil)))
-         media "\n")))
+  (let* ((media (mastodon-tl--field 'media_attachments toot))
+         (media-string (mapconcat
+                        (lambda (media-preview)
+                          (concat "Media_Link:: "
+                                  (mastodon-tl--set-face
+                                   (cdr (assoc 'preview_url media-preview))
+                                   'mouse-face nil)))
+                        media "\n")))
+    (if (not (equal media-string ""))
+        (concat "\n" media-string ) "")))
 
 (defun mastodon-tl--content (toot)
   "Retrieve text content from TOOT."
@@ -201,8 +203,9 @@ also render the html"
   (insert
    (concat
     (mastodon-tl--spoiler toot)
-    (mastodon-tl--content toot)
+    (replace-regexp-in-string "\n*$" "" (mastodon-tl--content toot))    
     (mastodon-tl--media toot)
+    "\n\n"
     (mastodon-tl--byline toot)
     "\n\n")))
 
