@@ -40,6 +40,7 @@
 (autoload 'mastodon-media--inline-images "mastodon-media")
 (autoload 'mastodon-mode "mastodon")
 (defvar mastodon-toot-timestamp-format)
+(defvar shr-use-fonts)  ;; need to declare it since Emacs24 didn't have this
 
 (defgroup mastodon-tl nil
   "Timelines in Mastodon."
@@ -73,6 +74,47 @@ keep the timestamps current as time progresses."
   "The timer that, when set will scan the buffer to update the timestamps.")
 (make-variable-buffer-local 'mastodon-tl--timestamp-update-timer)
 
+(defvar mastodon-tl--shr-map-replacement
+  (let ((map (copy-keymap shr-map)))
+    ;; Replace the move to next/previous link bindings with our
+    ;; version that knows about more types of links.
+    (define-key map [remap shr-next-link] 'mastodon-tl--next-tab-item)
+    (define-key map [remap shr-previous-link] 'mastodon-tl--previous-tab-item)
+    (keymap-canonicalize map)))
+
+(defvar mastodon-tl--shr-image-map-replacement
+  (let ((map (copy-keymap (if (boundp 'shr-image-map)
+                              shr-image-map
+                            shr-map))))
+    ;; Replace the move to next/previous link bindings with our
+    ;; version that knows about more types of links.
+    (define-key map [remap shr-next-link] 'mastodon-tl--next-tab-item)
+    (define-key map [remap shr-previous-link] 'mastodon-tl--previous-tab-item)
+    (keymap-canonicalize map)))
+
+(defun mastodon-tl--next-tab-item ()
+  "Move to the next interesting item.
+
+This could be the next toot, link, or image; whichever comes first.
+Don't move if nothing else to move to is found, i.e. near the end of the buffer."
+  (interactive)
+  (let ((next-range (mastodon-tl--find-next-or-previous-property-range 'mastodon-tab-stop (point) nil)))
+    (if (null next-range)
+        (message "Nothing else here.")
+      (goto-char (car next-range))
+      (message "%s" (get-text-property (point) 'help-echo)))))
+
+(defun mastodon-tl--previous-tab-item ()
+  "Move to the previous interesting item.
+
+This could be the previous toot, link, or image; whichever comes first.
+Don't move if nothing else to move to is found, i.e. near the start of the buffer."
+  (interactive)
+  (let ((next-range (mastodon-tl--find-next-or-previous-property-range 'mastodon-tab-stop (point) t)))
+    (if (null next-range)
+        (message "Nothing else before this.")
+      (goto-char (car next-range))
+      (message "%s" (get-text-property (point) 'help-echo)))))
 
 (defun mastodon-tl--get-federated-timeline ()
   "Opens federated timeline."
@@ -140,6 +182,8 @@ Optionally start from POS."
          (handle (cdr (assoc 'acct account)))
          (name (cdr (assoc 'display_name account)))
          (avatar-url (cdr (assoc 'avatar account))))
+    ;; TODO: Once we have a view for a user (e.g. their posts
+    ;; timeline) make this a tab-stop and attach an action
     (concat
      (when (and mastodon-tl--show-avatars-p mastodon-tl--display-media-p)
        (mastodon-media--get-avatar-rendering avatar-url))
@@ -237,49 +281,74 @@ TIME-STAMP is assumed to be in the past."
         (parsed-time (date-to-time (mastodon-tl--field 'created_at toot)))
         (faved (equal 't (mastodon-tl--field 'favourited toot)))
         (boosted (equal 't (mastodon-tl--field 'reblogged toot))))
-    (propertize
-     (concat (propertize "\n | " 'face 'default)
-             (when boosted
-               (format "(%s) "
-                       (propertize "B" 'face 'mastodon-boost-fave-face)))
-             (when faved
-               (format "(%s) "
-                       (propertize "F" 'face 'mastodon-boost-fave-face)))
-             (mastodon-tl--byline-author toot)
-             (mastodon-tl--byline-boosted toot)
-             " "
-             (propertize
-              (format-time-string mastodon-toot-timestamp-format parsed-time)
-              'timestamp parsed-time
-              'display (if mastodon-tl--enable-relative-timestamps
-                           (mastodon-tl--relative-time-description parsed-time)
-                         parsed-time))
-             (propertize "\n  ------------" 'face 'default))
-     'favourited-p faved
-     'boosted-p    boosted
-     'toot-id      id
-     'toot-json    toot)))
+    (concat
+     (propertize "\n | " 'face 'default)
+     (propertize
+      (concat (when boosted
+                (format "(%s) "
+                        (propertize "B" 'face 'mastodon-boost-fave-face)))
+              (when faved
+                (format "(%s) "
+                        (propertize "F" 'face 'mastodon-boost-fave-face)))
+              (mastodon-tl--byline-author toot)
+              (mastodon-tl--byline-boosted toot)
+              " "
+              ;; TODO: Once we have a view for toot (responses etc.) make
+              ;; this a tab stop and attach an action.
+              (propertize
+               (format-time-string mastodon-toot-timestamp-format parsed-time)
+               'timestamp parsed-time
+               'display (if mastodon-tl--enable-relative-timestamps
+                            (mastodon-tl--relative-time-description parsed-time)
+                          parsed-time))
+              (propertize "\n  ------------" 'face 'default))
+      'favourited-p faved
+      'boosted-p    boosted
+      'toot-id      id
+      'toot-json    toot))))
 
-(defun mastodon-tl--set-face (string face render)
-  "Set the face of a string. If `render' is not nil
-also render the html"
-  (propertize
-   (with-temp-buffer
-     (insert string)
-     (when render
-       (let ((shr-use-fonts nil))
-         (shr-render-region (point-min) (point-max))))
-     (buffer-string))
-   'face face))
+(defun mastodon-tl--render-text (string)
+  "Returns a propertized text giving the rendering of the given HTML string."
+  (with-temp-buffer
+    (insert string)
+    (let ((shr-use-fonts nil))
+      (shr-render-region (point-min) (point-max)))
+    ;; Make all links a tab stop recognized by our own logic and
+    ;; update keymaps where needed.
+    ;;
+    ;; TODO: Once we have views for users and tags we need to
+    ;; recognize these links and turn them into links to our own
+    ;; views.
+    (let (region)
+      (while (setq region (mastodon-tl--find-property-range
+                           'shr-url (or (cdr region) (point-min))))
+        (let* ((start (car region))
+               (end (cdr region))
+               (keymap (if (eq shr-map (get-text-property start 'keymap))
+                           mastodon-tl--shr-map-replacement
+                         mastodon-tl--shr-image-map-replacement)))
+          (add-text-properties start end
+                              (list 'mastodon-tab-stop 'shr-url
+                                    'keymap keymap)))))
+    (buffer-string)))
+
+(defun mastodon-tl--set-face (string face)
+  "Returns the propertized STRING with the face property set to FACE."
+  (propertize string 'face face))
 
 (defun mastodon-tl--spoiler (toot)
   "Retrieve spoiler message from TOOT."
   (let* ((spoiler (mastodon-tl--field 'spoiler_text toot))
-         (string (mastodon-tl--set-face spoiler 'default t))
+         (string (mastodon-tl--set-face
+                  (mastodon-tl--render-text spoiler)
+                  'default))
+         ;; TODO: Make this a tab stop and link; then hide the main
+         ;; text and make the link action a toggling of the
+         ;; visibility of that main body.
          (message (concat "\n ---------------"
                           "\n Content Warning"
                           "\n ---------------\n"))
-         (cw (mastodon-tl--set-face message 'mastodon-cw-face nil)))
+         (cw (mastodon-tl--set-face message 'mastodon-cw-face)))
     (if (> (length string) 0)
         (replace-regexp-in-string "\n\n\n ---------------"
                                   "\n ---------------" (concat string cw))
@@ -299,28 +368,23 @@ also render the html"
                         media-attachements "")))
     (if (not (and mastodon-tl--display-media-p
                   (equal media-string "")))
-        (concat "\n" media-string) "")))
+        (concat "\n" media-string)
+      "")))
 
 
 (defun mastodon-tl--content (toot)
   "Retrieve text content from TOOT."
-  (let ((content (mastodon-tl--field 'content toot))
-        (shr-use-fonts nil))
-    (propertize (with-temp-buffer
-                  (insert content)
-                  (shr-render-region (point-min) (point-max))
-                  (buffer-string))
-                'face 'default)))
+  (let ((content (mastodon-tl--field 'content toot)))
+    (mastodon-tl--render-text content)))
 
 (defun mastodon-tl--toot (toot)
   "Display TOOT content and byline."
   (insert
    (concat
     (mastodon-tl--spoiler toot)
-    ;; remove two trailing newlines
-    (substring (mastodon-tl--content toot) 0 -2)
+    ;; remove trailing whitespace
+    (replace-regexp-in-string "[\t\n ]*\\'" "" (mastodon-tl--content toot))
     (mastodon-tl--media toot)
-    "\n\n"
     (mastodon-tl--byline toot)
     "\n\n")))
 
@@ -454,23 +518,60 @@ webapp"
         (funcall update-function json)
         (goto-char point-before)))))
 
-(defun mastodon-tl--find-property-range (property start-point)
-  "Finds (start . end) range around or after START-POINT where PROPERTY is set to a consistent value.
+(defun mastodon-tl--find-property-range (property start-point &optional search-backwards)
+  "Finds (start . end) range around or before/after START-POINT where PROPERTY is set to a consistent value.
 
-If PROPERTY is set at START-POINT returns a range aroung
-START-POINT otherwise after START-POINT."
+Returns `nil` if no such range is found.
+
+If PROPERTY is set at START-POINT returns a range around
+START-POINT otherwise before/after START-POINT.
+
+SEARCH-BACKWARDS determines whether we pick point
+before (non-nil) or after (nil)"
   (if (get-text-property start-point property)
       ;; We are within a range, so look backwards for the start:
-      (cons (or (previous-single-property-change start-point property)
-                (point-min))
-            (or (next-single-property-change start-point property)
-                (point-max)))
-    (let* ((start (next-single-property-change start-point property))
-           (end (and start
-                     (or (next-single-property-change start property)
-                         (point-max)))))
-      (when start
-        (cons start end)))))
+      (cons (previous-single-property-change
+             (if (equal start-point (point-max)) start-point (1+ start-point))
+             property nil (point-min))
+            (next-single-property-change start-point property nil (point-max)))
+    (if search-backwards
+        (let* ((end (or (previous-single-property-change
+                         (if (equal start-point (point-max)) start-point (1+ start-point))
+                         property)
+                        ;; we may either be just before the range or there is nothing at all
+                        (and (not (equal start-point (point-min)))
+                             (get-text-property (1- start-point) property)
+                             start-point)))
+               (start (and end
+                           (previous-single-property-change end property nil (point-min)))))
+          (when end
+            (cons start end)))
+      (let* ((start (next-single-property-change start-point property))
+             (end (and start
+                       (next-single-property-change start property nil (point-max)))))
+        (when start
+          (cons start end))))))
+
+(defun mastodon-tl--find-next-or-previous-property-range (property start-point search-backwards)
+  "Finds (start . end) range after/before START-POINT where PROPERTY is set to a consistent value (different from the value at START-POINT if that is set).
+
+Returns nil if no such range exists.
+
+If SEARCH-BACKWARDS is non-nil it find a region before
+START-POINT otherwise after START-POINT.
+"
+  (if (get-text-property start-point property)
+      ;; We are within a range, we need to start the search from
+      ;; before/after this range:
+      (let ((current-range (mastodon-tl--find-property-range property start-point)))
+        (if search-backwards
+            (unless (equal (car current-range) (point-min))
+              (mastodon-tl--find-property-range property (1- (car current-range)) search-backwards))
+          (unless (equal (cdr current-range) (point-max))
+            (mastodon-tl--find-property-range property (1+ (cdr current-range)) search-backwards))))
+    ;; If we are not within a range, we can just defer to
+    ;; mastodon-tl--find-property-range directly.
+    (mastodon-tl--find-property-range property start-point search-backwards)))
 
 (defun mastodon-tl--consider-timestamp-for-updates (timestamp)
   "Take note that TIMESTAMP is used in buffer and ajust timers as needed.

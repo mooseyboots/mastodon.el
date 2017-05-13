@@ -1,5 +1,6 @@
-(require 'el-mock)
+(require 'cl-lib)
 (require 'cl-macs)
+(require 'el-mock)
 
 (defconst mastodon-tl-test-base-toot
   '((id . 61208)
@@ -478,7 +479,8 @@ a string or a numeric."
     (insert "Just some random text")
     (insert (propertize "More text with a different property" 'other-property 'set))
 
-    (should (null (mastodon-tl--find-property-range 'test-property 2)))))
+    (should (null (mastodon-tl--find-property-range 'test-property 2 nil)))
+    (should (null (mastodon-tl--find-property-range 'test-property 2 t)))))
 
 (ert-deftest mastodon-tl--find-property-range--earlier-tag ()
   "Should cope with a buffer completely lacking the tag."
@@ -487,7 +489,9 @@ a string or a numeric."
     (let ((end-of-region (point)))
       (insert "More random text")
 
-      (should (null (mastodon-tl--find-property-range 'test-property end-of-region))))))
+      (should (null (mastodon-tl--find-property-range 'test-property end-of-region nil)))
+      (should (equal (cons (point-min) end-of-region)
+                     (mastodon-tl--find-property-range 'test-property end-of-region t))))))
 
 (ert-deftest mastodon-tl--find-property-range--successful-finding ()
   "Should find the sought tag in all expected circumstances."
@@ -501,13 +505,47 @@ a string or a numeric."
 
       ;; before the region
       (should (equal (cons start-of-region end-of-region)
-                     (mastodon-tl--find-property-range 'test-property 1)))
+                     (mastodon-tl--find-property-range 'test-property 1 nil)))
+      (should (null (mastodon-tl--find-property-range 'test-property 1 t)))
       ;; in the region
       (should (equal (cons start-of-region end-of-region)
-                     (mastodon-tl--find-property-range 'test-property (+ 2 start-of-region))))
+                     (mastodon-tl--find-property-range 'test-property (+ 2 start-of-region) nil)))
+      (should (equal (cons start-of-region end-of-region)
+                     (mastodon-tl--find-property-range 'test-property (+ 2 start-of-region) t)))
       ;; at end of region
       (should (equal (cons start-of-region end-of-region)
-                     (mastodon-tl--find-property-range 'test-property (1- end-of-region)))))))
+                     (mastodon-tl--find-property-range 'test-property (1- end-of-region) nil)))
+      (should (equal (cons start-of-region end-of-region)
+                     (mastodon-tl--find-property-range 'test-property (1- end-of-region) t))))))
+
+(ert-deftest mastodon-tl--find-property-range--successful-finding-consecutive-ranges ()
+  "Should find the sought tag even from in between consecutive ranges."
+  (with-temp-buffer
+    (insert "Previous text")
+    (let ((start-of-region-1 (point))
+          between-regions
+          end-of-region-2)
+      (insert (propertize "region1" 'test-property 'region1))
+      (setq between-regions (point))
+      (insert (propertize "region2" 'test-property 'region2))
+      (setq end-of-region-2 (point))
+      (insert "More random text")
+
+
+      ;; before
+      (should (equal (cons start-of-region-1 between-regions)
+                     (mastodon-tl--find-property-range 'test-property 1 nil)))
+      (should (null (mastodon-tl--find-property-range 'test-property 1 t)))
+
+      ;; between the regions
+      (should (equal (cons between-regions end-of-region-2)
+                     (mastodon-tl--find-property-range 'test-property between-regions nil)))
+      (should (equal (cons between-regions end-of-region-2)
+                     (mastodon-tl--find-property-range 'test-property between-regions t)))
+      ;; after
+      (should (null (mastodon-tl--find-property-range 'test-property end-of-region-2 nil)))
+      (should (equal (cons between-regions end-of-region-2)
+                     (mastodon-tl--find-property-range 'test-property end-of-region-2 t))))))
 
 (ert-deftest mastodon-tl--find-property-range--successful-finding-at-start ()
   "Should cope with a tag at start."
@@ -518,13 +556,17 @@ a string or a numeric."
 
       ;; at start of the region
       (should (equal (cons 1 end-of-region)
-                     (mastodon-tl--find-property-range 'test-property 1)))
+                     (mastodon-tl--find-property-range 'test-property 1 nil)))
+      (should (equal (cons 1 end-of-region)
+                     (mastodon-tl--find-property-range 'test-property 1 t)))
       ;; in the region
       (should (equal (cons 1 end-of-region)
-                     (mastodon-tl--find-property-range 'test-property 3)))
+                     (mastodon-tl--find-property-range 'test-property 3 nil)))
+      (should (equal (cons 1 end-of-region)
+                     (mastodon-tl--find-property-range 'test-property 3 t)))
       ;; at end of region
       (should (equal (cons 1 end-of-region)
-                     (mastodon-tl--find-property-range 'test-property (1- end-of-region)))))))
+                     (mastodon-tl--find-property-range 'test-property (1- end-of-region) t))))))
 
 (ert-deftest mastodon-tl--find-property-range--successful-finding-at-end ()
   "Should cope with a tag at end."
@@ -537,22 +579,28 @@ a string or a numeric."
 
       ;; before the region
       (should (equal (cons start-of-region end-of-region)
-                     (mastodon-tl--find-property-range 'test-property 1)))
+                     (mastodon-tl--find-property-range 'test-property 1 nil)))
+      (should (null (mastodon-tl--find-property-range 'test-property 1 t)))
       ;; in the region
       (should (equal (cons start-of-region end-of-region)
-                     (mastodon-tl--find-property-range 'test-property (1+ start-of-region))))
+                     (mastodon-tl--find-property-range 'test-property (1+ start-of-region) nil)))
+      (should (equal (cons start-of-region end-of-region)
+                     (mastodon-tl--find-property-range 'test-property (1+ start-of-region) t)))
       ;; at end of region
       (should (equal (cons start-of-region end-of-region)
-                     (mastodon-tl--find-property-range 'test-property (1- end-of-region)))))))
+                     (mastodon-tl--find-property-range 'test-property (1- end-of-region) nil)))
+      (should (equal (cons start-of-region end-of-region)
+                     (mastodon-tl--find-property-range 'test-property (1- end-of-region) t))))))
 
 (ert-deftest mastodon-tl--find-property-range--successful-finding-whole-buffer ()
   "Should cope with a tag being set for the whole buffer."
   (with-temp-buffer
     (insert (propertize "Just some text with a the sought property" 'test-property 'set))
 
-    ;; before the region
     (should (equal (cons (point-min) (point-max))
-                   (mastodon-tl--find-property-range 'test-property 2)))))
+                   (mastodon-tl--find-property-range 'test-property 2 nil)))
+    (should (equal (cons (point-min) (point-max))
+                   (mastodon-tl--find-property-range 'test-property 2 t)))))
 
 (defun tl-tests--all-regions-with-property (property)
   "Returns a list with (start . end) regions where PROPERTY is set."
@@ -564,6 +612,102 @@ a string or a numeric."
       (push region result)
       (goto-char (min (point-max) (cdr region))))
     (nreverse result)))
+
+
+(ert-deftest mastodon-tl--next-tab-item--with-spaces-at-ends ()
+  "Should do the correct tab actions."
+  (with-temp-buffer
+    ;; We build a buffer with 3 tab stops:  "...R1...R2R3..." (a dot
+    ;; represents text that is not part of a link, so R1 and R2 have a
+    ;; gap in between each other, R2 and R3 don't.
+    (insert "Random text at start")
+    (let ((start 2)
+          (r1 (point))
+          r2 gap r3
+          end)
+      (insert (propertize "R1 R1 R1" 'mastodon-tab-stop 'region1))
+      (setq gap (+ (point) 2))
+      (insert " a gap ")
+      (setq r2 (point))
+      (insert (propertize "R2 R2 R2" 'mastodon-tab-stop 'region2))
+      (setq r3 (point))
+      (insert (propertize "R3 R3 R3" 'mastodon-tab-stop 'region3))
+      (setq end (+ (point) 2))
+      (insert " more text at end")
+
+      (let ((test-cases
+             ;; a list 4-elemet lists of (test-name start-point
+             ;; expected-prev-stop expected-next-stop):
+             (list (list 'start start start r1)
+                   (list 'r1 r1 r1 r2)
+                   (list 'gap gap r1 r2)
+                   (list 'r2 r2 r1 r3)
+                   (list 'r3 r3 r2 r3)
+                   (list 'end end r3 end))))
+        (with-mock
+         (stub message => nil) ;; don't mess up our test output with the function's messages
+         (cl-dolist (test test-cases)
+           (let ((test-name (cl-first test))
+                 (test-start (cl-second test))
+                 (expected-prev (cl-third test))
+                 (expected-next (cl-fourth test)))
+             (goto-char test-start)
+             (mastodon-tl--previous-tab-item)
+             (should (equal (list 'prev test-name expected-prev)
+                            (list 'prev test-name (point))))
+             (goto-char test-start)
+             (mastodon-tl--next-tab-item)
+             (should (equal (list 'next test-name expected-next)
+                            (list 'next test-name (point)))))))))))
+
+(ert-deftest mastodon-tl--next-tab-item--no-spaces-at-ends ()
+  "Should do the correct tab actions even with regions right at buffer ends."
+  (with-temp-buffer
+    ;; We build a buffer with 3 tab stops:  "R1...R2R3...R4" (a dot
+    ;; represents text that is not part of a link, so R1 and R2, and
+    ;; R3 and R4 have a gap in between each other, R2 and R3 don't.
+    (let ((r1 (point))
+          gap1 
+          r2 r3
+          gap2
+          r4)
+      (insert (propertize "R1 R1 R1" 'mastodon-tab-stop 'region1))
+      (setq gap1 (+ (point) 2))
+      (insert " a gap ")
+      (setq r2 (point))
+      (insert (propertize "R2 R2 R2" 'mastodon-tab-stop 'region2))
+      (setq r3 (point))
+      (insert (propertize "R3 R3 R3" 'mastodon-tab-stop 'region3))
+      (setq gap2 (+ (point) 2))
+      (insert " another gap ")
+      (setq r4 (point))
+      (insert (propertize "R4 R4 R4" 'mastodon-tab-stop 'region4))
+
+      (let ((test-cases
+             ;; a list 4-elemet lists of (test-name start-point
+             ;; expected-prev-stop expected-next-stop):
+             (list (list 'r1 r1 r1 r2)
+                   (list 'gap1 gap1 r1 r2)
+                   (list 'r2 r2 r1 r3)
+                   (list 'r3 r3 r2 r4)
+                   (list 'gap2 gap2 r3 r4)
+                   (list 'r4 r4 r3 r4))))
+        (with-mock
+         (stub message => nil) ;; don't mess up our test output with the function's messages
+         (cl-dolist (test test-cases)
+           (let ((test-name (cl-first test))
+                 (test-start (cl-second test))
+                 (expected-prev (cl-third test))
+                 (expected-next (cl-fourth test)))
+             (goto-char test-start)
+             (mastodon-tl--previous-tab-item)
+             (should (equal (list 'prev test-name expected-prev)
+                            (list 'prev test-name (point))))
+             (goto-char test-start)
+             (mastodon-tl--next-tab-item)
+             (should (equal (list 'next test-name expected-next)
+                            (list 'next test-name (point)))))))))))
+
 
 (defun tl-tests--property-values-at (property ranges)
   "Returns a list with property values at the given ranges.
@@ -618,3 +762,4 @@ constant."
                          (tl-tests--property-values-at 'display
                                                        (tl-tests--all-regions-with-property 'timestamp))))
           (should (null (marker-position (nth 9 markers)))))))))
+
