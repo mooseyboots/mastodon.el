@@ -82,12 +82,6 @@ Use. e.g. \"%c\" for your locale's date and time format."
   :options '(provide-discover-context-menu)
   :group 'mastodon)
 
-(defcustom mastodon-mode-hook nil
-  "Hook run when entering Mastodon mode."
-  :type 'hook
-  :options '(provide-discover-context-menu)
-  :group 'mastodon)
-
 (defface mastodon-handle-face
   '((t :inherit default))
   "Face used for user display names.")
