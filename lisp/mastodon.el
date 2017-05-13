@@ -82,6 +82,26 @@ Use. e.g. \"%c\" for your locale's date and time format."
   :options '(provide-discover-context-menu)
   :group 'mastodon)
 
+(defface mastodon-handle-face
+  '((t :inherit default))
+  "Face used for user display names.")
+
+(defface mastodon-display-name-face
+  '((t :inherit warning))
+  "Face used for user display names.")
+
+(defface mastodon-boosted-face
+  '((t :inherit highlight :weight bold))
+  "Face to indicate that a toot is boosted.")
+
+(defface mastodon-boost-fave-face
+  '((t :inherit success))
+  "Face to indicate that you have boosted or favourited a toot.")
+
+(defface mastodon-cw-face
+  '((t :inherit success))
+  "Face used for content warning.")
+
 (defun mastodon-version ()
   "Message package version."
   (interactive)
