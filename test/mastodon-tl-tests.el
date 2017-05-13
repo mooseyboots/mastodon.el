@@ -105,8 +105,7 @@
 
 (ert-deftest mastodon-tl--byline-regular ()
   "Should format the regular toot correctly."
-  (let ((mastodon-media-show-avatars-p nil)
-        (timestamp (cdr (assoc 'created_at mastodon-tl-test-base-toot))))
+  (let ((timestamp (cdr (assoc 'created_at mastodon-tl-test-base-toot))))
     (with-mock
       (mock (date-to-time timestamp) => '(22782 21551))
       (mock (format-time-string mastodon-toot-timestamp-format '(22782 21551)) => "2999-99-99 00:11:22")
@@ -117,25 +116,9 @@
  | Account 42 (@acct42@example.space) 2999-99-99 00:11:22
   ------------")))))
 
-(ert-deftest mastodon-tl--byline-regular-with-avatar ()
-  "Should format the regular toot correctly."
-  (let ((mastodon-media-show-avatars-p t)
-        (timestamp (cdr (assoc 'created_at mastodon-tl-test-base-toot))))
-    (with-mock
-      (stub create-image => '(image "fake data"))
-      (mock (date-to-time timestamp) => '(22782 21551))
-      (mock (format-time-string mastodon-toot-timestamp-format '(22782 21551)) => "2999-99-99 00:11:22")
-
-      (should (string= (substring-no-properties
-                        (mastodon-tl--byline mastodon-tl-test-base-toot))
-                       "
- |   Account 42 (@acct42@example.space) 2999-99-99 00:11:22
-  ------------")))))
-
 (ert-deftest mastodon-tl--byline-boosted ()
   "Should format the boosted toot correctly."
-  (let* ((mastodon-media-show-avatars-p nil)
-         (toot (cons '(reblogged . t) mastodon-tl-test-base-toot))
+  (let* ((toot (cons '(reblogged . t) mastodon-tl-test-base-toot))
          (timestamp (cdr (assoc 'created_at toot))))
     (with-mock
       (mock (date-to-time timestamp) => '(22782 21551))
@@ -148,8 +131,7 @@
 
 (ert-deftest mastodon-tl--byline-favorited ()
   "Should format the favourited toot correctly."
-  (let* ((mastodon-media-show-avatars-p nil)
-         (toot (cons '(favourited . t) mastodon-tl-test-base-toot))
+  (let* ((toot (cons '(favourited . t) mastodon-tl-test-base-toot))
          (timestamp (cdr (assoc 'created_at toot))))
     (with-mock
       (mock (date-to-time timestamp) => '(22782 21551))
@@ -163,8 +145,7 @@
 
 (ert-deftest mastodon-tl--byline-boosted/favorited ()
   "Should format the boosted & favourited toot correctly."
-  (let* ((mastodon-media-show-avatars-p nil)
-         (toot `((favourited . t) (reblogged . t) ,@mastodon-tl-test-base-toot))
+  (let* ((toot `((favourited . t) (reblogged . t) ,@mastodon-tl-test-base-toot))
          (timestamp (cdr (assoc 'created_at toot))))
     (with-mock
       (mock (date-to-time timestamp) => '(22782 21551))
@@ -177,8 +158,7 @@
 
 (ert-deftest mastodon-tl--byline-reblogged ()
   "Should format the reblogged toot correctly."
-  (let* ((mastodon-media-show-avatars-p nil)
-         (toot mastodon-tl-test-base-boosted-toot)
+  (let* ((toot mastodon-tl-test-base-boosted-toot)
          (original-toot (cdr (assoc 'reblog mastodon-tl-test-base-boosted-toot)))
          (timestamp (cdr (assoc 'created_at toot)))
          (original-timestamp (cdr (assoc 'created_at original-toot))))
@@ -195,31 +175,9 @@
  | Account 42 (@acct42@example.space) Boosted Account 43 (@acct43@example.space) original time
   ------------")))))
 
-(ert-deftest mastodon-tl--byline-reblogged-with-avatars ()
-  "Should format the reblogged toot correctly."
-  (let* ((mastodon-media-show-avatars-p t)
-         (toot mastodon-tl-test-base-boosted-toot)
-         (original-toot (cdr (assoc 'reblog mastodon-tl-test-base-boosted-toot)))
-         (timestamp (cdr (assoc 'created_at toot)))
-         (original-timestamp (cdr (assoc 'created_at original-toot))))
-    (with-mock
-      ;; We don't expect to use the toot's timestamp but the timestamp of the
-      ;; reblogged toot:
-      (stub create-image => '(image "fake data"))
-      (mock (date-to-time timestamp) => '(1 2))
-      (mock (format-time-string mastodon-toot-timestamp-format '(1 2)) => "reblogging time")
-      (mock (date-to-time original-timestamp) => '(3 4))
-      (mock (format-time-string mastodon-toot-timestamp-format '(3 4)) => "original time")
-
-      (should (string= (substring-no-properties (mastodon-tl--byline toot))
-                      "
- |   Account 42 (@acct42@example.space) Boosted   Account 43 (@acct43@example.space) original time
-  ------------")))))
-
 (ert-deftest mastodon-tl--byline-reblogged-boosted/favorited ()
   "Should format the reblogged toot that was also boosted & favoritedcorrectly."
-  (let* ((mastodon-media-show-avatars-p nil)
-         (toot `((favourited . t) (reblogged . t) ,@mastodon-tl-test-base-boosted-toot))
+  (let* ((toot `((favourited . t) (reblogged . t) ,@mastodon-tl-test-base-boosted-toot))
          (original-toot (cdr (assoc 'reblog mastodon-tl-test-base-boosted-toot)))
          (timestamp (cdr (assoc 'created_at toot)))
          (original-timestamp (cdr (assoc 'created_at original-toot))))

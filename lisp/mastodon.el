@@ -60,16 +60,6 @@ Use. e.g. \"%c\" for your locale's date and time format."
   :group 'mastodon
   :type 'string)
 
-(defcustom mastodon-avatar-height 30
-  "Height of the user avatar images (if shown)."
-  :group 'mastodon
-  :type 'integer)
-
-(defcustom mastodon-preview-max-height 250
-  "Max height of any media attachment preview to be shown."
-  :group 'mastodon
-  :type 'integer)
-
 (defvar mastodon-mode-map
   (make-sparse-keymap)
   "Keymap for `mastodon-mode'.")
