@@ -519,7 +519,6 @@ webapp"
         (goto-char point-before)))))
 
 (defun mastodon-tl--find-property-range (property start-point &optional search-backwards)
-  "Finds (start . end) range around or before/after START-POINT where PROPERTY is set to a consistent value.
 
 Returns `nil` if no such range is found.
 
