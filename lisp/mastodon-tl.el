@@ -103,12 +103,12 @@ Optionally start from POS."
 (defun mastodon-tl--byline-author (toot)
   "Propertize author of TOOT."
   (let* ((account (cdr (assoc 'account toot)))
-         ;; It may not be necissary to decode the handle
-         (handle (decode-coding-string
-                  (cdr (assoc 'acct account))'utf-8))
-         (name (decode-coding-string
-                (cdr (assoc 'display_name account)) 'utf-8)))
+         (handle (cdr (assoc 'acct account)))
+         (name (cdr (assoc 'display_name account)))
+         (avatar-url (cdr (assoc 'avatar account))))
     (concat
+     (when mastodon-media-show-avatars-p
+       (mastodon-media--get-avatar-rendering avatar-url))
      (propertize name 'face 'warning)
      " (@"
      handle
@@ -154,11 +154,11 @@ Return value from boosted content if available."
      'toot-json    toot)))
 
 (defun mastodon-tl--set-face (string face render)
-  "Set the face of a string. If `render' is not 'nil
+  "Set the face of a string. If `render' is not nil
 also render the html"
   (propertize
    (with-temp-buffer
-     (insert (decode-coding-string string 'utf-8))
+     (insert string)
      (when render
        (let ((shr-use-fonts nil))
          (shr-render-region (point-min) (point-max))))
@@ -172,7 +172,7 @@ also render the html"
          (message (concat "\n ---------------"
                           "\n Content Warning"
                           "\n ---------------\n"))
-         (cw (mastodon-tl--set-face message 'success 'nil)))
+         (cw (mastodon-tl--set-face message 'success nil)))
     (if (> (length string) 0)
         (replace-regexp-in-string "\n\n\n ---------------"
                                   "\n ---------------" (concat string cw))
@@ -180,21 +180,19 @@ also render the html"
 
 (defun mastodon-tl--media (toot)
   "Retrieve a media attachment link for TOOT if one exists."
-  (let ((media (mastodon-tl--field 'media_attachments toot)))
-        (mapconcat
-         (lambda (media-preview)
-           (concat "Media_Link:: "
-                   (mastodon-tl--set-face
-                    (cdr (assoc 'preview_url media-preview))
-                    'mouse-face 'nil)))
-         media "\n")))
+  (let ((media-attachements (mastodon-tl--field 'media_attachments toot)))
+    (mapconcat
+     (lambda (media-attachement)
+       (let ((preview-url (cdr (assoc 'preview_url media-attachement))))
+         (mastodon-media--get-media-link-rendering preview-url)))
+     media-attachements "")))
 
 (defun mastodon-tl--content (toot)
   "Retrieve text content from TOOT."
   (let ((content (mastodon-tl--field 'content toot))
         (shr-use-fonts nil))
     (propertize (with-temp-buffer
-                  (insert (decode-coding-string content 'utf-8))
+                  (insert content)
                   (shr-render-region (point-min) (point-max))
                   (buffer-string))
                 'face 'default)))
@@ -251,9 +249,8 @@ Move forward (down) the timeline unless BACKWARD is non-nil."
 
 (defun mastodon-tl--oldest-id ()
   "Return toot-id from the bottom of the buffer."
-  (progn
-    (goto-char (point-max))
-    (mastodon-tl--property 'toot-id t)))
+  (goto-char (point-max))
+  (mastodon-tl--property 'toot-id t))
 
 (defun mastodon-tl--thread ()
   "Open thread buffer for toot under `point'."

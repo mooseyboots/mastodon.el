@@ -43,10 +43,10 @@
 
 Remove MARKER if RM is non-nil."
   (let ((inhibit-read-only t)
-        (bol (progn (move-beginning-of-line '()) (point)))
-        (eol (progn (move-end-of-line '()) (point))))
-    (when rm (replace-regexp (format "(%s) " marker) "" '() bol eol))
-    (move-beginning-of-line '())
+        (bol (progn (move-beginning-of-line nil) (point)))
+        (eol (progn (move-end-of-line nil) (point))))
+    (when rm (replace-regexp (format "(%s) " marker) "" nil bol eol))
+    (move-beginning-of-line nil)
     (mastodon-tl--goto-next-toot)
     (unless rm
       (insert (format "(%s) "
@@ -121,11 +121,10 @@ Set `mastodon-toot--content-warning' to nil."
                  ("sensitive" . ,(when mastodon-toot--content-warning
                                    (symbol-name t)))
                  ("spoiler_text" . ,spoiler))))
-    (progn
-      (mastodon-toot--kill)
-      (let ((response (mastodon-http--post endpoint args nil)))
-        (mastodon-http--triage response
-                               (lambda () (message "Toot toot!")))))))
+    (mastodon-toot--kill)
+    (let ((response (mastodon-http--post endpoint args nil)))
+      (mastodon-http--triage response
+                             (lambda () (message "Toot toot!"))))))
 
 (defun mastodon-toot--reply ()
   "Reply to toot at `point'."
@@ -147,13 +146,12 @@ Set `mastodon-toot--content-warning' to nil."
 (defun mastodon-toot--get-mode-kbinds ()
   "Get a list of the keybindings in the mastodon-toot-mode."
   (let* ((binds (copy-tree mastodon-toot-mode-map))
-	       (prefix (car (cadr binds)))
-	       (bindings (remove nil (mapcar (lambda (i) (if (listp i) i))
-					                               (cadr binds)))))
+         (prefix (car (cadr binds)))
+         (bindings (remove nil (mapcar (lambda (i) (if (listp i) i))
+                                       (cadr binds)))))
     (mapcar (lambda (b)
-	      (progn
-		      (setf (car b) (vector prefix (car b)))
-		      b))
+              (setf (car b) (vector prefix (car b)))
+              b)
 	    bindings)))
 
 (defun mastodon-toot--format-kbind-command (cmd)

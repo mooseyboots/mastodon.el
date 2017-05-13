@@ -48,16 +48,14 @@
 (defun mastodon-http--response-body (pattern)
   "Return substring matching PATTERN from `mastodon-http--response'."
   (let ((resp (mastodon-http--response)))
-    (progn
-      (string-match pattern resp)
-      (match-string 0 resp))))
+    (string-match pattern resp)
+    (match-string 0 resp)))
 
 (defun mastodon-http--status ()
   "Return HTTP Response Status Code from `mastodon-http--response'."
   (let* ((status-line (mastodon-http--response-body "^HTTP/1.*$")))
-    (progn
-      (string-match "[0-9][0-9][0-9]" status-line)
-      (match-string 0 status-line))))
+    (string-match "[0-9][0-9][0-9]" status-line)
+    (match-string 0 status-line)))
 
 (defun mastodon-http--triage (response success)
   "Determine if RESPONSE was successful. Call SUCCESS if successful.
@@ -104,7 +102,10 @@ Pass response buffer to CALLBACK function."
          (with-current-buffer (mastodon-http--get url)
            (goto-char (point-min))
            (re-search-forward "^$" nil 'move)
-           (let ((json-string (buffer-substring-no-properties (point) (point-max))))
+           (let ((json-string
+                  (decode-coding-string
+                   (buffer-substring-no-properties (point) (point-max))
+                   'utf-8)))
              (json-read-from-string json-string)))))
     json-vector))
 
