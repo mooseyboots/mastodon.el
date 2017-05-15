@@ -38,9 +38,6 @@
   :prefix "mastodon-"
   :group 'external)
 
-(defconst mastodon-version "0.6.2"
-  "Current `mastodon' package version.")
-
 (defcustom mastodon-instance-url "https://mastodon.social"
   "Base URL for the Masto instance from which you toot."
   :group 'mastodon
@@ -102,11 +99,6 @@ Use. e.g. \"%c\" for your locale's date and time format."
   '((t :inherit success))
   "Face used for content warning.")
 
-(defun mastodon-version ()
-  "Message package version."
-  (interactive)
-  (message "Mastodon version %s" mastodon-version))
-
 ;;;###autoload
 (defun mastodon ()
   "Connect Mastodon client to `mastodon-instance-url' instance."
@@ -121,7 +113,7 @@ Use. e.g. \"%c\" for your locale's date and time format."
 If USER is non-nil, insert after @ symbol to begin new toot.
 If REPLY-TO-ID is non-nil, attach new toot to a conversation."
   (interactive)
-  (require 'mastodon-toot nil t)  
+  (require 'mastodon-toot nil t)
   (mastodon-toot--compose-buffer user reply-to-id))
 
 ;;;###autoload
