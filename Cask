@@ -1,7 +1,7 @@
 (source gnu)
 (source melpa)
 
-(package "mastodon" "0.6.2" "Emacs client for Mastodon")
+(package-file "lisp/mastodon.el")
 (files "lisp/*.el")
 
 (development
