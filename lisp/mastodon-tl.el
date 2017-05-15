@@ -211,7 +211,7 @@ also render the html"
   (insert
    (concat
     (mastodon-tl--spoiler toot)
-    (replace-regexp-in-string "\n*$" "" (mastodon-tl--content toot))
+    (replace-regexp-in-string "^\n+$" "" (mastodon-tl--content toot))
     (mastodon-tl--media toot)
     "\n\n"
     (mastodon-tl--byline toot)
