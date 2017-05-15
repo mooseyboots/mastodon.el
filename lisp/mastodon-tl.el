@@ -109,10 +109,11 @@ Optionally start from POS."
     (concat
      (when mastodon-media-show-avatars-p
        (mastodon-media--get-avatar-rendering avatar-url))
-     (propertize name 'face 'warning)
-     " (@"
-     handle
-     ")")))
+     (propertize name 'face 'mastodon-display-name-face)
+     (propertize (concat " (@"
+			 handle
+			 ")")
+		 'face 'mastodon-handle-face))))
 
 (defun mastodon-tl--byline-boosted (toot)
   "Add byline for boosted data from TOOT."
@@ -120,7 +121,7 @@ Optionally start from POS."
     (when reblog
       (concat
        " "
-       (propertize "Boosted" 'face 'highlight)
+       (propertize "Boosted" 'face 'mastodon-boosted-face)
        " "
        (mastodon-tl--byline-author reblog)))))
 
@@ -140,9 +141,11 @@ Return value from boosted content if available."
     (propertize
      (concat (propertize "\n | " 'face 'default)
              (when boosted
-               (format "(%s) " (propertize "B" 'face 'success)))
+               (format "(%s) "
+		       (propertize "B" 'face 'mastodon-boost-fave-face)))
              (when faved
-               (format "(%s) " (propertize "F" 'face 'success)))
+               (format "(%s) "
+		       (propertize "F" 'face 'mastodon-boost-fave-face)))
              (mastodon-tl--byline-author toot)
              (mastodon-tl--byline-boosted toot)
              " "
@@ -172,7 +175,7 @@ also render the html"
          (message (concat "\n ---------------"
                           "\n Content Warning"
                           "\n ---------------\n"))
-         (cw (mastodon-tl--set-face message 'success nil)))
+         (cw (mastodon-tl--set-face message 'mastodon-cw-face nil)))
     (if (> (length string) 0)
         (replace-regexp-in-string "\n\n\n ---------------"
                                   "\n ---------------" (concat string cw))
