@@ -6,7 +6,7 @@
     (mock (image-type-available-p 'imagemagick) => t)
     (mock (create-image * 'imagemagick t :height 123) => :mock-image)
 
-    (let* ((mastodon-avatar-height 123)
+    (let* ((mastodon-media--avatar-height 123)
            (result (mastodon-media--get-avatar-rendering "http://example.org/img.png"))
            (result-no-properties (substring-no-properties result))
            (properties (text-properties-at 0 result)))
@@ -21,7 +21,7 @@
   (with-mock
     (mock (create-image * nil t) => :mock-image)
 
-    (let* ((mastodon-preview-max-height 123)
+    (let* ((mastodon-media--preview-max-height 123)
            (result (mastodon-media--get-media-link-rendering "http://example.org/img.png"))
            (result-no-properties (substring-no-properties result))
            (properties (text-properties-at 0 result)))
@@ -34,7 +34,7 @@
 (ert-deftest mastodon-media:load-image-from-url:avatar-with-imagemagic ()
   "Should make the right call to url-retrieve."
   (let ((url "http://example.org/image.png")
-        (mastodon-avatar-height 123))
+        (mastodon-media--avatar-height 123))
     (with-mock
       (mock (image-type-available-p 'imagemagick) => t)
       (mock (create-image * 'imagemagick t :height 123) => '(image foo))
@@ -42,7 +42,7 @@
       (mock (url-retrieve
              url
              #'mastodon-media--process-image-response
-             '(:my-marker (:height 123) 1 "http://example.org/image.png"))
+             '(:my-marker (:height 123) 1))
             => :called-as-expected)
 
       (with-temp-buffer
@@ -62,7 +62,7 @@
       (mock (url-retrieve
              url
              #'mastodon-media--process-image-response
-             '(:my-marker () 1 "http://example.org/image.png"))
+             '(:my-marker () 1))
             => :called-as-expected)
 
       (with-temp-buffer
@@ -82,13 +82,13 @@
       (mock (url-retrieve
              "http://example.org/image.png"
              #'mastodon-media--process-image-response
-             '(:my-marker (:max-height 321) 5 "http://example.org/image.png"))
+             '(:my-marker (:max-height 321) 5))
             => :called-as-expected)
       (with-temp-buffer
         (insert (concat "Start:"
                         (mastodon-media--get-media-link-rendering url)
                         ":rest"))
-        (let ((mastodon-preview-max-height 321))
+        (let ((mastodon-media--preview-max-height 321))
           (should (eq :called-as-expected (mastodon-media--load-image-from-url url 'media-link 7 5))))))))
 
 (ert-deftest mastodon-media:load-image-from-url:media-link-without-imagemagic ()
@@ -101,14 +101,14 @@
       (mock (url-retrieve
              "http://example.org/image.png"
              #'mastodon-media--process-image-response
-             '(:my-marker () 5 "http://example.org/image.png"))
+             '(:my-marker () 5))
             => :called-as-expected)
 
       (with-temp-buffer
         (insert (concat "Start:"
                         (mastodon-media--get-avatar-rendering url)
                         ":rest"))
-        (let ((mastodon-preview-max-height 321))
+        (let ((mastodon-media--preview-max-height 321))
           (should (eq :called-as-expected (mastodon-media--load-image-from-url url 'media-link 7 5))))))))
 
 (ert-deftest mastodon-media:process-image-response ()
@@ -134,7 +134,7 @@
 
          (mock (create-image "fake\nimage\ndata" 'imagemagick t ':image :option) => :fake-image)
 
-         (mastodon-media--process-image-response () used-marker '(:image :option) 1 "the-url")
+         (mastodon-media--process-image-response () used-marker '(:image :option) 1)
 
          ;; the used marker has been unset:
          (should (null (marker-position used-marker)))

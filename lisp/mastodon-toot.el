@@ -29,15 +29,25 @@
 
 ;;; Code:
 
-(require 'mastodon-auth nil t)
-
-(defgroup mastodon-toot nil
-  "Capture Mastodon toots."
-  :prefix "mastodon-toot-"
-  :group 'mastodon)
-
 (defvar mastodon-toot--reply-to-id nil)
 (defvar mastodon-toot--content-warning nil)
+
+(declare-function mastodon-http--api "mastodon-http")
+(declare-function mastodon-http--post "mastodon-http")
+(declare-function mastodon-http--triage "mastodon-http")
+(declare-function mastodon-tl--field "mastodon-tl")
+(declare-function mastodon-tl--goto-next-toot "mastodon-tl")
+(declare-function mastodon-tl--property "mastodon-tl")
+(declare-function mastodon-toot "mastodon")
+
+(defvar mastodon-toot-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c C-c") #'mastodon-toot--send)
+    (define-key map (kbd "C-c C-k") #'mastodon-toot--cancel)
+    (define-key map (kbd "C-c C-w") #'mastodon-toot--toggle-warning)
+      map)
+  "Keymap for `mastodon-toot'.")
+
 
 (defun mastodon-toot--action-success (marker &optional rm)
   "Insert MARKER with 'success face in byline.
@@ -210,14 +220,6 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
       (mastodon-toot--display-docs)
       (mastodon-toot--setup-as-reply reply-to-user reply-to-id))
     (mastodon-toot-mode t)))
-
-(defvar mastodon-toot-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-c") #'mastodon-toot--send)
-    (define-key map (kbd "C-c C-k") #'mastodon-toot--cancel)
-    (define-key map (kbd "C-c C-w") #'mastodon-toot--toggle-warning)
-      map)
-  "Keymap for `mastodon-toot'.")
 
 (define-minor-mode mastodon-toot-mode
   "Minor mode to capture Mastodon toots."

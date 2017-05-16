@@ -30,7 +30,10 @@
 ;;; Code:
 
 (require 'plstore)
-(require 'mastodon-client nil t)
+
+(declare-function mastodon-client "mastodon-client")
+(declare-function mastodon-http--post "mastodon-http")
+(defvar mastodon-instance-url)
 
 (defgroup mastodon-auth nil
   "Authenticate with Mastodon."

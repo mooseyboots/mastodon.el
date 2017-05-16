@@ -29,15 +29,30 @@
 
 ;;; Code:
 
-(require 'mastodon-http)
-(require 'mastodon-toot)
-(require 'mastodon-media)
+(require 'shr)
+(require 'thingatpt) ;; for word-at-point
 (require 'time-date)
+
+(declare-function mastodon-http--api "mastodon-http")
+(declare-function mastodon-http--get-json "mastodon-http")
+(declare-function mastodon-media--get-avatar-rendering "mastodon-media")
+(declare-function mastodon-media--get-media-link-rendering "mastodon-media")
+(declare-function mastodon-media--inline-images "mastodon-media")
+(declare-function mastodon-mode "mastodon")
+(defvar mastodon-toot-timestamp-format)
 
 (defgroup mastodon-tl nil
   "Timelines in Mastodon."
   :prefix "mastodon-tl-"
   :group 'mastodon)
+
+(defvar mastodon-tl--buffer-spec nil
+  "A unique identifier and functions for each Mastodon buffer.")
+
+(defvar mastodon-tl--show-avatars-p
+  (image-type-available-p 'imagemagick)
+  "A boolean value stating whether to show avatars in timelines.")
+
 
 (defun mastodon-tl--get-federated-timeline ()
   "Opens federated timeline."
@@ -106,7 +121,7 @@ Optionally start from POS."
          (name (cdr (assoc 'display_name account)))
          (avatar-url (cdr (assoc 'avatar account))))
     (concat
-     (when mastodon-media-show-avatars-p
+     (when mastodon-tl--show-avatars-p
        (mastodon-media--get-avatar-rendering avatar-url))
      (propertize name 'face 'mastodon-display-name-face)
      (propertize (concat " (@"
@@ -217,28 +232,28 @@ also render the html"
 
 (defun mastodon-tl--timeline (toots)
   "Display each toot in TOOTS."
-  (mapcar 'mastodon-tl--toot toots)
+  (mapc 'mastodon-tl--toot toots)
   (replace-regexp "\n\n\n | " "\n | " nil (point-min) (point-max))
   (mastodon-media--inline-images))
 
 (defun mastodon-tl--get-update-function (&optional buffer)
-  "Get the UPDATE-FUNCTION stored in `mastodon-buffer-spec'"
+  "Get the UPDATE-FUNCTION stored in `mastodon-tl--buffer-spec'"
   (mastodon-tl--get-buffer-property 'update-function buffer))
 
 (defun mastodon-tl--get-endpoint (&optional buffer)
-  "Get the ENDPOINT stored in `mastodon-buffer-spec'"
+  "Get the ENDPOINT stored in `mastodon-tl--buffer-spec'"
   (mastodon-tl--get-buffer-property 'endpoint buffer))
 
 (defun mastodon-tl--buffer-name (&optional buffer)
-  "Get the BUFFER-NAME stored in `mastodon-buffer-spec'"
+  "Get the BUFFER-NAME stored in `mastodon-tl--buffer-spec'"
   (mastodon-tl--get-buffer-property 'buffer-name buffer ))
 
 (defun mastodon-tl--get-buffer-property (property &optional buffer)
-  "Get `MASTODON-BUFFER-SPEC' in BUFFER or `CURRENT-BUFFER'"
+  "Get `MASTODON-TL--BUFFER-SPEC' in BUFFER or `CURRENT-BUFFER'"
   (with-current-buffer  (or buffer (current-buffer))
-    (if (plist-get mastodon-buffer-spec property)
-        (plist-get mastodon-buffer-spec property)
-      (error "mastodon-buffer-spec is not defined for buffer %s"
+    (if (plist-get mastodon-tl--buffer-spec property)
+        (plist-get mastodon-tl--buffer-spec property)
+      (error "mastodon-tl--buffer-spec is not defined for buffer %s"
              (or buffer (current-buffer))))))
 
 (defun mastodon-tl--more-json (endpoint id)
@@ -302,7 +317,7 @@ Move forward (down) the timeline unless BACKWARD is non-nil."
                               (cdr (assoc 'descendants context)))))
     (mastodon-mode)))
 
-(defun mastodon-tl--more (&optional buffer)
+(defun mastodon-tl--more ()
   "Append older toots to timeline."
   (interactive)
   (let* ((point-before (point))
@@ -341,8 +356,8 @@ UPDATE-FUNCTION is used to recieve more toots."
       (funcall update-function json))
     (mastodon-mode)
     (with-current-buffer buffer
-      (make-local-variable 'mastodon-buffer-spec)
-      (setq mastodon-buffer-spec
+      (make-local-variable 'mastodon-tl--buffer-spec)
+      (setq mastodon-tl--buffer-spec
             `(buffer-name ,buffer-name
                           endpoint ,endpoint update-function
                           ,update-function)))

@@ -30,8 +30,20 @@
 ;; it is a labor of love.
 
 ;;; Code:
-
-(require 'mastodon-auth nil t)
+(declare-function discover-add-context-menu "discover")
+(declare-function emojify-mode "emojify")
+(declare-function mastodon-tl--get-federated-timeline "mastodon-tl")
+(declare-function mastodon-tl--get-home-timeline "mastodon-tl")
+(declare-function mastodon-tl--get-local-timeline "mastodon-tl")
+(declare-function mastodon-tl--get-tag-timeline "mastodon-tl")
+(declare-function mastodon-tl--goto-next-toot "mastodon-tl")
+(declare-function mastodon-tl--goto-prev-toot "mastodon-tl")
+(declare-function mastodon-tl--thread "mastodon-tl")
+(declare-function mastodon-tl--update "mastodon-tl")
+(declare-function mastodon-toot--compose-buffer "mastodon-toot")
+(declare-function mastodon-toot--reply "mastodon-toot")
+(declare-function mastodon-toot--toggle-boost "mastodon-toot")
+(declare-function mastodon-toot--toggle-favourite "mastodon-toot")
 
 (defgroup mastodon nil
   "Interface with Mastodon."
@@ -43,11 +55,6 @@
   :group 'mastodon
   :type 'string)
 
-(defcustom mastodon-token-file (concat user-emacs-directory "mastodon.plstore")
-  "File path where Mastodon access tokens are stored."
-  :group 'mastodon
-  :type 'file)
-
 (defcustom mastodon-toot-timestamp-format "%F %T"
   "Format to use for timestamps.
 
@@ -57,24 +64,9 @@ Use. e.g. \"%c\" for your locale's date and time format."
   :group 'mastodon
   :type 'string)
 
-(defcustom mastodon-avatar-height 30
-  "Height of the user avatar images (if shown)."
-  :group 'mastodon
-  :type 'integer)
-
-(defcustom mastodon-preview-max-height 250
-  "Max height of any media attachment preview to be shown."
-  :group 'mastodon
-  :type 'integer)
-
 (defvar mastodon-mode-map
   (make-sparse-keymap)
   "Keymap for `mastodon-mode'.")
-
-(defvar mastodon--api-version "v1")
-
-(defvar mastodon-buffer-spec nil
-  "A unique identifier and functions for each Mastodon buffer.")
 
 (defcustom mastodon-mode-hook nil
   "Hook run when entering Mastodon mode."
@@ -106,7 +98,6 @@ Use. e.g. \"%c\" for your locale's date and time format."
 (defun mastodon ()
   "Connect Mastodon client to `mastodon-instance-url' instance."
   (interactive)
-  (require 'mastodon-tl nil t)
   (mastodon-tl--get-home-timeline))
 
 ;;;###autoload
@@ -116,7 +107,6 @@ Use. e.g. \"%c\" for your locale's date and time format."
 If USER is non-nil, insert after @ symbol to begin new toot.
 If REPLY-TO-ID is non-nil, attach new toot to a conversation."
   (interactive)
-  (require 'mastodon-toot nil t)
   (mastodon-toot--compose-buffer user reply-to-id))
 
 ;;;###autoload

@@ -105,7 +105,7 @@
 
 (ert-deftest mastodon-tl--byline-regular ()
   "Should format the regular toot correctly."
-  (let ((mastodon-media-show-avatars-p nil)
+  (let ((mastodon-tl--show-avatars-p nil)
         (timestamp (cdr (assoc 'created_at mastodon-tl-test-base-toot))))
     (with-mock
       (mock (date-to-time timestamp) => '(22782 21551))
@@ -119,7 +119,7 @@
 
 (ert-deftest mastodon-tl--byline-regular-with-avatar ()
   "Should format the regular toot correctly."
-  (let ((mastodon-media-show-avatars-p t)
+  (let ((mastodon-tl--show-avatars-p t)
         (timestamp (cdr (assoc 'created_at mastodon-tl-test-base-toot))))
     (with-mock
       (stub create-image => '(image "fake data"))
@@ -134,7 +134,7 @@
 
 (ert-deftest mastodon-tl--byline-boosted ()
   "Should format the boosted toot correctly."
-  (let* ((mastodon-media-show-avatars-p nil)
+  (let* ((mastodon-tl--show-avatars-p nil)
          (toot (cons '(reblogged . t) mastodon-tl-test-base-toot))
          (timestamp (cdr (assoc 'created_at toot))))
     (with-mock
@@ -148,7 +148,7 @@
 
 (ert-deftest mastodon-tl--byline-favorited ()
   "Should format the favourited toot correctly."
-  (let* ((mastodon-media-show-avatars-p nil)
+  (let* ((mastodon-tl--show-avatars-p nil)
          (toot (cons '(favourited . t) mastodon-tl-test-base-toot))
          (timestamp (cdr (assoc 'created_at toot))))
     (with-mock
@@ -163,7 +163,7 @@
 
 (ert-deftest mastodon-tl--byline-boosted/favorited ()
   "Should format the boosted & favourited toot correctly."
-  (let* ((mastodon-media-show-avatars-p nil)
+  (let* ((mastodon-tl--show-avatars-p nil)
          (toot `((favourited . t) (reblogged . t) ,@mastodon-tl-test-base-toot))
          (timestamp (cdr (assoc 'created_at toot))))
     (with-mock
@@ -177,7 +177,7 @@
 
 (ert-deftest mastodon-tl--byline-reblogged ()
   "Should format the reblogged toot correctly."
-  (let* ((mastodon-media-show-avatars-p nil)
+  (let* ((mastodon-tl--show-avatars-p nil)
          (toot mastodon-tl-test-base-boosted-toot)
          (original-toot (cdr (assoc 'reblog mastodon-tl-test-base-boosted-toot)))
          (timestamp (cdr (assoc 'created_at toot)))
@@ -197,7 +197,7 @@
 
 (ert-deftest mastodon-tl--byline-reblogged-with-avatars ()
   "Should format the reblogged toot correctly."
-  (let* ((mastodon-media-show-avatars-p t)
+  (let* ((mastodon-tl--show-avatars-p t)
          (toot mastodon-tl-test-base-boosted-toot)
          (original-toot (cdr (assoc 'reblog mastodon-tl-test-base-boosted-toot)))
          (timestamp (cdr (assoc 'created_at toot)))
@@ -218,7 +218,7 @@
 
 (ert-deftest mastodon-tl--byline-reblogged-boosted/favorited ()
   "Should format the reblogged toot that was also boosted & favoritedcorrectly."
-  (let* ((mastodon-media-show-avatars-p nil)
+  (let* ((mastodon-tl--show-avatars-p nil)
          (toot `((favourited . t) (reblogged . t) ,@mastodon-tl-test-base-boosted-toot))
          (original-toot (cdr (assoc 'reblog mastodon-tl-test-base-boosted-toot)))
          (timestamp (cdr (assoc 'created_at toot)))
