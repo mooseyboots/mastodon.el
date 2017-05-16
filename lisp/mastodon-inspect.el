@@ -28,8 +28,12 @@
 ;; Some tools to help inspect / debug mastodon.el
 
 ;;; Code:
-
-(require 'mastodon-tl nil t)
+(declare-function mastodon-http--api "mastodon-http")
+(declare-function mastodon-http--get-json "mastodon-http")
+(declare-function mastodon-media--inline-images "mastodon-media")
+(declare-function mastodon-mode "mastodon")
+(declare-function mastodon-tl--property "mastodon-tl")
+(declare-function mastodon-tl--toot "mastodon-tl")
 
 (defgroup mastodon-inspect nil
   "Tools to help inspect toots."
