@@ -234,7 +234,9 @@ also render the html"
 (defun mastodon-tl--timeline (toots)
   "Display each toot in TOOTS."
   (mapc 'mastodon-tl--toot toots)
-  (replace-regexp "\n\n\n | " "\n | " nil (point-min) (point-max))
+  (goto-char (point-min))
+  (while (search-forward "\n\n\n | " nil t)
+    (replace-match "\n | "))
   (mastodon-media--inline-images))
 
 (defun mastodon-tl--get-update-function (&optional buffer)
