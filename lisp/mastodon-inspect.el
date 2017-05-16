@@ -71,8 +71,10 @@
     (with-current-buffer buffer
       (let ((toot (mastodon-inspect--download-single-toot toot-id )))
         (mastodon-tl--toot toot)
-            (replace-regexp "\n\n\n | " "\n | " nil (point-min) (point-max))
-            (mastodon-media--inline-images)))
+        (goto-char (point-min))
+        (while (search-forward "\n\n\n | " nil t)
+          (replace-match "\n | "))
+        (mastodon-media--inline-images)))
     (switch-to-buffer-other-window buffer)
     (mastodon-mode)))
 
