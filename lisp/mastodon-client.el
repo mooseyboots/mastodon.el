@@ -30,8 +30,8 @@
 ;;; Code:
 
 (require 'plstore)
-(declare-function mastodon-http--api "mastodon-http")
-(declare-function mastodon-http--post "mastodon-http")
+(autoload 'mastodon-http--api "mastodon-http")
+(autoload 'mastodon-http--post "mastodon-http")
 
 
 (defcustom mastodon-client--token-file (concat user-emacs-directory "mastodon.plstore")

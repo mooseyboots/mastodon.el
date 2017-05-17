@@ -32,13 +32,13 @@
 (defvar mastodon-toot--reply-to-id nil)
 (defvar mastodon-toot--content-warning nil)
 
-(declare-function mastodon-http--api "mastodon-http")
-(declare-function mastodon-http--post "mastodon-http")
-(declare-function mastodon-http--triage "mastodon-http")
-(declare-function mastodon-tl--field "mastodon-tl")
-(declare-function mastodon-tl--goto-next-toot "mastodon-tl")
-(declare-function mastodon-tl--property "mastodon-tl")
-(declare-function mastodon-toot "mastodon")
+(autoload 'mastodon-http--api "mastodon-http")
+(autoload 'mastodon-http--post "mastodon-http")
+(autoload 'mastodon-http--triage "mastodon-http")
+(autoload 'mastodon-tl--field "mastodon-tl")
+(autoload 'mastodon-tl--goto-next-toot "mastodon-tl")
+(autoload 'mastodon-tl--property "mastodon-tl")
+(autoload 'mastodon-toot "mastodon")
 
 (defvar mastodon-toot-mode-map
   (let ((map (make-sparse-keymap)))
@@ -166,28 +166,28 @@ Set `mastodon-toot--content-warning' to nil."
     (mapcar (lambda (b)
               (setf (car b) (vector prefix (car b)))
               b)
-	    bindings)))
+            bindings)))
 
 (defun mastodon-toot--format-kbind-command (cmd)
   "Format CMD to be more readable.
 e.g. mastodon-toot--send -> Send."
   (let* ((str (symbol-name cmd))
-	 (re "--\\(.*\\)$")
-	 (str2 (save-match-data
-		 (string-match re str)
-		 (match-string 1 str))))
+         (re "--\\(.*\\)$")
+         (str2 (save-match-data
+                 (string-match re str)
+                 (match-string 1 str))))
     (capitalize (replace-regexp-in-string "-" " " str2))))
 
 (defun mastodon-toot--format-kbind (kbind)
   "Format a single keybinding, KBIND, for display in documentation."
   (let ((key (help-key-description (car kbind) nil))
-	(command (mastodon-toot--format-kbind-command (cdr kbind))))
+        (command (mastodon-toot--format-kbind-command (cdr kbind))))
     (format "\t%s - %s" key command)))
 
 (defun mastodon-toot--format-kbinds (kbinds)
   "Format a list keybindings, KBINDS, for display in documentation."
   (mapconcat 'identity (cons "" (mapcar #'mastodon-toot--format-kbind kbinds))
-	       "\n"))
+               "\n"))
 
 (defun mastodon-toot--make-mode-docs ()
   "Create formatted documentation text for the mastodon-toot-mode."
@@ -217,7 +217,7 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
 If REPLY-TO-USER is provided, inject their handle into the message.
 If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
   (let* ((buffer-exists (get-buffer "*new toot*"))
-	 (buffer (or buffer-exists (get-buffer-create "*new toot*"))))
+         (buffer (or buffer-exists (get-buffer-create "*new toot*"))))
     (switch-to-buffer-other-window buffer)
     (when (not buffer-exists)
       (mastodon-toot--display-docs)

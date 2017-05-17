@@ -32,7 +32,7 @@
 (require 'json)
 (defvar mastodon-instance-url)
 (defvar mastodon-auth--token)
-(declare-function mastodon-auth--access-token "mastodon-auth")
+(autoload 'mastodon-auth--access-token "mastodon-auth")
 
 (defvar mastodon-http--api-version "v1")
 
