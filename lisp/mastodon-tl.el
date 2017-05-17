@@ -33,12 +33,12 @@
 (require 'thingatpt) ;; for word-at-point
 (require 'time-date)
 
-(declare-function mastodon-http--api "mastodon-http")
-(declare-function mastodon-http--get-json "mastodon-http")
-(declare-function mastodon-media--get-avatar-rendering "mastodon-media")
-(declare-function mastodon-media--get-media-link-rendering "mastodon-media")
-(declare-function mastodon-media--inline-images "mastodon-media")
-(declare-function mastodon-mode "mastodon")
+(autoload 'mastodon-http--api "mastodon-http")
+(autoload 'mastodon-http--get-json "mastodon-http")
+(autoload 'mastodon-media--get-avatar-rendering "mastodon-media")
+(autoload 'mastodon-media--get-media-link-rendering "mastodon-media")
+(autoload 'mastodon-media--inline-images "mastodon-media")
+(autoload 'mastodon-mode "mastodon")
 (defvar mastodon-toot-timestamp-format)
 
 (defgroup mastodon-tl nil

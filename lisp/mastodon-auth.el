@@ -31,8 +31,8 @@
 
 (require 'plstore)
 
-(declare-function mastodon-client "mastodon-client")
-(declare-function mastodon-http--post "mastodon-http")
+(autoload 'mastodon-client "mastodon-client")
+(autoload 'mastodon-http--post "mastodon-http")
 (defvar mastodon-instance-url)
 
 (defgroup mastodon-auth nil
