@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.6.3
+;; Version: 0.7.0
 ;; Homepage: https://github.com/jdenen/mastodon.el
 ;; Package-Requires: ((emacs "24.4"))
 
