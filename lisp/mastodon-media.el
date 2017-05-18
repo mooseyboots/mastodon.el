@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.6.3
+;; Version: 0.7.0
 ;; Homepage: https://github.com/jdenen/mastodon.el
 ;; Package-Requires: ((emacs "24.4"))
 
@@ -32,16 +32,20 @@
 ;; required by the server and client.
 
 ;;; Code:
-(require 'mastodon-http  nil t)
-
 (defgroup mastodon-media nil
   "Inline Mastadon media."
   :prefix "mastodon-media-"
   :group 'mastodon)
 
-(defvar mastodon-media-show-avatars-p
-  (image-type-available-p 'imagemagick)
-  "A boolean value stating whether to show avatars in timelines.")
+(defcustom mastodon-media--avatar-height 30
+  "Height of the user avatar images (if shown)."
+  :group 'mastodon-media
+  :type 'integer)
+
+(defcustom mastodon-media--preview-max-height 250
+  "Max height of any media attachment preview to be shown."
+  :group 'mastodon-media
+  :type 'integer)
 
 (defvar mastodon-media--generic-avatar-data
   (base64-decode-string
@@ -121,14 +125,13 @@ BAIQCEAgAIEABAIsJVH58WqHw8FIgjUIQCAACAQgEIBAAAIBCAQgEIBAAAIBCAQgEAAEAhAIQCBA
 fKRJkmVZjAQwh78A6vCRWJE8K+8AAAAASUVORK5CYII=")
   "The PNG data for a generic 200x200 'broken image' view")
 
-(defun mastodon-media--process-image-response (status-plist marker image-options region-length image-url)
+(defun mastodon-media--process-image-response (status-plist marker image-options region-length)
   "Callback function processing the url retrieve response for URL.
 
 STATUS-PLIST is the usual plist of status events as per `url-retrieve'.
 IMAGE-OPTIONS are the precomputed options to apply to the image.
 MARKER is the marker to where the response should be visible.
 REGION-LENGTH is the length of the region that should be replaced with the image.
-IMAGE-URL is the URL that was retrieved.
 "
   (let ((url-buffer (current-buffer))
         (is-error-response-p (eq :error (car status-plist))))
@@ -164,12 +167,12 @@ MEDIA-TYPE is a symbol and either 'avatar or 'media-link."
   (let ((image-options (when (image-type-available-p 'imagemagick)
                          (cond
                           ((eq media-type 'avatar)
-                           `(:height ,mastodon-avatar-height))
+                           `(:height ,mastodon-media--avatar-height))
                           ((eq media-type 'media-link)
-                           `(:max-height ,mastodon-preview-max-height))))))
+                           `(:max-height ,mastodon-media--preview-max-height))))))
     (url-retrieve url
                   #'mastodon-media--process-image-response
-                  (list (copy-marker start) image-options region-length url))))
+                  (list (copy-marker start) image-options region-length))))
 
 (defun mastodon-media--select-next-media-line ()
   "Find coordinates of the next media to load.
@@ -225,7 +228,7 @@ not been returned."
   ;; This is what a user will see on a non-graphical display
   ;; where not showing an avatar at all is preferable.
   (let ((image-options (when (image-type-available-p 'imagemagick)
-                         `(:height ,mastodon-avatar-height))))
+                         `(:height ,mastodon-media--avatar-height))))
     (concat
      (propertize " "
                  'media-url avatar-url

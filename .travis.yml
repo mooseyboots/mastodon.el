@@ -13,3 +13,10 @@ script:
   - cask clean-elc
   - cask exec ert-runner -l test/ert-helper.el test/*-tests.el
   - cask emacs --batch -Q -l package-lint.el -f package-lint-batch-and-exit lisp/*.el
+notifications:
+    webhooks:
+        urls:
+          - "https://scalar.vector.im/api/neb/services/hooks/dHJhdmlzLWNpLyU0MGpvaG5zb24lM0FtYXRyaXgub3JnLyUyMVpSbGVnVEFCTHBTQmJ2c01tTiUzQW1hdHJpeC5vcmc"
+        on_success: always # always|never|change
+        on_failure: always
+        on_start: never

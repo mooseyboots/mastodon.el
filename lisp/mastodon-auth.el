@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.6.3
+;; Version: 0.7.0
 ;; Homepage: https://github.com/jdenen/mastodon.el
 ;; Package-Requires: ((emacs "24.4"))
 
@@ -30,7 +30,10 @@
 ;;; Code:
 
 (require 'plstore)
-(require 'mastodon-client nil t)
+
+(autoload 'mastodon-client "mastodon-client")
+(autoload 'mastodon-http--post "mastodon-http")
+(defvar mastodon-instance-url)
 
 (defgroup mastodon-auth nil
   "Authenticate with Mastodon."

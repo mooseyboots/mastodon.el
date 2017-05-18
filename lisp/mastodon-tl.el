@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.6.3
+;; Version: 0.7.0
 ;; Homepage: https://github.com/jdenen/mastodon.el
 ;; Package-Requires: ((emacs "24.4"))
 
@@ -29,30 +29,48 @@
 
 ;;; Code:
 
-(require 'mastodon-http)
-(require 'mastodon-toot)
-(require 'mastodon-media)
+(require 'shr)
+(require 'thingatpt) ;; for word-at-point
 (require 'time-date)
+
+(autoload 'mastodon-http--api "mastodon-http")
+(autoload 'mastodon-http--get-json "mastodon-http")
+(autoload 'mastodon-media--get-avatar-rendering "mastodon-media")
+(autoload 'mastodon-media--get-media-link-rendering "mastodon-media")
+(autoload 'mastodon-media--inline-images "mastodon-media")
+(autoload 'mastodon-mode "mastodon")
+(defvar mastodon-toot-timestamp-format)
 
 (defgroup mastodon-tl nil
   "Timelines in Mastodon."
   :prefix "mastodon-tl-"
   :group 'mastodon)
 
+(defvar mastodon-tl--buffer-spec nil
+  "A unique identifier and functions for each Mastodon buffer.")
+
+(defvar mastodon-tl--show-avatars-p
+  (image-type-available-p 'imagemagick)
+  "A boolean value stating whether to show avatars in timelines.")
+
+
 (defun mastodon-tl--get-federated-timeline ()
   "Opens federated timeline."
   (interactive)
-  (mastodon-tl--get "public"))
+  (mastodon-tl--init
+   "federated" "timelines/public" 'mastodon-tl--timeline))
 
 (defun mastodon-tl--get-home-timeline ()
   "Opens home timeline."
   (interactive)
-  (mastodon-tl--get "home"))
+  (mastodon-tl--init
+   "home" "timelines/home" 'mastodon-tl--timeline))
 
 (defun mastodon-tl--get-local-timeline ()
   "Opens local timeline."
   (interactive)
-  (mastodon-tl--get "public?local=true"))
+  (mastodon-tl--init
+   "local" "timelines/public?local=true" 'mastodon-tl--timeline))
 
 (defun mastodon-tl--get-tag-timeline ()
   "Prompts for tag and opens its timeline."
@@ -60,8 +78,8 @@
   (let* ((word (or (word-at-point) ""))
          (input (read-string (format "Tag(%s): " word)))
          (tag (if (equal input "") word input)))
-    (print tag)
-    (mastodon-tl--get (concat "tag/" tag))))
+    (mastodon-tl--init
+     (concat "tag-" tag) (concat "timelines/tag/" tag) 'mastodon-tl--timeline)))
 
 (defun mastodon-tl--goto-toot-pos (find-pos refresh &optional pos)
   "Search for toot with FIND-POS.
@@ -90,11 +108,6 @@ Optionally start from POS."
   (mastodon-tl--goto-toot-pos 'previous-single-property-change
                               'mastodon-tl--update))
 
-(defun mastodon-tl--timeline-name ()
-  "Determine timeline from `buffer-name'."
-  (replace-regexp-in-string "\*" ""
-                            (replace-regexp-in-string "mastodon-" "" (buffer-name))))
-
 (defun mastodon-tl--remove-html (toot)
   "Remove unrendered tags from TOOT."
   (let* ((t1 (replace-regexp-in-string "<\/p>" "\n\n" toot))
@@ -108,13 +121,13 @@ Optionally start from POS."
          (name (cdr (assoc 'display_name account)))
          (avatar-url (cdr (assoc 'avatar account))))
     (concat
-     (when mastodon-media-show-avatars-p
+     (when mastodon-tl--show-avatars-p
        (mastodon-media--get-avatar-rendering avatar-url))
      (propertize name 'face 'mastodon-display-name-face)
      (propertize (concat " (@"
-			 handle
-			 ")")
-		 'face 'mastodon-handle-face))))
+                         handle
+                         ")")
+                 'face 'mastodon-handle-face))))
 
 (defun mastodon-tl--byline-boosted (toot)
   "Add byline for boosted data from TOOT."
@@ -143,10 +156,10 @@ Return value from boosted content if available."
      (concat (propertize "\n | " 'face 'default)
              (when boosted
                (format "(%s) "
-		       (propertize "B" 'face 'mastodon-boost-fave-face)))
+                       (propertize "B" 'face 'mastodon-boost-fave-face)))
              (when faved
                (format "(%s) "
-		       (propertize "F" 'face 'mastodon-boost-fave-face)))
+                       (propertize "F" 'face 'mastodon-boost-fave-face)))
              (mastodon-tl--byline-author toot)
              (mastodon-tl--byline-boosted toot)
              " "
@@ -184,12 +197,17 @@ also render the html"
 
 (defun mastodon-tl--media (toot)
   "Retrieve a media attachment link for TOOT if one exists."
-  (let ((media-attachements (mastodon-tl--field 'media_attachments toot)))
-    (mapconcat
-     (lambda (media-attachement)
-       (let ((preview-url (cdr (assoc 'preview_url media-attachement))))
-         (mastodon-media--get-media-link-rendering preview-url)))
-     media-attachements "")))
+  (let* ((media-attachements (mastodon-tl--field 'media_attachments toot))
+         (media-string (mapconcat
+                        (lambda (media-attachement)
+                          (let ((preview-url
+                                 (cdr (assoc 'preview_url media-attachement))))
+                            (mastodon-media--get-media-link-rendering
+                             preview-url)))
+                        media-attachements "")))
+    (if (not (equal media-string ""))
+        (concat "\n" media-string ) "")))
+
 
 (defun mastodon-tl--content (toot)
   "Retrieve text content from TOOT."
@@ -206,33 +224,63 @@ also render the html"
   (insert
    (concat
     (mastodon-tl--spoiler toot)
-    (mastodon-tl--content toot)
+    ;; remove two trailing newlines
+    (substring (mastodon-tl--content toot) 0 -2)
     (mastodon-tl--media toot)
+    "\n\n"
     (mastodon-tl--byline toot)
     "\n\n")))
 
 (defun mastodon-tl--timeline (toots)
   "Display each toot in TOOTS."
-  (mapcar 'mastodon-tl--toot toots)
-  (replace-regexp "\n\n\n | " "\n | " nil (point-min) (point-max))
+  (mapc 'mastodon-tl--toot toots)
+  (goto-char (point-min))
+  (while (search-forward "\n\n\n | " nil t)
+    (replace-match "\n | "))
   (mastodon-media--inline-images))
 
-(defun mastodon-tl--more-json (timeline id)
-  "Return JSON for TIMELINE before ID."
-  (let ((url (mastodon-http--api (concat "timelines/"
-                                         timeline
-                                         "?max_id="
-                                         (number-to-string id)))))
+(defun mastodon-tl--get-update-function (&optional buffer)
+  "Get the UPDATE-FUNCTION stored in `mastodon-tl--buffer-spec'"
+  (mastodon-tl--get-buffer-property 'update-function buffer))
+
+(defun mastodon-tl--get-endpoint (&optional buffer)
+  "Get the ENDPOINT stored in `mastodon-tl--buffer-spec'"
+  (mastodon-tl--get-buffer-property 'endpoint buffer))
+
+(defun mastodon-tl--buffer-name (&optional buffer)
+  "Get the BUFFER-NAME stored in `mastodon-tl--buffer-spec'"
+  (mastodon-tl--get-buffer-property 'buffer-name buffer ))
+
+(defun mastodon-tl--get-buffer-property (property &optional buffer)
+  "Get `MASTODON-TL--BUFFER-SPEC' in BUFFER or `CURRENT-BUFFER'"
+  (with-current-buffer  (or buffer (current-buffer))
+    (if (plist-get mastodon-tl--buffer-spec property)
+        (plist-get mastodon-tl--buffer-spec property)
+      (error "mastodon-tl--buffer-spec is not defined for buffer %s"
+             (or buffer (current-buffer))))))
+
+(defun mastodon-tl--more-json (endpoint id)
+  "Return JSON for timeline ENDPOINT before ID."
+  (let* ((url (mastodon-http--api (concat
+                                   endpoint
+                                   (if (string-match-p "?" endpoint)
+                                       "&"
+                                     "?")
+                                   "max_id="
+                                   (number-to-string id)))))
     (mastodon-http--get-json url)))
 
 ;; TODO
 ;; Look into the JSON returned here by Local
-(defun mastodon-tl--updated-json (timeline id)
-  "Return JSON for TIMELINE since ID."
-  (let ((url (mastodon-http--api (concat "timelines/"
-                                         timeline
-                                         "?since_id="
-                                         (number-to-string id)))))
+(defun mastodon-tl--updated-json (endpoint id)
+  "Return JSON for timeline ENDPOINT since ID."
+  (let ((url (mastodon-http--api (concat
+                                  endpoint
+                                  (if (string-match-p "?" endpoint)
+                                      "&"
+                                    "?")
+                                  "since_id="
+                                  (number-to-string id)))))
     (mastodon-http--get-json url)))
 
 (defun mastodon-tl--property (prop &optional backward)
@@ -276,38 +324,47 @@ Move forward (down) the timeline unless BACKWARD is non-nil."
   "Append older toots to timeline."
   (interactive)
   (let* ((point-before (point))
-         (tl (mastodon-tl--timeline-name))
+         (endpoint (mastodon-tl--get-endpoint))
+         (update-function (mastodon-tl--get-update-function))
          (id (mastodon-tl--oldest-id))
-         (json (mastodon-tl--more-json tl id)))
+         (json (mastodon-tl--more-json endpoint id)))
     (when json
-      (with-current-buffer (current-buffer)
-        (let ((inhibit-read-only t))
-          (goto-char (point-max))
-          (mastodon-tl--timeline json)
-          (goto-char point-before)
-          (mastodon-tl--goto-next-toot))))))
+      (let ((inhibit-read-only t))
+        (goto-char (point-max))
+        (funcall update-function json)
+        (goto-char point-before)))))
 
 (defun mastodon-tl--update ()
   "Update timeline with new toots."
   (interactive)
-  (let* ((tl (mastodon-tl--timeline-name))
+  (let* ((endpoint (mastodon-tl--get-endpoint))
+         (update-function (mastodon-tl--get-update-function))
          (id (mastodon-tl--newest-id))
-         (json (mastodon-tl--updated-json tl id)))
+         (json (mastodon-tl--updated-json endpoint id)))
     (when json
-      (with-current-buffer (current-buffer)
-        (let ((inhibit-read-only t))
-          (goto-char (point-min))
-          (mastodon-tl--timeline json))))))
+      (let ((inhibit-read-only t))
+        (goto-char (point-min))
+        (funcall update-function json)))))
 
-(defun mastodon-tl--get (timeline)
-  "Display TIMELINE in buffer."
-  (let* ((url (mastodon-http--api (concat "timelines/" timeline)))
-         (buffer (concat "*mastodon-" timeline "*"))
+
+(defun mastodon-tl--init (buffer-name endpoint update-function)
+  "Initialize BUFFER-NAME with timeline targeted by ENDPOINT.
+
+UPDATE-FUNCTION is used to recieve more toots."
+  (let* ((url (mastodon-http--api endpoint))
+         (buffer (concat "*mastodon-" buffer-name "*"))
          (json (mastodon-http--get-json url)))
     (with-output-to-temp-buffer buffer
       (switch-to-buffer buffer)
-      (mastodon-tl--timeline json))
-    (mastodon-mode)))
+      (funcall update-function json))
+    (mastodon-mode)
+    (with-current-buffer buffer
+      (make-local-variable 'mastodon-tl--buffer-spec)
+      (setq mastodon-tl--buffer-spec
+            `(buffer-name ,buffer-name
+                          endpoint ,endpoint update-function
+                          ,update-function)))
+    buffer))
 
 (provide 'mastodon-tl)
 ;;; mastodon-tl.el ends here

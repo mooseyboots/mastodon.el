@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.6.3
+;; Version: 0.7.0
 ;; Homepage: https://github.com/jdenen/mastodon.el
 ;; Package-Requires: ((emacs "24.4"))
 
@@ -29,15 +29,25 @@
 
 ;;; Code:
 
-(require 'mastodon-auth nil t)
-
-(defgroup mastodon-toot nil
-  "Capture Mastodon toots."
-  :prefix "mastodon-toot-"
-  :group 'mastodon)
-
 (defvar mastodon-toot--reply-to-id nil)
 (defvar mastodon-toot--content-warning nil)
+
+(autoload 'mastodon-http--api "mastodon-http")
+(autoload 'mastodon-http--post "mastodon-http")
+(autoload 'mastodon-http--triage "mastodon-http")
+(autoload 'mastodon-tl--field "mastodon-tl")
+(autoload 'mastodon-tl--goto-next-toot "mastodon-tl")
+(autoload 'mastodon-tl--property "mastodon-tl")
+(autoload 'mastodon-toot "mastodon")
+
+(defvar mastodon-toot-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c C-c") #'mastodon-toot--send)
+    (define-key map (kbd "C-c C-k") #'mastodon-toot--cancel)
+    (define-key map (kbd "C-c C-w") #'mastodon-toot--toggle-warning)
+      map)
+  "Keymap for `mastodon-toot'.")
+
 
 (defun mastodon-toot--action-success (marker &optional rm)
   "Insert MARKER with 'success face in byline.
@@ -46,7 +56,10 @@ Remove MARKER if RM is non-nil."
   (let ((inhibit-read-only t)
         (bol (progn (move-beginning-of-line nil) (point)))
         (eol (progn (move-end-of-line nil) (point))))
-    (when rm (replace-regexp (format "(%s) " marker) "" nil bol eol))
+    (when rm
+      (goto-char bol)
+      (if (search-forward (format "(%s) " marker) eol t)
+          (replace-match "")))
     (move-beginning-of-line nil)
     (mastodon-tl--goto-next-toot)
     (unless rm
@@ -153,28 +166,28 @@ Set `mastodon-toot--content-warning' to nil."
     (mapcar (lambda (b)
               (setf (car b) (vector prefix (car b)))
               b)
-	    bindings)))
+            bindings)))
 
 (defun mastodon-toot--format-kbind-command (cmd)
   "Format CMD to be more readable.
 e.g. mastodon-toot--send -> Send."
   (let* ((str (symbol-name cmd))
-	 (re "--\\(.*\\)$")
-	 (str2 (save-match-data
-		 (string-match re str)
-		 (match-string 1 str))))
+         (re "--\\(.*\\)$")
+         (str2 (save-match-data
+                 (string-match re str)
+                 (match-string 1 str))))
     (capitalize (replace-regexp-in-string "-" " " str2))))
 
 (defun mastodon-toot--format-kbind (kbind)
   "Format a single keybinding, KBIND, for display in documentation."
   (let ((key (help-key-description (car kbind) nil))
-	(command (mastodon-toot--format-kbind-command (cdr kbind))))
+        (command (mastodon-toot--format-kbind-command (cdr kbind))))
     (format "\t%s - %s" key command)))
 
 (defun mastodon-toot--format-kbinds (kbinds)
   "Format a list keybindings, KBINDS, for display in documentation."
   (mapconcat 'identity (cons "" (mapcar #'mastodon-toot--format-kbind kbinds))
-	       "\n"))
+               "\n"))
 
 (defun mastodon-toot--make-mode-docs ()
   "Create formatted documentation text for the mastodon-toot-mode."
@@ -204,20 +217,12 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
 If REPLY-TO-USER is provided, inject their handle into the message.
 If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
   (let* ((buffer-exists (get-buffer "*new toot*"))
-	 (buffer (or buffer-exists (get-buffer-create "*new toot*"))))
+         (buffer (or buffer-exists (get-buffer-create "*new toot*"))))
     (switch-to-buffer-other-window buffer)
     (when (not buffer-exists)
       (mastodon-toot--display-docs)
       (mastodon-toot--setup-as-reply reply-to-user reply-to-id))
     (mastodon-toot-mode t)))
-
-(defvar mastodon-toot-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-c") #'mastodon-toot--send)
-    (define-key map (kbd "C-c C-k") #'mastodon-toot--cancel)
-    (define-key map (kbd "C-c C-w") #'mastodon-toot--toggle-warning)
-      map)
-  "Keymap for `mastodon-toot'.")
 
 (define-minor-mode mastodon-toot-mode
   "Minor mode to capture Mastodon toots."

@@ -54,22 +54,22 @@
 
 (ert-deftest client-1 ()
   "Should return `mastondon-client' if non-nil."
-  (let ((mastodon-client t))
+  (let ((mastodon-client--client-details t))
     (should (eq (mastodon-client) t))))
 
 (ert-deftest client-2 ()
   "Should read from `mastodon-token-file' if available."
-  (let ((mastodon-client nil))
+  (let ((mastodon-client--client-details nil))
     (with-mock
       (mock (mastodon-client--read) => '(:client_id "foo" :client_secret "bar"))
       (should (equal (mastodon-client) '(:client_id "foo" :client_secret "bar")))
-      (should (equal mastodon-client '(:client_id "foo" :client_secret "bar"))))))
+      (should (equal mastodon-client--client-details '(:client_id "foo" :client_secret "bar"))))))
 
 (ert-deftest client-3 ()
   "Should store client data in plstore if it can't be read."
-  (let ((mastodon-client nil))
+  (let ((mastodon-client--client-details nil))
     (with-mock
       (mock (mastodon-client--read))
       (mock (mastodon-client--store) => '(:client_id "foo" :client_secret "baz"))
       (should (equal (mastodon-client) '(:client_id "foo" :client_secret "baz")))
-      (should (equal mastodon-client '(:client_id "foo" :client_secret "baz"))))))
+      (should (equal mastodon-client--client-details '(:client_id "foo" :client_secret "baz"))))))
