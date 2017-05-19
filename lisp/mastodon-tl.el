@@ -268,6 +268,8 @@ also render the html"
                                      "?")
                                    "max_id="
                                    (number-to-string id)))))
+    (message url)
+    (mastodon-http--get url)
     (mastodon-http--get-json url)))
 
 ;; TODO

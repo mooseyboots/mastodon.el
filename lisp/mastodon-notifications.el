@@ -110,7 +110,7 @@
   (let ((toot (mastodon-tl--field 'status note)))
   (insert
    (concat
-    "Congratulations, you have a new follower!"
+    "Congratulations, you have a new follower!\n\n"
     (mastodon-notifications--byline note "Follows")
     "\n\n"))))
 
@@ -150,19 +150,26 @@ It then processes NOTE."
 
 (defun mastodon-notifications--notifications (json)
   "Format JSON in Emacs buffer."
-  (mapcar #'mastodon-notifications--note json)
-  (replace-regexp "\n\n\n | " "\n | " nil (point-min) (point-max)))
+  (mapc #'mastodon-notifications--note json)
+  (goto-char (point-min))
+  (while (search-forward "\n\n\n | " nil t)
+    (replace-match "\n | ")))
 
-(defun mastodon-notifications--get ()
-  "Display NOTIFICATIONS in buffer."
+(defun mastodon-notifications--get()
   (interactive)
-  (let* ((url (mastodon-http--api "notifications"))
-         (buffer "*mastodon-notifications*")
-         (json (mastodon-http--get-json url)))
-    (with-output-to-temp-buffer buffer
-      (switch-to-buffer buffer)
-      (mastodon-notifications--notifications json))
-    (mastodon-mode)))
+  (mastodon-tl--init
+   "notifications" "notifications" 'mastodon-notifications--notifications))
+
+;; (defun mastodon-notifications--get ()
+;;   "Display NOTIFICATIONS in buffer."
+;;   (interactive)
+;;   (let* ((url (mastodon-http--api "notifications"))
+;;          (buffer "*mastodon-notifications*")
+;;          (json (mastodon-http--get-json url)))
+;;     (with-output-to-temp-buffer buffer
+;;       (switch-to-buffer buffer)
+;;       (mastodon-notifications--notifications json))
+;;     (mastodon-mode)))
 
 (provide 'mastodon-notifications)
 ;;; mastodon-notifications.el ends here
