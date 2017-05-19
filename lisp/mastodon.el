@@ -1,8 +1,8 @@
-;;; mastodon.el --- Client for Mastodon
+;;; mastodon.el --- Client for Mastodon  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.5.4
+;; Version: 0.7.0
 ;; Package-Requires: ((emacs "24.4"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
@@ -30,32 +30,43 @@
 ;; it is a labor of love.
 
 ;;; Code:
-
-(require 'mastodon-auth nil t)
+(declare-function discover-add-context-menu "discover")
+(declare-function emojify-mode "emojify")
+(autoload 'mastodon-tl--get-federated-timeline "mastodon-tl")
+(autoload 'mastodon-tl--get-home-timeline "mastodon-tl")
+(autoload 'mastodon-tl--get-local-timeline "mastodon-tl")
+(autoload 'mastodon-tl--get-tag-timeline "mastodon-tl")
+(autoload 'mastodon-tl--goto-next-toot "mastodon-tl")
+(autoload 'mastodon-tl--goto-prev-toot "mastodon-tl")
+(autoload 'mastodon-tl--thread "mastodon-tl")
+(autoload 'mastodon-tl--update "mastodon-tl")
+(autoload 'mastodon-toot--compose-buffer "mastodon-toot")
+(autoload 'mastodon-toot--reply "mastodon-toot")
+(autoload 'mastodon-toot--toggle-boost "mastodon-toot")
+(autoload 'mastodon-toot--toggle-favourite "mastodon-toot")
 
 (defgroup mastodon nil
   "Interface with Mastodon."
   :prefix "mastodon-"
   :group 'external)
 
-(defconst mastodon-version "0.5.4"
-  "Current `mastodon' package version.")
-
 (defcustom mastodon-instance-url "https://mastodon.social"
   "Base URL for the Masto instance from which you toot."
   :group 'mastodon
   :type 'string)
 
-(defcustom mastodon-token-file (concat user-emacs-directory "mastodon.plstore")
-  "File path where Mastodon access tokens are stored."
+(defcustom mastodon-toot-timestamp-format "%F %T"
+  "Format to use for timestamps.
+
+For valid formatting options see `format-time-string`.
+The default value \"%F %T\" prints ISO8601-style YYYY-mm-dd HH:MM:SS.
+Use. e.g. \"%c\" for your locale's date and time format."
   :group 'mastodon
-  :type 'file)
+  :type 'string)
 
 (defvar mastodon-mode-map
   (make-sparse-keymap)
   "Keymap for `mastodon-mode'.")
-
-(defvar mastodon--api-version "v1")
 
 (defcustom mastodon-mode-hook nil
   "Hook run when entering Mastodon mode."
@@ -63,17 +74,31 @@
   :options '(provide-discover-context-menu)
   :group 'mastodon)
 
-(defun mastodon-version ()
-  "Message package version."
-  (interactive)
-  (message "Mastodon version %s" mastodon-version))
+(defface mastodon-handle-face
+  '((t :inherit default))
+  "Face used for user display names.")
+
+(defface mastodon-display-name-face
+  '((t :inherit warning))
+  "Face used for user display names.")
+
+(defface mastodon-boosted-face
+  '((t :inherit highlight :weight bold))
+  "Face to indicate that a toot is boosted.")
+
+(defface mastodon-boost-fave-face
+  '((t :inherit success))
+  "Face to indicate that you have boosted or favourited a toot.")
+
+(defface mastodon-cw-face
+  '((t :inherit success))
+  "Face used for content warning.")
 
 ;;;###autoload
 (defun mastodon ()
   "Connect Mastodon client to `mastodon-instance-url' instance."
   (interactive)
-  (require 'mastodon-tl nil t)
-  (mastodon-tl--get "home"))
+  (mastodon-tl--get-home-timeline))
 
 ;;;###autoload
 (defun mastodon-toot (&optional user reply-to-id)
@@ -82,20 +107,7 @@
 If USER is non-nil, insert after @ symbol to begin new toot.
 If REPLY-TO-ID is non-nil, attach new toot to a conversation."
   (interactive)
-  (require 'mastodon-toot nil t)
-  (progn
-    (switch-to-buffer-other-window (get-buffer-create "*new toot*"))
-    (when user
-      (insert (format "@%s " user))
-      (setq mastodon-toot--reply-to-id reply-to-id))
-    (mastodon-toot-mode t)))
-
-;;;###autoload
-(defun mastodon-register ()
-  "Registers mastodon.el with the Mastodon instance."
-  (interactive)
-  (progn
-    (mastodon--store-client-id-and-secret)))
+  (mastodon-toot--compose-buffer user reply-to-id))
 
 ;;;###autoload
 (add-hook 'mastodon-mode-hook (lambda ()
@@ -106,8 +118,8 @@ If REPLY-TO-ID is non-nil, attach new toot to a conversation."
   "Major mode for Mastodon, the federated microblogging network."
   :group 'mastodon
   (let ((map mastodon-mode-map))
-    (define-key map (kbd "b") #'mastodon-toot--boost)
-    (define-key map (kbd "f") #'mastodon-toot--favourite)
+    (define-key map (kbd "b") #'mastodon-toot--toggle-boost)
+    (define-key map (kbd "f") #'mastodon-toot--toggle-favourite)
     (define-key map (kbd "F") #'mastodon-tl--get-federated-timeline)
     (define-key map (kbd "H") #'mastodon-tl--get-home-timeline)
     (define-key map (kbd "j") #'mastodon-tl--goto-next-toot)

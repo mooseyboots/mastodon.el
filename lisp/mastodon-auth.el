@@ -1,9 +1,10 @@
-;;; mastodon-auth.el --- Auth functions for mastodon.el
+;;; mastodon-auth.el --- Auth functions for mastodon.el  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.5.4
+;; Version: 0.7.0
 ;; Homepage: https://github.com/jdenen/mastodon.el
+;; Package-Requires: ((emacs "24.4"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -29,7 +30,10 @@
 ;;; Code:
 
 (require 'plstore)
-(require 'mastodon-client nil t)
+
+(autoload 'mastodon-client "mastodon-client")
+(autoload 'mastodon-http--post "mastodon-http")
+(defvar mastodon-instance-url)
 
 (defgroup mastodon-auth nil
   "Authenticate with Mastodon."
@@ -67,10 +71,9 @@
 
 Generate token and set `mastodon-auth--token' if nil."
   (or mastodon-auth--token
-      (progn
-        (let* ((json (mastodon-auth--get-token))
-               (token (plist-get json :access_token)))
-          (setq mastodon-auth--token token)))))
+      (let* ((json (mastodon-auth--get-token))
+             (token (plist-get json :access_token)))
+        (setq mastodon-auth--token token))))
 
 (provide 'mastodon-auth)
 ;;; mastodon-auth.el ends here

@@ -1,5 +1,7 @@
 * mastodon.el 
 
+[[https://melpa.org/#/mastodon][file:https://melpa.org/packages/mastodon-badge.svg]]
+
 [[https://travis-ci.org/jdenen/mastodon.el][https://travis-ci.org/jdenen/mastodon.el.svg?branch=master]]
 [[http://waffle.io/jdenen/mastodon.el][https://badge.waffle.io/jdenen/mastodon.el.png?label=in%20progress&title=In%20Progress]]
 
@@ -26,8 +28,19 @@ Or, with =use-package=:
 
 *** MELPA
 
-I'll make mastdon.el available on MELPA when I feel like it's reached a
-stable state.
+Add =MELPA= to your archives:
+
+#+BEGIN_SRC emacs-lisp
+  (require 'package)
+  (add-to-list 'package-archives
+               '("melpa" . "http://melpa.org/packages/") t)
+#+END_SRC
+
+Update and install:
+
+=M-x package-refresh-contents RET=
+
+=M-x package-install RET mastodon RET=
 
 *** Emoji
 
@@ -52,19 +65,11 @@ Set =mastodon-instance-url= in your =.emacs= or =customize=. Defaults to the [[h
     (setq mastodon-instance-url "https://my.instance.url")
 #+END_SRC
 
-*** App registration
-
-=M-x mastodon-register=
-
-Retrieves =client_id= and =client_secret= tokens. They're stored in the =mastdon-token-file=.
-This value can be customized too, and defaults to
-=${EMACS_HOME_DIRECTORY}/mastodon.plstore=.
-
 *** Timelines
 
 =M-x mastodon=
 
-Opens a =*mastodon-home*= buffer in the major mode so you can see toots.
+Opens a =*mastodon-home*= buffer in the major mode so you can see toots. You will be prompted for email and password. The app registration process will take place if your =mastodon-token-file= does not contain =:client_id= and =:client_secret=.
 
 **** Keybindings
 
@@ -111,6 +116,16 @@ Authentication stores your access token in the =mastodon-auth--token=
 variable. It is not stored on your filesystem, so you will have to 
 re-authenticate when you close/reopen Emacs.
 
+**** Keybindings
+
+|-----------+---------------------|
+| Key       | Action              |
+|-----------+---------------------|
+| =C-c C-c= | Send toot           |
+| =C-c C-k= | Cancel toot         |
+| =C-c C-w= | Add content warning |
+|-----------+---------------------|
+
 ** Roadmap
 
 [[https://github.com/jdenen/mastodon.el/milestone/1][Here]] are the features I plan to implement before putting mastodon.el on MELPA.
@@ -123,19 +138,15 @@ PRs, issues, and feature requests are very welcome!
 
 *** Features
 
-1. Create an [[https://github.com/jdenen/mastodon.el/issues][issue]]
-   detailing the feature you'd like to add.
-2. I'll give you a thumbs up and assign you the issue.
-3. Fork the repository and create a branch.
-4. Create a pull request referencing the issue created in step 1.
+1. Create an [[https://github.com/jdenen/mastodon.el/issues][issue]] detailing the feature you'd like to add.
+2. Fork the repository and create a branch off of =develop=.
+3. Create a pull request referencing the issue created in step 1.
 
 *** Fixes
 
-1. In an [[https://github.com/jdenen/mastodon.el/issues][issue]], let me
-   know that you're working to fix it.
-2. I'll assign you the issue.
-3. Fork the repository and create a branch.
-4. Create a pull request referencing the issue from step 1.
+1. In an [[https://github.com/jdenen/mastodon.el/issues][issue]], let me know that you're working to fix it.
+2. Fork the repository and create a branch off of =develop=.
+3. Create a pull request referencing the issue from step 1.
 
 ** Connect
 
