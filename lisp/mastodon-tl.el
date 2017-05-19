@@ -146,6 +146,38 @@ Return value from boosted content if available."
   (or (cdr (assoc field (cdr (assoc 'reblog toot))))
       (cdr (assoc field toot))))
 
+(defun mastodon-tl--relative-time-description (time-stamp)
+  "Returns a string with a human readable description of TIME-STMAP relative to the current time.
+
+E.g. this could return something like \"1 min ago\", \"yesterday\", etc.
+TIME-STAMP is assumed to be in the past."
+  (let* ((now (current-time))
+         (time-difference (time-subtract now time-stamp))
+         (seconds-difference (float-time time-difference)))
+    (cond
+     ((< seconds-difference 60)
+      "less than a minute ago")
+     ((<= seconds-difference (* 1.5 60))
+      "one minute ago")
+     ((< seconds-difference (* 60 59.5))
+      (format "%d minutes ago" (round (/ seconds-difference 60))))
+     ((<= seconds-difference (* 1.5 60 60))
+      "one hour ago")
+     ((< seconds-difference (* 60 60 23.5))
+      (format "%d hours ago" (round (/ seconds-difference 60 60))))
+     ((<= seconds-difference (* 1.5 60 60 24))
+      "one day ago")
+     ((<= seconds-difference (* 60 60 24 6.5))
+      (format "%d days ago" (round (/ seconds-difference 60 60 24))))
+     ((<= seconds-difference (* 1.5 60 60 24 7))
+      "one week ago")
+     ((<= seconds-difference (* 60 60 24 365))
+      (format "%d weeks ago" (round (/ seconds-difference 60 60 24 7))))
+     ((<= seconds-difference (* 1.5 60 60 24 365))
+      "one year ago")
+     (t
+      (format "%d years ago" (round (/ seconds-difference 60 60 24 365.25)))))))
+
 (defun mastodon-tl--byline (toot)
   "Generate byline for TOOT."
   (let ((id (cdr (assoc 'id toot)))
@@ -163,7 +195,11 @@ Return value from boosted content if available."
              (mastodon-tl--byline-author toot)
              (mastodon-tl--byline-boosted toot)
              " "
-             (format-time-string mastodon-toot-timestamp-format (date-to-time timestamp))
+             (let ((parsed-time (date-to-time timestamp)))
+               (propertize
+                (format-time-string mastodon-toot-timestamp-format parsed-time)
+                'timestamp parsed-time
+                'display (mastodon-tl--relative-time-description parsed-time)))
              (propertize "\n  ------------" 'face 'default))
      'favourited-p faved
      'boosted-p    boosted

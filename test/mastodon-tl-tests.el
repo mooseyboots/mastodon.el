@@ -1,4 +1,5 @@
 (require 'el-mock)
+(require 'cl-macs)
 
 (defconst mastodon-tl-test-base-toot
   '((id . 61208)
@@ -102,6 +103,44 @@
     (with-mock
       (mock (mastodon-http--get-json "https://instance.url/api/v1/timelines/foo?max_id=12345"))
       (mastodon-tl--more-json "timelines/foo" 12345))))
+
+(ert-deftest mastodon-tl--relative-time-description ()
+  "Should format relative time as expected"
+  (cl-labels ((minutes (n) (* n 60))
+              (hours (n) (* n (minutes 60)))
+              (days (n) (* n (hours 24)))
+              (weeks (n) (* n (days 7)))
+              (years (n) (* n (days 365)))
+              (format-seconds-since (seconds)
+                                    (let ((time-stamp (time-subtract (current-time) (seconds-to-time seconds))))
+                                      (mastodon-tl--relative-time-description time-stamp)))
+              (check (seconds expected)
+                     (should (string= (format-seconds-since seconds) expected))))
+    (check 1 "less than a minute ago")
+    (check 59 "less than a minute ago")
+    (check 60 "one minute ago")
+    (check 89 "one minute ago")            ;; rounding down
+    (check 91 "2 minutes ago")             ;; rounding up
+    (check (minutes 3.49) "3 minutes ago") ;; rounding down
+    (check (minutes 3.52) "4 minutes ago")
+    (check (minutes 59) "59 minutes ago")
+    (check (minutes 60) "one hour ago")
+    (check (minutes 89) "one hour ago")
+    (check (minutes 91) "2 hours ago")
+    (check (hours 3.49) "3 hours ago") ;; rounding down
+    (check (hours 3.51) "4 hours ago") ;; rounding down
+    (check (hours 23.4) "23 hours ago")
+    (check (hours 23.6) "one day ago") ;; rounding up
+    (check (days 1.48) "one day ago")  ;; rounding down
+    (check (days 1.52) "2 days ago")   ;; rounding up
+    (check (days 6.6) "one week ago")  ;; rounding up
+    (check (weeks 2.49) "2 weeks ago") ;; rounding down
+    (check (weeks 2.51) "3 weeks ago") ;; rounding down
+    (check (weeks 52) "52 weeks ago") 
+    (check (weeks 53) "one year ago") 
+    (check (years 2.49) "2 years ago") ;; rounding down
+    (check (years 2.51) "3 years ago") ;; rounding down
+    ))
 
 (ert-deftest mastodon-tl--byline-regular ()
   "Should format the regular toot correctly."
@@ -235,4 +274,19 @@
                       "
  | (B) (F) Account 42 (@acct42@example.space) Boosted Account 43 (@acct43@example.space) original time
   ------------")))))
+
+(ert-deftest mastodon-tl--byline-timestamp-has-relative-display ()
+  "Should display the timestamp with a relative time."
+  (let ((mastodon-tl--show-avatars-p nil)
+        (timestamp (cdr (assoc 'created_at mastodon-tl-test-base-toot))))
+    (with-mock
+      (mock (date-to-time timestamp) => '(22782 21551))
+      (mock (current-time) => '(22782 22000))
+      (mock (format-time-string mastodon-toot-timestamp-format '(22782 21551)) => "2999-99-99 00:11:22")
+
+      (let* ((formatted-string (mastodon-tl--byline mastodon-tl-test-base-toot))
+             (timestamp-start (string-match "2999-99-99" formatted-string))
+             (properties (text-properties-at timestamp-start formatted-string)))
+        (should (equal '(22782 21551) (plist-get properties 'timestamp)))
+        (should (string-equal "7 minutes ago" (plist-get properties 'display)))))))
 
