@@ -201,9 +201,10 @@ found."
   "Checks to make sure that the missing string has
 
 not been returned."
-  (let ((missing "/files/small/missing.png"))
-    (and link
-         (not (equal link missing)))))
+  (and link
+       (> (length link) 8)
+       (or (string= "http://" (substring link 0 7))
+           (string= "https://" (substring link 0 8)))))
 
 (defun mastodon-media--inline-images ()
   "Find all `Media_Links:' in the buffer replacing them with the referenced image."
