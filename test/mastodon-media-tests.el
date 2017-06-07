@@ -111,6 +111,24 @@
         (let ((mastodon-media--preview-max-height 321))
           (should (eq :called-as-expected (mastodon-media--load-image-from-url url 'media-link 7 5))))))))
 
+(ert-deftest mastodon-media:load-image-from-url:url-fetching-fails ()
+  "Should cope with failures in url-retrieve."
+  (let ((url "http://example.org/image.png")
+        (mastodon-media--avatar-height 123))
+    (with-mock
+      (mock (image-type-available-p 'imagemagick) => t)
+      (mock (create-image * 'imagemagick t :height 123) => '(image foo))
+      (stub url-retrieve => (error "url-retrieve failed"))
+
+      (with-temp-buffer
+        (insert (concat "Start:"
+                        (mastodon-media--get-avatar-rendering "http://example.org/img.png")
+                        ":rest"))
+
+        (should (eq :loading-failed (mastodon-media--load-image-from-url url 'avatar 7 1)))
+        ;; the media state was updated so we won't load this again: 
+        (should (eq 'loading-failed (get-text-property 7 'media-state)))))))
+
 (ert-deftest mastodon-media:process-image-response ()
   "Should process the HTTP response and adjust the source buffer."
   (with-temp-buffer
