@@ -46,6 +46,14 @@
   :prefix "mastodon-tl-"
   :group 'mastodon)
 
+(defcustom mastodon-tl--enable-relative-timestamps t
+  "Nonnil to enable showing relative (to the current time) timestamps.
+
+This will require periodic updates of a timeline buffer to 
+keep the timestamps current as time progresses."
+  :group 'mastodon-tl
+  :type '(boolean :tag "Enable relative timestamps and background updater task"))
+
 (defvar mastodon-tl--buffer-spec nil
   "A unique identifier and functions for each Mastodon buffer.")
 (make-variable-buffer-local 'mastodon-tl--buffer-spec)
@@ -223,7 +231,7 @@ TIME-STAMP is assumed to be in the past."
 (defun mastodon-tl--byline (toot)
   "Generate byline for TOOT."
   (let ((id (cdr (assoc 'id toot)))
-        (timestamp (mastodon-tl--field 'created_at toot))
+        (parsed-time (date-to-time (mastodon-tl--field 'created_at toot)))
         (faved (mastodon-tl--field 'favourited toot))
         (boosted (mastodon-tl--field 'reblogged toot)))
     (propertize
@@ -237,11 +245,10 @@ TIME-STAMP is assumed to be in the past."
              (mastodon-tl--byline-author toot)
              (mastodon-tl--byline-boosted toot)
              " "
-             (let ((parsed-time (date-to-time timestamp)))
-               (propertize
-                (format-time-string mastodon-toot-timestamp-format parsed-time)
-                'timestamp parsed-time
-                'display (mastodon-tl--relative-time-description parsed-time)))
+             (propertize
+              (format-time-string mastodon-toot-timestamp-format parsed-time)
+              'timestamp parsed-time
+              'display (mastodon-tl--relative-time-description parsed-time))
              (propertize "\n  ------------" 'face 'default))
      'favourited-p faved
      'boosted-p    boosted
@@ -440,20 +447,25 @@ before current plans to run the update function.
 The adjustment is only made if it is significantly (a few
 seconds) before the currently scheduled time. This helps reduce
 the number of occasions where we schedule an update only to
-schedule the next one on completion to be within a few seconds."
-  (let ((this-update (cdr (mastodon-tl--relative-time-details timestamp))))
-    (when (time-less-p this-update
-                       (time-subtract mastodon-tl--timestamp-next-update
-                                      (seconds-to-time 10)))
-      (setq mastodon-tl--timestamp-next-update this-update)
-      (when mastodon-tl--timestamp-update-timer
-        ;; We need to re-schedule for an earlier time
-        (cancel-timer mastodon-tl--timestamp-update-timer)
-        (setq mastodon-tl--timestamp-update-timer
-              (run-at-time this-update
-                           nil ;; don't repeat
-                           #'mastodon-tl--update-timestamps-callback
-                           (current-buffer) nil))))))
+schedule the next one on completion to be within a few seconds.
+
+If relative timestamps are
+disabled (`mastodon-tl--enable-relative-timestamps` is nil) this
+is a no-op."
+  (when mastodon-tl--enable-relative-timestamps
+    (let ((this-update (cdr (mastodon-tl--relative-time-details timestamp))))
+      (when (time-less-p this-update
+                         (time-subtract mastodon-tl--timestamp-next-update
+                                        (seconds-to-time 10)))
+        (setq mastodon-tl--timestamp-next-update this-update)
+        (when mastodon-tl--timestamp-update-timer
+          ;; We need to re-schedule for an earlier time
+          (cancel-timer mastodon-tl--timestamp-update-timer)
+          (setq mastodon-tl--timestamp-update-timer
+                (run-at-time this-update
+                             nil ;; don't repeat
+                             #'mastodon-tl--update-timestamps-callback
+                             (current-buffer) nil)))))))
 
 (defun mastodon-tl--update-timestamps-callback (buffer previous-marker)
   "Update the next few timestamp displays in BUFFER.
@@ -461,7 +473,8 @@ schedule the next one on completion to be within a few seconds."
 Start searching for more timestamps from PREVIOUS-MARKER or
 from the start if it is nil."
   ;; only do things if the buffer hasn't been killed in the meantime
-  (when (buffer-live-p buffer)
+  (when (and mastodon-tl--enable-relative-timestamps ;; should be true but just in case...
+             (buffer-live-p buffer))
     (save-excursion
       (with-current-buffer buffer
         (let ((previous-timestamp (if previous-marker
@@ -537,11 +550,12 @@ UPDATE-FUNCTION is used to recieve more toots."
             `(buffer-name ,buffer-name
                           endpoint ,endpoint update-function
                           ,update-function)
-            mastodon-tl--timestamp-update-timer (run-at-time mastodon-tl--timestamp-next-update
-                                                             nil ;; don't repeat
-                                                             #'mastodon-tl--update-timestamps-callback
-                                                             (current-buffer)
-                                                             nil)))
+            mastodon-tl--timestamp-update-timer (when mastodon-tl--enable-relative-timestamps
+                                                  (run-at-time mastodon-tl--timestamp-next-update
+                                                               nil ;; don't repeat
+                                                               #'mastodon-tl--update-timestamps-callback
+                                                               (current-buffer)
+                                                               nil))))
     buffer))
 
 (provide 'mastodon-tl)
