@@ -32,6 +32,7 @@
 ;;; Code:
 (declare-function discover-add-context-menu "discover")
 (declare-function emojify-mode "emojify")
+(autoload 'mastodon-tl--get-favourites-timeline "mastodon-tl")
 (autoload 'mastodon-tl--get-federated-timeline "mastodon-tl")
 (autoload 'mastodon-tl--get-home-timeline "mastodon-tl")
 (autoload 'mastodon-tl--get-local-timeline "mastodon-tl")

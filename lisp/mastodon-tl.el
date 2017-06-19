@@ -81,10 +81,10 @@
     (mastodon-tl--init
      (concat "tag-" tag) (concat "timelines/tag/" tag) 'mastodon-tl--timeline)))
 
-(defun mastodon-tl--get-favorites-timeline ()
-  "Opens 'timeline' of favorites."
+(defun mastodon-tl--get-favourites-timeline ()
+  "Open favourites timeline."
   (interactive)
-  (mastodon-tl--get-favorites))
+  (mastodon-tl--init "favourites" "favourites" 'mastodon-tl--timeline))
 
 (defun mastodon-tl--goto-toot-pos (find-pos refresh &optional pos)
   "Search for toot with FIND-POS.
