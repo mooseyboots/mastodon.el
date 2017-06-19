@@ -371,15 +371,5 @@ UPDATE-FUNCTION is used to recieve more toots."
                           ,update-function)))
     buffer))
 
-(defun mastodon-tl--get-favorites ()
-  "Display favorites in buffer."
-  (let* ((url (mastodon-http--api "favourites"))
-	 (buffer "*mastodon-favorites*")
-	 (json (mastodon-http--get-json url)))
-    (with-output-to-temp-buffer buffer
-      (switch-to-buffer buffer)
-      (mastodon-tl--timeline json))
-    (mastodon-mode)))
-
 (provide 'mastodon-tl)
 ;;; mastodon-tl.el ends here
