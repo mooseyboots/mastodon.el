@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.6.3
+;; Version: 0.7.1
 ;; Package-Requires: ((emacs "24.4"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
@@ -28,8 +28,12 @@
 ;; Some tools to help inspect / debug mastodon.el
 
 ;;; Code:
-
-(require 'mastodon-tl nil t)
+(autoload 'mastodon-http--api "mastodon-http")
+(autoload 'mastodon-http--get-json "mastodon-http")
+(autoload 'mastodon-media--inline-images "mastodon-media")
+(autoload 'mastodon-mode "mastodon")
+(autoload 'mastodon-tl--property "mastodon-tl")
+(autoload 'mastodon-tl--toot "mastodon-tl")
 
 (defgroup mastodon-inspect nil
   "Tools to help inspect toots."
@@ -67,8 +71,10 @@
     (with-current-buffer buffer
       (let ((toot (mastodon-inspect--download-single-toot toot-id )))
         (mastodon-tl--toot toot)
-            (replace-regexp "\n\n\n | " "\n | " nil (point-min) (point-max))
-            (mastodon-media--inline-images)))
+        (goto-char (point-min))
+        (while (search-forward "\n\n\n | " nil t)
+          (replace-match "\n | "))
+        (mastodon-media--inline-images)))
     (switch-to-buffer-other-window buffer)
     (mastodon-mode)))
 

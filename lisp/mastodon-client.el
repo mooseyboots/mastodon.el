@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.6.3
+;; Version: 0.7.1
 ;; Homepage: https://github.com/jdenen/mastodon.el
 ;; Package-Requires: ((emacs "24.4"))
 
@@ -30,14 +30,16 @@
 ;;; Code:
 
 (require 'plstore)
-(require 'mastodon-http nil t)
+(autoload 'mastodon-http--api "mastodon-http")
+(autoload 'mastodon-http--post "mastodon-http")
 
-(defgroup mastodon-client nil
-  "Register your client with Mastodon."
-  :prefix "mastodon-client-"
-  :group 'mastodon)
 
-(defvar mastodon-client nil
+(defcustom mastodon-client--token-file (concat user-emacs-directory "mastodon.plstore")
+  "File path where Mastodon access tokens are stored."
+  :group 'mastodon
+  :type 'file)
+
+(defvar mastodon-client--client-details nil
   "Client id and secret.")
 
 (defun mastodon-client--register ()
@@ -62,11 +64,11 @@
       (json-read-from-string json-string))))
 
 (defun mastodon-client--token-file ()
-  "Return `mastodon-token-file'."
-  mastodon-token-file)
+  "Return `mastodon-client--token-file'."
+  mastodon-client--token-file)
 
 (defun mastodon-client--store ()
-  "Store client_id and client_secret in `mastodon-token-file'.
+  "Store client_id and client_secret in `mastodon-client--token-file'.
 
 Make `mastodon-client--fetch' call to determine client values."
   (let ((plstore (plstore-open (mastodon-client--token-file)))
@@ -77,19 +79,19 @@ Make `mastodon-client--fetch' call to determine client values."
     client))
 
 (defun mastodon-client--read ()
-  "Retrieve client_id and client_secret from `mastodon-token-file'."
+  "Retrieve client_id and client_secret from `mastodon-client--token-file'."
   (let* ((plstore (plstore-open (mastodon-client--token-file)))
          (mastodon (plstore-get plstore "mastodon")))
     (when mastodon
       (delete "mastodon" mastodon))))
 
 (defun mastodon-client ()
-  "Return variable `mastodon-client' plist.
+  "Return variable `mastodon-client--client-details' plist.
 
-Read plist from `mastodon-token-file' if variable is nil.
+Read plist from `mastodon-client--token-file' if variable is nil.
 Fetch and store plist if `mastodon-client--read' returns nil."
-  (or mastodon-client
-      (setq mastodon-client
+  (or mastodon-client--client-details
+      (setq mastodon-client--client-details
             (or (mastodon-client--read)
                 (mastodon-client--store)))))
 

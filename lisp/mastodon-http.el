@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.6.3
+;; Version: 0.7.1
 ;; Package-Requires: ((emacs "24.4"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
@@ -30,15 +30,16 @@
 ;;; Code:
 
 (require 'json)
+(defvar mastodon-instance-url)
+(defvar mastodon-auth--token)
+(autoload 'mastodon-auth--access-token "mastodon-auth")
 
-(defgroup mastodon-http nil
-  "HTTP requests and responses for Mastodon."
-  :prefix "mastodon-http-"
-  :group 'mastodon)
+(defvar mastodon-http--api-version "v1")
 
 (defun mastodon-http--api (endpoint)
   "Return Mastondon API URL for ENDPOINT."
-  (concat mastodon-instance-url "/api/" mastodon--api-version "/" endpoint))
+  (concat mastodon-instance-url "/api/"
+          mastodon-http--api-version "/" endpoint))
 
 (defun mastodon-http--response ()
   "Capture response buffer content as string."
