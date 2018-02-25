@@ -248,7 +248,9 @@ TIME-STAMP is assumed to be in the past."
              (propertize
               (format-time-string mastodon-toot-timestamp-format parsed-time)
               'timestamp parsed-time
-              'display (mastodon-tl--relative-time-description parsed-time))
+              'display (if mastodon-tl--enable-relative-timestamps
+                           (mastodon-tl--relative-time-description parsed-time)
+                         parsed-time))
              (propertize "\n  ------------" 'face 'default))
      'favourited-p faved
      'boosted-p    boosted
