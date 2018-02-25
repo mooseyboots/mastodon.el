@@ -1,9 +1,10 @@
-;;; mastodon-notifications.el --- Notification functions for mastodon.el
+;;; mastodon-notifications.el --- Notification functions for mastodon.el  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.5.4
+;; Version: 0.7.1
 ;; Homepage: https://github.com/jdenen/mastodon.el
+;; Package-Requires: ((emacs "24.4"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -34,29 +35,6 @@
 ;;       - fix thread access
 ;;       - Add keybinding of mastodon-notifications--get to `N'
 
-;; ;; One approach for generalizing the get-more functionality
-;; (defun mastodon-tl--get-more (more-function id-fun goto-fun
-;;                               processing-function)
-;;   "can work for both oldert toots and newest toots"
-;;   (interactive)
-;;   (let* ((tl (mastodon-tl--timeline-name))
-;;       (id (funcall id-fun))
-;;       (json (funcall more-function tl id)))
-;;     (when json
-;;       (with-current-buffer (current-buffer)
-;;      (let ((inhibit-read-only t))
-;;        (goto-char (funcall goto-fun))
-;;        (funcall processing-function json))))))
-;;
-;; ;; Equivelent to the mastodon-tl--more
-;; (mastodon-tl--get-more 'mastodon-tl--more-json 'mastodon-tl--oldest-id
-;;                        point-max mastodon-tl--timeline)
-;;
-;; ;; Equivelent to the mastodon-tl--update
-;; (mastodon-tl--get-more 'mastodon-tl--update-json 'mastodon-tl--newest-id
-;;                        point-min mastodon-tl--timeline)
-
-
 ;;; Code:
 
 ;;(require 'mastodon-media)
@@ -69,16 +47,19 @@
   :group 'mastodon)
 
 (defvar mastodon-notifications--types
-  '("mention" "follow" "favourite" "reblog" )
+  '(:mention mastodon-notifications--mention
+             :follow mastodon-notifications--follow
+             :favourite mastodon-notifications--favorite
+             :reblog mastodon-notifications--reblog)
   "A list of notification types that have been implemented.")
 
 (defun mastodon-notifications--byline-concat (toot message)
   "Add byline for TOOT with MESSAGE."
-      (concat
-       " "
-       (propertize message 'face 'highlight)
-       " "
-       "You!"))
+  (concat
+   " "
+   (propertize message 'face 'highlight)
+   " "
+   "You!"))
 
 (defun mastodon-notifications--byline (toot message)
   "Generate byline from TOOT based on MESSAGE for notification."
@@ -108,11 +89,11 @@
 (defun mastodon-notifications--follow (note)
   "Format for a `follow' NOTE."
   (let ((toot (mastodon-tl--field 'status note)))
-  (insert
-   (concat
-    "Congratulations, you have a new follower!"
-    (mastodon-notifications--byline note "Follows")
-    "\n\n"))))
+    (insert
+     (concat
+      "Congratulations, you have a new follower!\n\n"
+      (mastodon-notifications--byline note "Follows")
+      "\n\n"))))
 
 
 (defun mastodon-notifications--favorite(note)
@@ -135,40 +116,26 @@
   "Call the apprpriate function bassed on notification TYPE.
 
 It then processes NOTE."
-  (cond ((equal type "mention") (mastodon-notifications--mention note))
-        ((equal type "follow") (mastodon-notifications--follow note))
-        ((equal type "favourite") (mastodon-notifications--favorite note))
-        ((equal type "reblog") (mastodon-notifications--reblog note))))
+  (let ((func (plist-get mastodon-notifications--types type)))
+    (when func (funcall func note)) ))
 
 (defun mastodon-notifications--note (note)
-  "Filters NOTE for those listed in `mastodon-notifications--types'.
-
-  It then passes the results to the `caller'"
-  (let ((type (mastodon-tl--field 'type note)))
-    (when (member type mastodon-notifications--types)
-      (mastodon-notifications--caller type note))))
+  "Find type in NOTE, interns it and passes it to `MASTODON-NOTIFICATIONS--CALLER'."
+  (let ((type (intern (concat ":" (mastodon-tl--field 'type note)))))
+    (mastodon-notifications--caller type note)))
 
 (defun mastodon-notifications--notifications (json)
   "Format JSON in Emacs buffer."
-  (mapcar #'mastodon-notifications--note json)
-  (replace-regexp "\n\n\n | " "\n | " nil (point-min) (point-max)))
+  (mapc #'mastodon-notifications--note json)
+  (goto-char (point-min))
+  (while (search-forward "\n\n\n | " nil t)
+    (replace-match "\n | ")))
 
-(defun mastodon-notifications--get ()
-  "Display NOTIFICATIONS in buffer."
+(defun mastodon-notifications--get()
   (interactive)
-  (let* ((url (mastodon-http--api "notifications"))
-         (buffer "*mastodon-notifications*")
-         (json (mastodon-http--get-json url)))
-    (with-output-to-temp-buffer buffer
-      (switch-to-buffer buffer)
-      (mastodon-notifications--notifications json))
-    (with-current-buffer buffer
-      (mastodon-mode)
-      (setq mastodon-tl--buffer-spec
-            `(buffer-name "*mastodon-notifications*"
-                          endpoint "notifications"
-                          update-function ,(lambda(x) (message "not implemented")))))
-    ))
+  (mastodon-tl--init
+   "notifications" "notifications" 'mastodon-notifications--notifications))
+
 
 (provide 'mastodon-notifications)
 ;;; mastodon-notifications.el ends here
