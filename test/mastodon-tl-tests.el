@@ -204,6 +204,26 @@
       (check (years 2.1))
       )))
 
+(ert-deftest more-json-id-string ()
+  "Should request toots older than max_id.
+
+`mastodon-tl--more-json' should accept and id that is either
+a string or a numeric."
+  (let ((mastodon-instance-url "https://instance.url"))
+    (with-mock
+      (mock (mastodon-http--get-json "https://instance.url/api/v1/timelines/foo?max_id=12345"))
+      (mastodon-tl--more-json "timelines/foo" "12345"))))
+
+(ert-deftest update-json-id-string ()
+  "Should request toots more recent than since_id.
+
+`mastodon-tl--updated-json' should accept and id that is either
+a string or a numeric."  
+  (let ((mastodon-instance-url "https://instance.url"))
+    (with-mock
+      (mock (mastodon-http--get-json "https://instance.url/api/v1/timelines/foo?since_id=12345"))
+      (mastodon-tl--updated-json "timelines/foo" "12345"))))
+
 (ert-deftest mastodon-tl--byline-regular ()
   "Should format the regular toot correctly."
   (let ((mastodon-tl--show-avatars-p nil)
@@ -260,7 +280,6 @@
                        "
  | (F) Account 42 (@acct42@example.space) 2999-99-99 00:11:22
   ------------")))))
-
 
 (ert-deftest mastodon-tl--byline-boosted/favorited ()
   "Should format the boosted & favourited toot correctly."
