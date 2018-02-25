@@ -104,7 +104,6 @@
       (mock (mastodon-http--get-json "https://instance.url/api/v1/timelines/foo?max_id=12345"))
       (mastodon-tl--more-json "timelines/foo" 12345))))
 
-
 (ert-deftest mastodon-tl--relative-time-description ()
   "Should format relative time as expected"
   (cl-labels ((minutes (n) (* n 60))
@@ -225,7 +224,6 @@ a string or a numeric."
       (mock (mastodon-http--get-json "https://instance.url/api/v1/timelines/foo?since_id=12345"))
       (mastodon-tl--updated-json "timelines/foo" "12345"))))
 
-
 (ert-deftest mastodon-tl--byline-regular ()
   "Should format the regular toot correctly."
   (let ((mastodon-tl--show-avatars-p nil)
@@ -282,7 +280,6 @@ a string or a numeric."
                        "
  | (F) Account 42 (@acct42@example.space) 2999-99-99 00:11:22
   ------------")))))
-
 
 (ert-deftest mastodon-tl--byline-boosted/favorited ()
   "Should format the boosted & favourited toot correctly."
