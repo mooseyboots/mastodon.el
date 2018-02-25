@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.7.0
+;; Version: 0.7.1
 ;; Homepage: https://github.com/jdenen/mastodon.el
 ;; Package-Requires: ((emacs "24.4"))
 
@@ -267,9 +267,10 @@ also render the html"
                                        "&"
                                      "?")
                                    "max_id="
-                                   (number-to-string id)))))
-    (message url)
-    (mastodon-http--get url)
+                                   (if (numberp id )
+                                       (number-to-string id)
+                                     id)))))
+
     (mastodon-http--get-json url)))
 
 ;; TODO
@@ -282,7 +283,9 @@ also render the html"
                                       "&"
                                     "?")
                                   "since_id="
-                                  (number-to-string id)))))
+                                  (if (numberp id)
+                                      (number-to-string id)
+                                    id)))))
     (mastodon-http--get-json url)))
 
 (defun mastodon-tl--property (prop &optional backward)

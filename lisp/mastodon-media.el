@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.7.0
+;; Version: 0.7.1
 ;; Homepage: https://github.com/jdenen/mastodon.el
 ;; Package-Requires: ((emacs "24.4"))
 
@@ -170,9 +170,18 @@ MEDIA-TYPE is a symbol and either 'avatar or 'media-link."
                            `(:height ,mastodon-media--avatar-height))
                           ((eq media-type 'media-link)
                            `(:max-height ,mastodon-media--preview-max-height))))))
-    (url-retrieve url
-                  #'mastodon-media--process-image-response
-                  (list (copy-marker start) image-options region-length))))
+    (let ((buffer (current-buffer))
+          (marker (copy-marker start)))
+      (condition-case nil
+          ;; catch any errors in url-retrieve so as to not abort
+          ;; whatever called us
+          (url-retrieve url
+                        #'mastodon-media--process-image-response
+                        (list marker image-options region-length))
+        (error (with-current-buffer buffer
+                 ;; TODO: Consider adding retries
+                 (put-text-property marker (+ marker region-length) 'media-state 'loading-failed)
+                 :loading-failed))))))
 
 (defun mastodon-media--select-next-media-line ()
   "Find coordinates of the next media to load.
@@ -201,9 +210,10 @@ found."
   "Checks to make sure that the missing string has
 
 not been returned."
-  (let ((missing "/files/small/missing.png"))
-    (and link
-         (not (equal link missing)))))
+  (and link
+       (> (length link) 8)
+       (or (string= "http://" (substring link 0 7))
+           (string= "https://" (substring link 0 8)))))
 
 (defun mastodon-media--inline-images ()
   "Find all `Media_Links:' in the buffer replacing them with the referenced image."
