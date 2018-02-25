@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.7.0
+;; Version: 0.7.1
 ;; Homepage: https://github.com/jdenen/mastodon.el
 ;; Package-Requires: ((emacs "24.4"))
 
@@ -46,12 +46,29 @@
   :prefix "mastodon-tl-"
   :group 'mastodon)
 
+(defcustom mastodon-tl--enable-relative-timestamps t
+  "Nonnil to enable showing relative (to the current time) timestamps.
+
+This will require periodic updates of a timeline buffer to 
+keep the timestamps current as time progresses."
+  :group 'mastodon-tl
+  :type '(boolean :tag "Enable relative timestamps and background updater task"))
+
 (defvar mastodon-tl--buffer-spec nil
   "A unique identifier and functions for each Mastodon buffer.")
+(make-variable-buffer-local 'mastodon-tl--buffer-spec)
 
 (defvar mastodon-tl--show-avatars-p
   (image-type-available-p 'imagemagick)
   "A boolean value stating whether to show avatars in timelines.")
+
+(defvar mastodon-tl--timestamp-next-update nil
+  "The timestamp when the buffer should next be scanned to update the timestamps.")
+(make-variable-buffer-local 'mastodon-tl--timestamp-next-update)
+
+(defvar mastodon-tl--timestamp-update-timer nil
+  "The timer that, when set will scan the buffer to update the timestamps.")
+(make-variable-buffer-local 'mastodon-tl--timestamp-update-timer)
 
 
 (defun mastodon-tl--get-federated-timeline ()
@@ -146,10 +163,75 @@ Return value from boosted content if available."
   (or (cdr (assoc field (cdr (assoc 'reblog toot))))
       (cdr (assoc field toot))))
 
+(defun mastodon-tl--relative-time-details (timestamp &optional current-time)
+  "Returns cons of (descriptive string . next change) for the TIMESTAMP.
+
+Use the optional CURRENT-TIME as the current time (only used for
+reliable testing).
+
+The descriptive string is a human readable version relative to
+the current time while the next change timestamp give the first
+time that this description will change in the future.
+
+TIMESTAMP is assumed to be in the past."
+  (let* ((now (or current-time (current-time)))
+         (time-difference (time-subtract now timestamp))
+         (seconds-difference (float-time time-difference))
+         (regular-response
+          (lambda (seconds-difference multiplier unit-name)
+            (let ((n (floor (+ 0.5 (/ seconds-difference multiplier)))))
+              (cons (format "%d %ss ago" n unit-name)
+                    (* (+ 0.5 n) multiplier)))))
+         (relative-result
+          (cond
+           ((< seconds-difference 60)
+            (cons "less than a minute ago"
+                  60))
+           ((< seconds-difference (* 1.5 60))
+            (cons "one minute ago"
+                  90)) ;; at 90 secs
+           ((< seconds-difference (* 60 59.5))
+            (funcall regular-response seconds-difference 60 "minute"))
+           ((< seconds-difference (* 1.5 60 60))
+            (cons "one hour ago"
+                  (* 60 90))) ;; at 90 minutes
+           ((< seconds-difference (* 60 60 23.5))
+            (funcall regular-response seconds-difference (* 60 60) "hour"))
+           ((< seconds-difference (* 1.5 60 60 24))
+            (cons "one day ago"
+                  (* 1.5 60 60 24))) ;; at a day and a half
+           ((< seconds-difference (* 60 60 24 6.5))
+            (funcall regular-response seconds-difference (* 60 60 24) "day"))
+           ((< seconds-difference (* 1.5 60 60 24 7))
+            (cons "one week ago"
+                  (* 1.5 60 60 24 7))) ;; a week and a half
+           ((< seconds-difference (* 60 60 24 7 52))
+            (if (= 52 (floor (+ 0.5 (/ seconds-difference 60 60 24 7))))
+                (cons "52 weeks ago"
+                      (* 60 60 24 7 52))
+              (funcall regular-response seconds-difference (* 60 60 24 7) "week")))
+           ((< seconds-difference (* 1.5 60 60 24 365))
+            (cons "one year ago"
+                  (* 60 60 24 365 1.5))) ;; a year and a half
+           (t
+            (funcall regular-response seconds-difference (* 60 60 24 365.25) "year")))))
+    (cons (car relative-result)
+          (time-add timestamp (seconds-to-time (cdr relative-result))))))
+
+(defun mastodon-tl--relative-time-description (timestamp &optional current-time)
+  "Returns a string with a human readable description of TIMESTMAP relative to the current time.
+
+Use the optional CURRENT-TIME as the current time (only used for
+reliable testing).
+
+E.g. this could return something like \"1 min ago\", \"yesterday\", etc.
+TIME-STAMP is assumed to be in the past."
+  (car (mastodon-tl--relative-time-details timestamp current-time)))
+
 (defun mastodon-tl--byline (toot)
   "Generate byline for TOOT."
   (let ((id (cdr (assoc 'id toot)))
-        (timestamp (mastodon-tl--field 'created_at toot))
+        (parsed-time (date-to-time (mastodon-tl--field 'created_at toot)))
         (faved (mastodon-tl--field 'favourited toot))
         (boosted (mastodon-tl--field 'reblogged toot)))
     (propertize
@@ -163,7 +245,12 @@ Return value from boosted content if available."
              (mastodon-tl--byline-author toot)
              (mastodon-tl--byline-boosted toot)
              " "
-             (format-time-string mastodon-toot-timestamp-format (date-to-time timestamp))
+             (propertize
+              (format-time-string mastodon-toot-timestamp-format parsed-time)
+              'timestamp parsed-time
+              'display (if mastodon-tl--enable-relative-timestamps
+                           (mastodon-tl--relative-time-description parsed-time)
+                         parsed-time))
              (propertize "\n  ------------" 'face 'default))
      'favourited-p faved
      'boosted-p    boosted
@@ -334,6 +421,104 @@ Move forward (down) the timeline unless BACKWARD is non-nil."
         (funcall update-function json)
         (goto-char point-before)))))
 
+(defun mastodon-tl--find-property-range (property start-point)
+  "Finds (start . end) range around or after START-POINT where PROPERTY is set to a consistent value.
+
+If PROPERTY is set at START-POINT returns a range aroung
+START-POINT otherwise after START-POINT."
+  (if (get-text-property start-point property)
+      ;; We are within a range, so look backwards for the start:
+      (cons (or (previous-single-property-change start-point property)
+                (point-min))
+            (or (next-single-property-change start-point property)
+                (point-max)))
+    (let* ((start (next-single-property-change start-point property))
+           (end (and start
+                     (or (next-single-property-change start property)
+                         (point-max)))))
+      (when start
+        (cons start end)))))
+
+(defun mastodon-tl--consider-timestamp-for-updates (timestamp)
+  "Take note that TIMESTAMP is used in buffer and ajust timers as needed.
+
+This calculates the next time the text for TIMESTAMP will change
+and may adjust existing or future timer runs should that time
+before current plans to run the update function.
+
+The adjustment is only made if it is significantly (a few
+seconds) before the currently scheduled time. This helps reduce
+the number of occasions where we schedule an update only to
+schedule the next one on completion to be within a few seconds.
+
+If relative timestamps are
+disabled (`mastodon-tl--enable-relative-timestamps` is nil) this
+is a no-op."
+  (when mastodon-tl--enable-relative-timestamps
+    (let ((this-update (cdr (mastodon-tl--relative-time-details timestamp))))
+      (when (time-less-p this-update
+                         (time-subtract mastodon-tl--timestamp-next-update
+                                        (seconds-to-time 10)))
+        (setq mastodon-tl--timestamp-next-update this-update)
+        (when mastodon-tl--timestamp-update-timer
+          ;; We need to re-schedule for an earlier time
+          (cancel-timer mastodon-tl--timestamp-update-timer)
+          (setq mastodon-tl--timestamp-update-timer
+                (run-at-time this-update
+                             nil ;; don't repeat
+                             #'mastodon-tl--update-timestamps-callback
+                             (current-buffer) nil)))))))
+
+(defun mastodon-tl--update-timestamps-callback (buffer previous-marker)
+  "Update the next few timestamp displays in BUFFER.
+
+Start searching for more timestamps from PREVIOUS-MARKER or
+from the start if it is nil."
+  ;; only do things if the buffer hasn't been killed in the meantime
+  (when (and mastodon-tl--enable-relative-timestamps ;; should be true but just in case...
+             (buffer-live-p buffer))
+    (save-excursion
+      (with-current-buffer buffer
+        (let ((previous-timestamp (if previous-marker
+                                      (marker-position previous-marker)
+                                    (point-min)))
+              (iteration 0)
+              next-timestamp-range)
+          (if previous-marker
+              ;; This is a follow-up call to process the next batch of
+              ;; timestamps.
+              ;; Release the marker to not slow things down.
+              (set-marker previous-marker nil)
+            ;; Otherwise this is a rew run, so let's initialize the next-run time.
+            (setq mastodon-tl--timestamp-next-update (time-add (current-time)
+                                                               (seconds-to-time 300))
+                  mastodon-tl--timestamp-update-timer nil))
+          (while (and (< iteration 5)
+                      (setq next-timestamp-range (mastodon-tl--find-property-range 'timestamp
+                                                                                   previous-timestamp)))
+            (let* ((start (car next-timestamp-range))
+                   (end (cdr next-timestamp-range))
+                   (timestamp (get-text-property start 'timestamp))
+                   (current-display (get-text-property start 'display))
+                   (new-display (mastodon-tl--relative-time-description timestamp)))
+              (unless (string= current-display new-display)
+                (let ((inhibit-read-only t))
+                  (add-text-properties start end
+                                       (list 'display (mastodon-tl--relative-time-description timestamp)))))
+              (mastodon-tl--consider-timestamp-for-updates timestamp)
+              (setq iteration (1+ iteration)
+                    previous-timestamp (1+ (cdr next-timestamp-range)))))
+          (if next-timestamp-range
+              ;; schedule the next batch from the previous location to
+              ;; start very soon in the future:
+              (run-at-time 0.1 nil #'mastodon-tl--update-timestamps-callback buffer (copy-marker previous-timestamp))
+            ;; otherwise we are done for now; schedule a new run for when needed
+            (setq mastodon-tl--timestamp-update-timer
+                  (run-at-time mastodon-tl--timestamp-next-update
+                               nil ;; don't repeat
+                               #'mastodon-tl--update-timestamps-callback
+                               buffer nil))))))))
+
 (defun mastodon-tl--update ()
   "Update timeline with new toots."
   (interactive)
@@ -346,7 +531,6 @@ Move forward (down) the timeline unless BACKWARD is non-nil."
         (goto-char (point-min))
         (funcall update-function json)))))
 
-
 (defun mastodon-tl--init (buffer-name endpoint update-function)
   "Initialize BUFFER-NAME with timeline targeted by ENDPOINT.
 
@@ -356,14 +540,24 @@ UPDATE-FUNCTION is used to recieve more toots."
          (json (mastodon-http--get-json url)))
     (with-output-to-temp-buffer buffer
       (switch-to-buffer buffer)
+      (setq
+       ;; Initialize with a minimal interval; we re-scan at least once
+       ;; every 5 minutes to catch any timestamps we may have missed
+       mastodon-tl--timestamp-next-update (time-add (current-time)
+                                                    (seconds-to-time 300)))
       (funcall update-function json))
     (mastodon-mode)
     (with-current-buffer buffer
-      (make-local-variable 'mastodon-tl--buffer-spec)
       (setq mastodon-tl--buffer-spec
             `(buffer-name ,buffer-name
                           endpoint ,endpoint update-function
-                          ,update-function)))
+                          ,update-function)
+            mastodon-tl--timestamp-update-timer (when mastodon-tl--enable-relative-timestamps
+                                                  (run-at-time mastodon-tl--timestamp-next-update
+                                                               nil ;; don't repeat
+                                                               #'mastodon-tl--update-timestamps-callback
+                                                               (current-buffer)
+                                                               nil))))
     buffer))
 
 (provide 'mastodon-tl)
