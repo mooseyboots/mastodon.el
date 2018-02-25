@@ -162,7 +162,13 @@ It then processes NOTE."
     (with-output-to-temp-buffer buffer
       (switch-to-buffer buffer)
       (mastodon-notifications--notifications json))
-    (mastodon-mode)))
+    (with-current-buffer buffer
+      (mastodon-mode)
+      (setq mastodon-tl--buffer-spec
+            `(buffer-name "*mastodon-notifications*"
+                          endpoint "notifications"
+                          update-function ,(lambda(x) (message "not implemented")))))
+    ))
 
 (provide 'mastodon-notifications)
 ;;; mastodon-notifications.el ends here
