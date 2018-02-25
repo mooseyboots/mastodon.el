@@ -82,35 +82,32 @@
   "Format for a `mention' NOTE."
   (let ((toot (mastodon-tl--field 'status note)))
     (insert
-     (concat (mastodon-tl--content toot)
+     (mastodon-tl--content toot)
              (mastodon-notifications--byline toot "Mentioned")
-             "\n\n"))))
+             "\n\n")))
 
 (defun mastodon-notifications--follow (note)
   "Format for a `follow' NOTE."
   (let ((toot (mastodon-tl--field 'status note)))
     (insert
-     (concat
       "Congratulations, you have a new follower!\n\n"
       (mastodon-notifications--byline note "Follows")
-      "\n\n"))))
+      "\n\n")))
 
 
 (defun mastodon-notifications--favorite(note)
   "Format for a `favorite' NOTE."
   (let ((toot (mastodon-tl--field 'status note)))
-    (insert
      (concat (mastodon-tl--content toot)
              (mastodon-notifications--byline note "Favorited")
-             "\n\n"))))
+             "\n\n")))
 
 (defun mastodon-notifications--reblog (note)
   "Format for a `boost' NOTE."
   (let ((toot (mastodon-tl--field 'status note)))
-    (insert
      (concat (mastodon-tl--content toot)
              (mastodon-notifications--byline note "Boosted")
-             "\n\n"))))
+             "\n\n")))
 
 (defun mastodon-notifications--caller (type note)
   "Call the apprpriate function bassed on notification TYPE.
