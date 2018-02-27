@@ -354,7 +354,9 @@ also render the html"
                                        "&"
                                      "?")
                                    "max_id="
-                                   (number-to-string id)))))
+                                   (if (numberp id )
+                                       (number-to-string id)
+                                     id)))))
     (mastodon-http--get-json url)))
 
 ;; TODO
@@ -367,7 +369,9 @@ also render the html"
                                       "&"
                                     "?")
                                   "since_id="
-                                  (number-to-string id)))))
+                                  (if (numberp id)
+                                      (number-to-string id)
+                                    id)))))
     (mastodon-http--get-json url)))
 
 (defun mastodon-tl--property (prop &optional backward)
