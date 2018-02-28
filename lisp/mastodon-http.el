@@ -31,7 +31,6 @@
 
 (require 'json)
 (defvar mastodon-instance-url)
-(defvar mastodon-auth--token)
 (autoload 'mastodon-auth--access-token "mastodon-auth")
 
 (defvar mastodon-http--api-version "v1")
@@ -68,10 +67,10 @@ Open RESPONSE buffer if unsuccessful."
         (funcall success)
       (switch-to-buffer response))))
 
-(defun mastodon-http--post (url args headers)
+(defun mastodon-http--post (url args headers &optional unauthenticed-p)
   "POST synchronously to URL with ARGS and HEADERS.
 
-Authorization header is included by default."
+Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
   (let ((url-request-method "POST")
         (url-request-data
          (when args
@@ -82,8 +81,10 @@ Authorization header is included by default."
                       args
                       "&")))
         (url-request-extra-headers
-         `(("Authorization" . ,(concat "Bearer " mastodon-auth--token))
-           ,headers)))
+	 (append
+	  (unless unauthenticed-p
+	    `(("Authorization" . (concat "Bearer " (mastodon-auth--access-token)))))
+	  headers)))
     (with-temp-buffer
       (url-retrieve-synchronously url))))
 
