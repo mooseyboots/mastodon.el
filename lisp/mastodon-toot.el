@@ -70,7 +70,7 @@ Remove MARKER if RM is non-nil."
   "Take ACTION on toot at point, then execute CALLBACK."
   (let* ((id (mastodon-tl--property 'toot-id))
          (url (mastodon-http--api (concat "statuses/"
-                                         (number-to-string id)
+                                         (mastodon-tl--as-string id)
                                          "/"
                                          action))))
     (let ((response (mastodon-http--post url nil nil)))
@@ -79,7 +79,8 @@ Remove MARKER if RM is non-nil."
 (defun mastodon-toot--toggle-boost ()
   "Boost/unboost toot at `point'."
   (interactive)
-  (let* ((id (mastodon-tl--property 'toot-id))
+  (let* ((id (mastodon-tl--as-string
+              (mastodon-tl--property 'toot-id)))
          (boosted (get-text-property (point) 'boosted-p))
          (action (if boosted "unreblog" "reblog"))
          (msg (if boosted "unboosted" "boosted"))
@@ -87,19 +88,20 @@ Remove MARKER if RM is non-nil."
     (mastodon-toot--action action
                            (lambda ()
                              (mastodon-toot--action-success "B" remove)
-                             (message (format "%s #%d" msg id))))))
+                             (message (format "%s #%s" msg id))))))
 
 (defun mastodon-toot--toggle-favourite ()
   "Favourite/unfavourite toot at `point'."
   (interactive)
-  (let* ((id (mastodon-tl--property 'toot-id))
+  (let* ((id (mastodon-tl--as-string
+              (mastodon-tl--property 'toot-id)))
          (faved (get-text-property (point) 'favourited-p))
          (action (if faved "unfavourite" "favourite"))
          (remove (when faved t)))
     (mastodon-toot--action action
                            (lambda ()
                              (mastodon-toot--action-success "F" remove)
-                             (message (format "%sd #%d" action id))))))
+                             (message (format "%s #%s" action id))))))
 
 (defun mastodon-toot--kill ()
   "Kill `mastodon-toot-mode' buffer and window.
@@ -144,7 +146,7 @@ Set `mastodon-toot--content-warning' to nil."
   "Reply to toot at `point'."
   (interactive)
   (let* ((toot (mastodon-tl--property 'toot-json))
-         (id (number-to-string (mastodon-tl--field 'id toot)))
+         (id (mastodon-tl--as-string (mastodon-tl--field 'id toot)))
          (account (mastodon-tl--field 'account toot))
          (user (cdr (assoc 'username account))))
     (mastodon-toot user id)))

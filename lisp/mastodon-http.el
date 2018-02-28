@@ -107,6 +107,7 @@ Pass response buffer to CALLBACK function."
                   (decode-coding-string
                    (buffer-substring-no-properties (point) (point-max))
                    'utf-8)))
+             (kill-buffer)
              (json-read-from-string json-string)))))
     json-vector))
 
