@@ -97,6 +97,28 @@
   (let ((input "foobar</p>"))
     (should (string= (mastodon-tl--remove-html input) "foobar\n\n"))))
 
+(ert-deftest toot-id-boosted ()
+  "If a toot is boostedm, return the reblog id."
+  (should (string= (mastodon-tl--as-string
+                    (mastodon-tl--toot-id mastodon-tl-test-base-boosted-toot))
+                   "4543919")))
+
+(ert-deftest toot-id ()
+  "If a toot is boostedm, return the reblog id."
+  (should (string= (mastodon-tl--as-string
+                    (mastodon-tl--toot-id mastodon-tl-test-base-toot))
+                   "61208")))
+
+(ert-deftest as-string-1 ()
+  "Should accept a string or number and return a string."
+  (let ((id "1000"))
+      (should (string= (mastodon-tl--as-string id) id))))
+
+(ert-deftest as-string-2 ()
+  "Should accept a string or number and return a string."
+  (let ((id 1000))
+      (should (string= (mastodon-tl--as-string id) (number-to-string id)))))
+
 (ert-deftest more-json ()
   "Should request toots older than max_id."
   (let ((mastodon-instance-url "https://instance.url"))

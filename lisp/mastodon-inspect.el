@@ -55,7 +55,7 @@
   (interactive)
   (mastodon-inspect--dump-json-in-buffer
    (concat "*mastodon-inspect-toot-"
-           (int-to-string (mastodon-tl--property 'toot-id))
+           (mastodon-tl--as-string (mastodon-tl--property 'toot-id))
            "*")
   (mastodon-tl--property 'toot-json)))
 

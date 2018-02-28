@@ -62,6 +62,9 @@ keep the timestamps current as time progresses."
   (image-type-available-p 'imagemagick)
   "A boolean value stating whether to show avatars in timelines.")
 
+(defvar mastodon-tl--display-media-p t
+  "A boolean value stating whether to show media in timelines.")
+
 (defvar mastodon-tl--timestamp-next-update nil
   "The timestamp when the buffer should next be scanned to update the timestamps.")
 (make-variable-buffer-local 'mastodon-tl--timestamp-next-update)
@@ -138,7 +141,7 @@ Optionally start from POS."
          (name (cdr (assoc 'display_name account)))
          (avatar-url (cdr (assoc 'avatar account))))
     (concat
-     (when mastodon-tl--show-avatars-p
+     (when (and mastodon-tl--show-avatars-p mastodon-tl--display-media-p)
        (mastodon-media--get-avatar-rendering avatar-url))
      (propertize name 'face 'mastodon-display-name-face)
      (propertize (concat " (@"
@@ -232,8 +235,8 @@ TIME-STAMP is assumed to be in the past."
   "Generate byline for TOOT."
   (let ((id (cdr (assoc 'id toot)))
         (parsed-time (date-to-time (mastodon-tl--field 'created_at toot)))
-        (faved (mastodon-tl--field 'favourited toot))
-        (boosted (mastodon-tl--field 'reblogged toot)))
+        (faved (equal 't (mastodon-tl--field 'favourited toot)))
+        (boosted (equal 't (mastodon-tl--field 'reblogged toot))))
     (propertize
      (concat (propertize "\n | " 'face 'default)
              (when boosted
@@ -289,11 +292,14 @@ also render the html"
                         (lambda (media-attachement)
                           (let ((preview-url
                                  (cdr (assoc 'preview_url media-attachement))))
-                            (mastodon-media--get-media-link-rendering
-                             preview-url)))
+                            (if mastodon-tl--display-media-p
+                                (mastodon-media--get-media-link-rendering
+                                 preview-url)
+                              (concat "Media::" preview-url "\n"))))
                         media-attachements "")))
-    (if (not (equal media-string ""))
-        (concat "\n" media-string ) "")))
+    (if (not (and (not mastodon-tl--display-media-p)
+                  (equal media-string "")))
+        (concat "\n" media-string) "")))
 
 
 (defun mastodon-tl--content (toot)
@@ -324,7 +330,8 @@ also render the html"
   (goto-char (point-min))
   (while (search-forward "\n\n\n | " nil t)
     (replace-match "\n | "))
-  (mastodon-media--inline-images))
+  (when mastodon-tl--display-media-p
+    (mastodon-media--inline-images)))
 
 (defun mastodon-tl--get-update-function (&optional buffer)
   "Get the UPDATE-FUNCTION stored in `mastodon-tl--buffer-spec'"
@@ -354,9 +361,7 @@ also render the html"
                                        "&"
                                      "?")
                                    "max_id="
-                                   (if (numberp id )
-                                       (number-to-string id)
-                                     id)))))
+                                   (mastodon-tl--as-string id)))))
     (mastodon-http--get-json url)))
 
 ;; TODO
@@ -369,9 +374,7 @@ also render the html"
                                       "&"
                                     "?")
                                   "since_id="
-                                  (if (numberp id)
-                                      (number-to-string id)
-                                    id)))))
+                                  (mastodon-tl--as-string id)))))
     (mastodon-http--get-json url)))
 
 (defun mastodon-tl--property (prop &optional backward)
@@ -395,21 +398,47 @@ Move forward (down) the timeline unless BACKWARD is non-nil."
   (goto-char (point-max))
   (mastodon-tl--property 'toot-id t))
 
+(defun mastodon-tl--as-string(numeric)
+  "Convert NUMERIC to string."
+  (cond ((numberp numeric)
+         (number-to-string numeric))
+        ((stringp numeric) numeric)
+        (t (error
+            "Numeric:%s must be either a string or a number"
+            numeric))))
+
+(defun mastodon-tl--toot-id (json)
+  "Find approproiate toot id in JSON.
+
+If the toot has been boosted use the id found in the
+reblog portion of the toot.  Otherwise, use the body of
+the toot.  This is the same behaviour as the mastodon.social
+webapp"
+  (let ((id (cdr (assoc 'id json)))
+        (reblog (cdr (assoc 'reblog json))))
+    (if reblog (cdr (assoc 'id reblog)) id)))
+  
 (defun mastodon-tl--thread ()
   "Open thread buffer for toot under `point'."
   (interactive)
-  (let* ((id (number-to-string (mastodon-tl--property 'toot-id)))
+  (let* ((id (mastodon-tl--as-string (mastodon-tl--toot-id
+                                      (mastodon-tl--property 'toot-json))))
          (url (mastodon-http--api (format "statuses/%s/context" id)))
          (buffer (format "*mastodon-thread-%s*" id))
          (toot (mastodon-tl--property 'toot-json))
          (context (mastodon-http--get-json url)))
     (with-output-to-temp-buffer buffer
       (switch-to-buffer buffer)
+      (mastodon-mode)
+      (setq mastodon-tl--buffer-spec
+            `(buffer-name ,buffer
+                          endpoint ,(format "statuses/%s/context" id)
+                          update-function
+                          (lambda(toot) (message "END of thread."))))
       (mastodon-tl--timeline (vconcat
                               (cdr (assoc 'ancestors context))
                               `(,toot)
-                              (cdr (assoc 'descendants context)))))
-    (mastodon-mode)))
+                              (cdr (assoc 'descendants context)))))))
 
 (defun mastodon-tl--more ()
   "Append older toots to timeline."
