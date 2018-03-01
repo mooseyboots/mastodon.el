@@ -183,14 +183,17 @@ MEDIA-TYPE is a symbol and either 'avatar or 'media-link."
                  (put-text-property marker (+ marker region-length) 'media-state 'loading-failed)
                  :loading-failed))))))
 
-(defun mastodon-media--select-next-media-line ()
+
+(defun mastodon-media--select-next-media-line (&optional end)
   "Find coordinates of the next media to load.
 
 Returns the list of (`start' . `end', `media-symbol') points of
 that line and string found or nil no more media links were
-found."
+found.
+END an optional argument that puts an upper bound on how far to search
+for the next media line"
   (let ((next-pos (point)))
-    (while (and (setq next-pos (next-single-property-change next-pos 'media-state))
+    (while (and (setq next-pos (next-single-property-change next-pos 'media-state nil end))
                 (or (not (eq 'needs-loading (get-text-property next-pos 'media-state)))
                     (null (get-text-property next-pos 'media-url))
                     (null (get-text-property next-pos 'media-type))))
@@ -205,6 +208,7 @@ found."
         ;; Media links are 5 character ("[img]")
          ((eq media-type 'media-link)
           (list next-pos (+ next-pos 5) 'media-link)))))))
+
 
 (defun mastodon-media--valid-link-p (link)
   "Checks to make sure that the missing string has
