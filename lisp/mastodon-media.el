@@ -133,31 +133,32 @@ IMAGE-OPTIONS are the precomputed options to apply to the image.
 MARKER is the marker to where the response should be visible.
 REGION-LENGTH is the length of the region that should be replaced with the image.
 "
-  (let ((url-buffer (current-buffer))
-        (is-error-response-p (eq :error (car status-plist))))
-    (unwind-protect
-        (let* ((data (unless is-error-response-p
-                       (goto-char (point-min))
-                       (search-forward "\n\n")
-                       (buffer-substring (point) (point-max))))
-               (image (when data
-                        (apply #'create-image data (when image-options 'imagemagick)
-                               t image-options))))
-          (switch-to-buffer (marker-buffer marker))
-          ;; Save narrowing in our buffer
-          (let ((inhibit-read-only t))
-            (save-restriction
-              (widen)
-              (put-text-property marker (+ marker region-length) 'media-state 'loaded)
-              (when image
-                ;; We only set the image to display if we could load
-                ;; it; we already have set a default image when we
-                ;; added the tag.
-                (put-text-property marker (+ marker region-length)
-                                   'display image))
-              ;; We are done with the marker; release it:
-              (set-marker marker nil)))
-          (kill-buffer url-buffer)))))
+  (when (marker-buffer marker) ; only if the buffer hasn't been kill in the meantime
+    (let ((url-buffer (current-buffer))
+          (is-error-response-p (eq :error (car status-plist))))
+      (unwind-protect
+          (let* ((data (unless is-error-response-p
+                         (goto-char (point-min))
+                         (search-forward "\n\n")
+                         (buffer-substring (point) (point-max))))
+                 (image (when data
+                          (apply #'create-image data (when image-options 'imagemagick)
+                                 t image-options))))
+            (switch-to-buffer (marker-buffer marker))
+            ;; Save narrowing in our buffer
+            (let ((inhibit-read-only t))
+              (save-restriction
+                (widen)
+                (put-text-property marker (+ marker region-length) 'media-state 'loaded)
+                (when image
+                  ;; We only set the image to display if we could load
+                  ;; it; we already have set a default image when we
+                  ;; added the tag.
+                  (put-text-property marker (+ marker region-length)
+                                     'display image))
+                ;; We are done with the marker; release it:
+                (set-marker marker nil)))
+            (kill-buffer url-buffer))))))
 
 (defun mastodon-media--load-image-from-url (url media-type start region-length)
   "Takes a URL and MEDIA-TYPE and load the image asynchronously.
