@@ -40,8 +40,8 @@
   :prefix "mastodon-auth-"
   :group 'mastodon)
 
-(defvar mastodon-auth--token nil
-  "User access token.")
+(defvar mastodon-auth--token-alist nil
+  "Alist of User access tokens keyed by instance url.")
 
 (defun mastodon-auth--generate-token ()
   "Make POST to generate auth token."
@@ -53,7 +53,8 @@
      ("username" . ,(read-string "Email: "))
      ("password" . ,(read-passwd "Password: "))
      ("scope" . "read write follow"))
-   nil))
+   nil
+   :unauthenticated))
 
 (defun mastodon-auth--get-token ()
   "Make auth token request and return JSON response."
@@ -67,13 +68,16 @@
       (json-read-from-string json-string))))
 
 (defun mastodon-auth--access-token ()
-  "Return `mastodon-auth--token'.
+  "Return the access token to use with the current `mastodon-instance-url'.
 
-Generate token and set `mastodon-auth--token' if nil."
-  (or mastodon-auth--token
-      (let* ((json (mastodon-auth--get-token))
-             (token (plist-get json :access_token)))
-        (setq mastodon-auth--token token))))
+Generate token and set if none known yet."
+  (let ((token
+         (cdr (assoc mastodon-instance-url mastodon-auth--token-alist))))
+    (unless token 
+      (let ((json (mastodon-auth--get-token)))
+        (setq token (plist-get json :access_token))
+        (push (cons mastodon-instance-url token) mastodon-auth--token-alist)))
+    token))
 
 (provide 'mastodon-auth)
 ;;; mastodon-auth.el ends here
