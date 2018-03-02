@@ -144,21 +144,21 @@ REGION-LENGTH is the length of the region that should be replaced with the image
                  (image (when data
                           (apply #'create-image data (when image-options 'imagemagick)
                                  t image-options))))
-            (switch-to-buffer (marker-buffer marker))
-            ;; Save narrowing in our buffer
-            (let ((inhibit-read-only t))
-              (save-restriction
-                (widen)
-                (put-text-property marker (+ marker region-length) 'media-state 'loaded)
-                (when image
-                  ;; We only set the image to display if we could load
-                  ;; it; we already have set a default image when we
-                  ;; added the tag.
-                  (put-text-property marker (+ marker region-length)
-                                     'display image))
-                ;; We are done with the marker; release it:
-                (set-marker marker nil)))
-            (kill-buffer url-buffer))))))
+            (with-current-buffer (marker-buffer marker)
+              ;; Save narrowing in our buffer
+              (let ((inhibit-read-only t))
+                (save-restriction
+                  (widen)
+                  (put-text-property marker (+ marker region-length) 'media-state 'loaded)
+                  (when image
+                    ;; We only set the image to display if we could load
+                    ;; it; we already have set a default image when we
+                    ;; added the tag.
+                    (put-text-property marker (+ marker region-length)
+                                       'display image))
+                  ;; We are done with the marker; release it:
+                  (set-marker marker nil)))
+              (kill-buffer url-buffer)))))))
 
 (defun mastodon-media--load-image-from-url (url media-type start region-length)
   "Takes a URL and MEDIA-TYPE and load the image asynchronously.
