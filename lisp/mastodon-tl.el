@@ -297,8 +297,8 @@ also render the html"
                                  preview-url)
                               (concat "Media::" preview-url "\n"))))
                         media-attachements "")))
-    (if (not (and (not mastodon-tl--display-media-p)
-                  (equal media-string "")))
+    (if (not (or mastodon-tl--display-media-p
+                 (equal media-string "")))
         (concat "\n" media-string) "")))
 
 
