@@ -32,6 +32,8 @@
 ;; required by the server and client.
 
 ;;; Code:
+(defvar url-show-status)
+
 (defgroup mastodon-media nil
   "Inline Mastadon media."
   :prefix "mastodon-media-"
@@ -172,7 +174,9 @@ MEDIA-TYPE is a symbol and either 'avatar or 'media-link."
                           ((eq media-type 'media-link)
                            `(:max-height ,mastodon-media--preview-max-height))))))
     (let ((buffer (current-buffer))
-          (marker (copy-marker start)))
+          (marker (copy-marker start))
+	  ;; Keep url.el from spamming us with messages about connecting to hosts:
+	  (url-show-status nil))
       (condition-case nil
           ;; catch any errors in url-retrieve so as to not abort
           ;; whatever called us
