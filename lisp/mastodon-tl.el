@@ -55,6 +55,11 @@ keep the timestamps current as time progresses."
   :group 'mastodon-tl
   :type '(boolean :tag "Enable relative timestamps and background updater task"))
 
+(defcustom mastodon-tl--enable-proportional-fonts nil
+  "Nonnil to enable using proportional (rather than the default fixed width) fonts when rendering HTML."
+  :group 'mastodon-tl
+  :type '(boolean :tag "Enable using proportional rather than fixed width fonts when rendering HTML text"))
+
 (defvar mastodon-tl--buffer-spec nil
   "A unique identifier and functions for each Mastodon buffer.")
 (make-variable-buffer-local 'mastodon-tl--buffer-spec)
@@ -311,7 +316,9 @@ TIME-STAMP is assumed to be in the past."
   "Returns a propertized text giving the rendering of the given HTML string."
   (with-temp-buffer
     (insert string)
-    (let ((shr-use-fonts nil))
+    (let ((shr-use-fonts mastodon-tl--enable-proportional-fonts)
+          (shr-width (when mastodon-tl--enable-proportional-fonts
+                       (window-width))))
       (shr-render-region (point-min) (point-max)))
     ;; Make all links a tab stop recognized by our own logic and
     ;; update keymaps where needed.
