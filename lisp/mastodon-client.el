@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.7.1
+;; Version: 0.7.2
 ;; Homepage: https://github.com/jdenen/mastodon.el
 ;; Package-Requires: ((emacs "24.4"))
 
@@ -30,6 +30,7 @@
 ;;; Code:
 
 (require 'plstore)
+(defvar mastodon-instance-url)
 (autoload 'mastodon-http--api "mastodon-http")
 (autoload 'mastodon-http--post "mastodon-http")
 
@@ -39,8 +40,8 @@
   :group 'mastodon
   :type 'file)
 
-(defvar mastodon-client--client-details nil
-  "Client id and secret.")
+(defvar mastodon-client--client-details-alist nil
+  "An alist of Client id and secrets keyed by the instance url.")
 
 (defun mastodon-client--register ()
   "POST client to Mastodon."
@@ -50,7 +51,8 @@
      ("redirect_uris" . "urn:ietf:wg:oauth:2.0:oob")
      ("scopes" . "read write follow")
      ("website" . "https://github.com/jdenen/mastodon.el"))
-   nil))
+   nil
+   :unauthenticated))
 
 (defun mastodon-client--fetch ()
   "Return JSON from `mastodon-client--register' call."
@@ -72,8 +74,13 @@
 
 Make `mastodon-client--fetch' call to determine client values."
   (let ((plstore (plstore-open (mastodon-client--token-file)))
-        (client (mastodon-client--fetch)))
-    (plstore-put plstore "mastodon" client nil)
+	(client (mastodon-client--fetch))
+	;; alexgriffith reported seeing ellipses in the saved output
+	;; which indicate some output truncating. Nothing in `plstore-save'
+	;; seems to ensure this cannot happen so let's do that ourselves:
+	(print-length nil)
+	(print-level nil))
+    (plstore-put plstore (concat "mastodon-" mastodon-instance-url) client nil)
     (plstore-save plstore)
     (plstore-close plstore)
     client))
@@ -81,19 +88,24 @@ Make `mastodon-client--fetch' call to determine client values."
 (defun mastodon-client--read ()
   "Retrieve client_id and client_secret from `mastodon-client--token-file'."
   (let* ((plstore (plstore-open (mastodon-client--token-file)))
-         (mastodon (plstore-get plstore "mastodon")))
-    (when mastodon
-      (delete "mastodon" mastodon))))
+         (mastodon (plstore-get plstore (concat "mastodon-" mastodon-instance-url))))
+    (cdr mastodon)))
 
 (defun mastodon-client ()
-  "Return variable `mastodon-client--client-details' plist.
+  "Return variable client secrets to use for the current `mastodon-instance-url'..
 
 Read plist from `mastodon-client--token-file' if variable is nil.
 Fetch and store plist if `mastodon-client--read' returns nil."
-  (or mastodon-client--client-details
-      (setq mastodon-client--client-details
+  (let ((client-details
+         (cdr (assoc mastodon-instance-url mastodon-client--client-details-alist))))
+    (unless client-details
+      (setq client-details
             (or (mastodon-client--read)
-                (mastodon-client--store)))))
+                (mastodon-client--store)))
+      (push (cons mastodon-instance-url client-details)
+            mastodon-client--client-details-alist))
+    client-details))
 
 (provide 'mastodon-client)
 ;;; mastodon-client.el ends here
+

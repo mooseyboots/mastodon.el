@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.7.1
+;; Version: 0.7.2
 ;; Homepage: https://github.com/jdenen/mastodon.el
 ;; Package-Requires: ((emacs "24.4"))
 
@@ -40,8 +40,11 @@
   :prefix "mastodon-auth-"
   :group 'mastodon)
 
-(defvar mastodon-auth--token nil
-  "User access token.")
+(defvar mastodon-auth--token-alist nil
+  "Alist of User access tokens keyed by instance url.")
+
+(defvar mastodon-auth--acct-alist nil
+  "Alist of account accts (name@domain) keyed by instance url.")
 
 (defun mastodon-auth--generate-token ()
   "Make POST to generate auth token."
@@ -53,7 +56,8 @@
      ("username" . ,(read-string "Email: "))
      ("password" . ,(read-passwd "Password: "))
      ("scope" . "read write follow"))
-   nil))
+   nil
+   :unauthenticated))
 
 (defun mastodon-auth--get-token ()
   "Make auth token request and return JSON response."
@@ -67,13 +71,31 @@
       (json-read-from-string json-string))))
 
 (defun mastodon-auth--access-token ()
-  "Return `mastodon-auth--token'.
+  "Return the access token to use with the current `mastodon-instance-url'.
 
-Generate token and set `mastodon-auth--token' if nil."
-  (or mastodon-auth--token
-      (let* ((json (mastodon-auth--get-token))
-             (token (plist-get json :access_token)))
-        (setq mastodon-auth--token token))))
+Generate token and set if none known yet."
+  (let ((token
+         (cdr (assoc mastodon-instance-url mastodon-auth--token-alist))))
+    (unless token 
+      (let ((json (mastodon-auth--get-token)))
+        (setq token (plist-get json :access_token))
+        (push (cons mastodon-instance-url token) mastodon-auth--token-alist)))
+    token))
+
+(defun mastodon-auth--get-account-name ()
+  "Request user credentials and return an account name."
+  (cdr (assoc
+        'acct
+        (mastodon-http--get-json
+         (mastodon-http--api
+          "accounts/verify_credentials")))))
+
+(defun mastodon-auth--user-acct ()
+  "Return a mastodon user acct name."
+  (or (cdr (assoc  mastodon-instance-url mastodon-auth--acct-alist))
+      (let ((acct (mastodon-auth--get-account-name)))
+        (push (cons mastodon-instance-url acct) mastodon-auth--acct-alist)
+        acct)))
 
 (provide 'mastodon-auth)
 ;;; mastodon-auth.el ends here

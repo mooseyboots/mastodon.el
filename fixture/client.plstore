@@ -1,2 +1,3 @@
 ;;; public entries -*- mode: plstore -*-
-(("mastodon" :client_id "id" :client_secret "secret"))
+(("mastodon-http://other.example" :client_id "id1" :client_secret "secret1")
+ ("mastodon-http://mastodon.example" :client_id "id2" :client_secret "secret2"))

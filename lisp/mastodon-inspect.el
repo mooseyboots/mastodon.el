@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.7.1
+;; Version: 0.7.2
 ;; Package-Requires: ((emacs "24.4"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
@@ -55,7 +55,7 @@
   (interactive)
   (mastodon-inspect--dump-json-in-buffer
    (concat "*mastodon-inspect-toot-"
-           (int-to-string (mastodon-tl--property 'toot-id))
+           (mastodon-tl--as-string (mastodon-tl--property 'toot-id))
            "*")
   (mastodon-tl--property 'toot-json)))
 

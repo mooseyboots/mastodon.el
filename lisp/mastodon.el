@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.7.1
+;; Version: 0.7.2
 ;; Package-Requires: ((emacs "24.4"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
@@ -38,6 +38,8 @@
 (autoload 'mastodon-tl--get-tag-timeline "mastodon-tl")
 (autoload 'mastodon-tl--goto-next-toot "mastodon-tl")
 (autoload 'mastodon-tl--goto-prev-toot "mastodon-tl")
+(autoload 'mastodon-tl--next-tab-item "mastodon-tl")
+(autoload 'mastodon-tl--previous-tab-item "mastodon-tl")
 (autoload 'mastodon-tl--thread "mastodon-tl")
 (autoload 'mastodon-tl--update "mastodon-tl")
 (autoload 'mastodon-toot--compose-buffer "mastodon-toot")
@@ -131,7 +133,12 @@ If REPLY-TO-ID is non-nil, attach new toot to a conversation."
     (define-key map (kbd "r") #'mastodon-toot--reply)
     (define-key map (kbd "t") #'mastodon-tl--thread)
     (define-key map (kbd "T") #'mastodon-tl--get-tag-timeline)
-    (define-key map (kbd "u") #'mastodon-tl--update)))
+    (define-key map (kbd "u") #'mastodon-tl--update)
+    (define-key map [?\t] #'mastodon-tl--next-tab-item)
+    (define-key map [backtab] #'mastodon-tl--previous-tab-item)
+    (define-key map [?\S-\t] #'mastodon-tl--previous-tab-item)
+    (define-key map [?\M-\t] #'mastodon-tl--previous-tab-item)
+    ))
 
 (with-eval-after-load 'mastodon
   (when (require 'discover nil :noerror)
