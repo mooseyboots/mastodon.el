@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.7.1
+;; Version: 0.7.2
 ;; Homepage: https://github.com/jdenen/mastodon.el
 ;; Package-Requires: ((emacs "24.4"))
 
@@ -127,7 +127,8 @@ BAIQCEAgAIEABAIsJVH58WqHw8FIgjUIQCAACAQgEIBAAAIBCAQgEIBAAAIBCAQgEAAEAhAIQCBA
 fKRJkmVZjAQwh78A6vCRWJE8K+8AAAAASUVORK5CYII=")
   "The PNG data for a generic 200x200 'broken image' view")
 
-(defun mastodon-media--process-image-response (status-plist marker image-options region-length)
+(defun mastodon-media--process-image-response
+    (status-plist marker image-options region-length)
   "Callback function processing the url retrieve response for URL.
 
 STATUS-PLIST is the usual plist of status events as per `url-retrieve'.
@@ -151,7 +152,8 @@ REGION-LENGTH is the length of the region that should be replaced with the image
               (let ((inhibit-read-only t))
                 (save-restriction
                   (widen)
-                  (put-text-property marker (+ marker region-length) 'media-state 'loaded)
+                  (put-text-property marker
+                                     (+ marker region-length) 'media-state 'loaded)
                   (when image
                     ;; We only set the image to display if we could load
                     ;; it; we already have set a default image when we
@@ -185,7 +187,10 @@ MEDIA-TYPE is a symbol and either 'avatar or 'media-link."
                         (list marker image-options region-length))
         (error (with-current-buffer buffer
                  ;; TODO: Consider adding retries
-                 (put-text-property marker (+ marker region-length) 'media-state 'loading-failed)
+                 (put-text-property marker
+                                    (+ marker region-length)
+                                    'media-state
+                                    'loading-failed)
                  :loading-failed))))))
 
 (defun mastodon-media--select-next-media-line ()
@@ -235,7 +240,8 @@ not been returned."
             (put-text-property start end 'media-state 'invalid-url)
           ;; proceed to load this image asynchronously
           (put-text-property start end 'media-state 'loading)
-          (mastodon-media--load-image-from-url image-url media-type start (- end start)))))))
+          (mastodon-media--load-image-from-url
+           image-url media-type start (- end start)))))))
 
 (defun mastodon-media--get-avatar-rendering (avatar-url)
   "Returns the string to be written that renders the avatar at AVATAR-URL."

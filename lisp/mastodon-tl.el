@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.7.1
+;; Version: 0.7.2
 ;; Homepage: https://github.com/jdenen/mastodon.el
 ;; Package-Requires: ((emacs "24.4"))
 
@@ -56,9 +56,12 @@ keep the timestamps current as time progresses."
   :type '(boolean :tag "Enable relative timestamps and background updater task"))
 
 (defcustom mastodon-tl--enable-proportional-fonts nil
-  "Nonnil to enable using proportional (rather than the default fixed width) fonts when rendering HTML."
+  "Nonnil to enable using proportional fonts when rendering HTML.
+
+By default fixed width fonts are used."
   :group 'mastodon-tl
-  :type '(boolean :tag "Enable using proportional rather than fixed width fonts when rendering HTML text"))
+  :type '(boolean :tag "Enable using proportional rather than fixed \
+width fonts when rendering HTML text"))
 
 (defvar mastodon-tl--buffer-spec nil
   "A unique identifier and functions for each Mastodon buffer.")
@@ -130,7 +133,8 @@ This also skips tab items in invisible text, i.e. hidden spoiler text."
   (interactive)
   (let (next-range
         (search-pos (point)))
-    (while (and (setq next-range (mastodon-tl--find-next-or-previous-property-range 'mastodon-tab-stop search-pos nil))
+    (while (and (setq next-range (mastodon-tl--find-next-or-previous-property-range
+                                  'mastodon-tab-stop search-pos nil))
                 (get-text-property (car next-range) 'invisible)
                 (setq search-pos (1+ (cdr next-range))))
       ;; do nothing, all the action in in the while condition
@@ -149,7 +153,8 @@ This also skips tab items in invisible text, i.e. hidden spoiler text."
   (interactive)
   (let (next-range
         (search-pos (point)))
-    (while (and (setq next-range (mastodon-tl--find-next-or-previous-property-range 'mastodon-tab-stop search-pos t))
+    (while (and (setq next-range (mastodon-tl--find-next-or-previous-property-range
+                                  'mastodon-tab-stop search-pos t))
                 (get-text-property (car next-range) 'invisible)
                 (setq search-pos (1- (car next-range))))
       ;; do nothing, all the action in in the while condition
@@ -373,8 +378,8 @@ TIME-STAMP is assumed to be in the past."
                            mastodon-tl--shr-map-replacement
                          mastodon-tl--shr-image-map-replacement)))
           (add-text-properties start end
-                              (list 'mastodon-tab-stop 'shr-url
-                                    'keymap keymap)))))
+                               (list 'mastodon-tab-stop 'shr-url
+                                     'keymap keymap)))))
     (buffer-string)))
 
 (defun mastodon-tl--set-face (string face)
@@ -384,11 +389,14 @@ TIME-STAMP is assumed to be in the past."
 (defun mastodon-tl--toggle-spoiler-text (position)
   "Toggle the visibility of the spoiler text at/after POSITION."
   (let ((inhibit-read-only t)
-        (spoiler-text-region (mastodon-tl--find-property-range 'mastodon-content-warning-body position nil)))
+        (spoiler-text-region (mastodon-tl--find-property-range
+                              'mastodon-content-warning-body position nil)))
     (if (not spoiler-text-region)
         (message "No spoiler text here")
       (add-text-properties (car spoiler-text-region) (cdr spoiler-text-region)
-                           (list 'invisible (not (get-text-property (car spoiler-text-region) 'invisible)))))))
+                           (list 'invisible
+                                 (not (get-text-property (car spoiler-text-region)
+                                                         'invisible)))))))
 
 (defun mastodon-tl--make-link (string link-type)
   "Return a propertized version of STRING that will act like link.
@@ -400,11 +408,11 @@ LINK-TYPE is the type of link to produce."
                     (t
                      (error "unknown link type %s" link-type)))))
     (propertize
-   string
-   'mastodon-tab-stop link-type
-   'mouse-face 'highlight
-   'keymap mastodon-tl--link-keymap
-   'help-echo help-text)))
+     string
+     'mastodon-tab-stop link-type
+     'mouse-face 'highlight
+     'keymap mastodon-tl--link-keymap
+     'help-echo help-text)))
 
 (defun mastodon-tl--do-link-action-at-point (position)
   (interactive "d")
@@ -438,7 +446,9 @@ message is a link which unhides/hides the main body."
                   'default))
          (message (concat "\n"
                           " ---------------\n"
-                          " " (mastodon-tl--make-link "Content Warning" 'content-warning) "\n"
+                          " " (mastodon-tl--make-link "Content Warning"
+                                                      'content-warning)
+                          "\n"
                           " ---------------\n"))
          (cw (mastodon-tl--set-face message 'mastodon-cw-face)))
     (concat
@@ -478,10 +488,11 @@ message is a link which unhides/hides the main body."
   (insert
    (concat
     ;; remove trailing whitespace
-    (replace-regexp-in-string "[\t\n ]*\\'" "" (if (mastodon-tl--has-spoiler toot)
-                                                   (mastodon-tl--spoiler toot)
-                                                 (mastodon-tl--content toot)))
-
+    (replace-regexp-in-string
+     "[\t\n ]*\\'" ""
+     (if (mastodon-tl--has-spoiler toot)
+         (mastodon-tl--spoiler toot)
+       (mastodon-tl--content toot)))
     (mastodon-tl--byline toot)
     "\n\n")))
 
@@ -616,7 +627,7 @@ webapp"
         (goto-char point-before)))))
 
 (defun mastodon-tl--find-property-range (property start-point &optional search-backwards)
-" Returns `nil` if no such range is found.
+  " Returns `nil` if no such range is found.
 
 If PROPERTY is set at START-POINT returns a range around
 START-POINT otherwise before/after START-POINT.
@@ -631,14 +642,17 @@ before (non-nil) or after (nil)"
             (next-single-property-change start-point property nil (point-max)))
     (if search-backwards
         (let* ((end (or (previous-single-property-change
-                         (if (equal start-point (point-max)) start-point (1+ start-point))
+                         (if (equal start-point (point-max))
+                             start-point (1+ start-point))
                          property)
-                        ;; we may either be just before the range or there is nothing at all
+                        ;; we may either be just before the range or there
+                        ;; is nothing at all
                         (and (not (equal start-point (point-min)))
                              (get-text-property (1- start-point) property)
                              start-point)))
-               (start (and end
-                           (previous-single-property-change end property nil (point-min)))))
+               (start (and
+                       end
+                       (previous-single-property-change end property nil (point-min)))))
           (when end
             (cons start end)))
       (let* ((start (next-single-property-change start-point property))
@@ -647,7 +661,8 @@ before (non-nil) or after (nil)"
         (when start
           (cons start end))))))
 
-(defun mastodon-tl--find-next-or-previous-property-range (property start-point search-backwards)
+(defun mastodon-tl--find-next-or-previous-property-range
+    (property start-point search-backwards)
   "Finds (start . end) range after/before START-POINT where PROPERTY is set to a consistent value (different from the value at START-POINT if that is set).
 
 Returns nil if no such range exists.
@@ -661,9 +676,11 @@ START-POINT otherwise after START-POINT.
       (let ((current-range (mastodon-tl--find-property-range property start-point)))
         (if search-backwards
             (unless (equal (car current-range) (point-min))
-              (mastodon-tl--find-property-range property (1- (car current-range)) search-backwards))
+              (mastodon-tl--find-property-range
+               property (1- (car current-range)) search-backwards))
           (unless (equal (cdr current-range) (point-max))
-            (mastodon-tl--find-property-range property (1+ (cdr current-range)) search-backwards))))
+            (mastodon-tl--find-property-range
+             property (1+ (cdr current-range)) search-backwards))))
     ;; If we are not within a range, we can just defer to
     ;; mastodon-tl--find-property-range directly.
     (mastodon-tl--find-property-range property start-point search-backwards)))
@@ -723,8 +740,9 @@ from the start if it is nil."
                                                                (seconds-to-time 300))
                   mastodon-tl--timestamp-update-timer nil))
           (while (and (< iteration 5)
-                      (setq next-timestamp-range (mastodon-tl--find-property-range 'timestamp
-                                                                                   previous-timestamp)))
+                      (setq next-timestamp-range
+                            (mastodon-tl--find-property-range 'timestamp
+                                                              previous-timestamp)))
             (let* ((start (car next-timestamp-range))
                    (end (cdr next-timestamp-range))
                    (timestamp (get-text-property start 'timestamp))
@@ -732,15 +750,17 @@ from the start if it is nil."
                    (new-display (mastodon-tl--relative-time-description timestamp)))
               (unless (string= current-display new-display)
                 (let ((inhibit-read-only t))
-                  (add-text-properties start end
-                                       (list 'display (mastodon-tl--relative-time-description timestamp)))))
+                  (add-text-properties
+                   start end (list 'display
+                                   (mastodon-tl--relative-time-description timestamp)))))
               (mastodon-tl--consider-timestamp-for-updates timestamp)
               (setq iteration (1+ iteration)
                     previous-timestamp (1+ (cdr next-timestamp-range)))))
           (if next-timestamp-range
               ;; schedule the next batch from the previous location to
               ;; start very soon in the future:
-              (run-at-time 0.1 nil #'mastodon-tl--update-timestamps-callback buffer (copy-marker previous-timestamp))
+              (run-at-time 0.1 nil #'mastodon-tl--update-timestamps-callback buffer
+                           (copy-marker previous-timestamp))
             ;; otherwise we are done for now; schedule a new run for when needed
             (setq mastodon-tl--timestamp-update-timer
                   (run-at-time mastodon-tl--timestamp-next-update
@@ -781,12 +801,13 @@ UPDATE-FUNCTION is used to recieve more toots."
             `(buffer-name ,buffer-name
                           endpoint ,endpoint update-function
                           ,update-function)
-            mastodon-tl--timestamp-update-timer (when mastodon-tl--enable-relative-timestamps
-                                                  (run-at-time mastodon-tl--timestamp-next-update
-                                                               nil ;; don't repeat
-                                                               #'mastodon-tl--update-timestamps-callback
-                                                               (current-buffer)
-                                                               nil))))
+            mastodon-tl--timestamp-update-timer
+            (when mastodon-tl--enable-relative-timestamps
+              (run-at-time mastodon-tl--timestamp-next-update
+                           nil ;; don't repeat
+                           #'mastodon-tl--update-timestamps-callback
+                           (current-buffer)
+                           nil))))
     buffer))
 
 (provide 'mastodon-tl)

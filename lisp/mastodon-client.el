@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.7.1
+;; Version: 0.7.2
 ;; Homepage: https://github.com/jdenen/mastodon.el
 ;; Package-Requires: ((emacs "24.4"))
 
@@ -96,7 +96,8 @@ Make `mastodon-client--fetch' call to determine client values."
 
 Read plist from `mastodon-client--token-file' if variable is nil.
 Fetch and store plist if `mastodon-client--read' returns nil."
-  (let ((client-details (cdr (assoc mastodon-instance-url mastodon-client--client-details-alist))))
+  (let ((client-details
+         (cdr (assoc mastodon-instance-url mastodon-client--client-details-alist))))
     (unless client-details
       (setq client-details
             (or (mastodon-client--read)
