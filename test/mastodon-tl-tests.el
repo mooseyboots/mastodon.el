@@ -821,3 +821,50 @@ constant."
 
       ;; The body is invisible again:
       (should (eq t (get-text-property body-position 'invisible))))))
+
+(ert-deftest mastodon-tl--hashtag ()
+  "Should recognise hashtags in a toot and add the required properties to it."
+  ;; Travis's Emacs doesn't have libxml so we fake things by inputting
+  ;; propertized text and stubbing shr-render-region
+  (let* ((fake-input-text
+          (concat "Tag:"
+                  (propertize
+                   "sampletag"
+                   'shr-url "https://example.space/tags/sampletag"
+                   'keymap shr-map
+                   'help-echo "https://example.space/tags/sampletag")
+                  " some text after"))
+         (rendered (with-mock
+                    (stub shr-render-region => nil)
+                    (mastodon-tl--render-text
+                     fake-input-text
+                     mastodon-tl-test-base-toot)))
+         (tag-location 7))
+    (should (eq (get-text-property tag-location 'mastodon-tab-stop rendered)
+                'hashtag))
+    (should (equal (get-text-property tag-location 'mastodon-tag rendered)
+                   "sampletag"))
+    (should (equal (get-text-property tag-location 'help-echo rendered)
+                   "Browse tag #sampletag"))))
+
+(ert-deftest mastodon-tl--extract-hashtag-from-url-mastodon-link ()
+  (should (equal (mastodon-tl--extract-hashtag-from-url
+		  "https://example.org/tags/foo"
+		  "https://example.org")
+		 "foo")))
+
+(ert-deftest mastodon-tl--extract-hashtag-from-url-other-link ()
+  (should (equal (mastodon-tl--extract-hashtag-from-url
+		  "https://example.org/tag/foo"
+		  "https://example.org")
+		 "foo")))
+
+(ert-deftest mastodon-tl--extract-hashtag-from-url-wrong-instance ()
+  (should (null (mastodon-tl--extract-hashtag-from-url
+		  "https://example.org/tags/foo"
+		  "https://other.example.org"))))
+
+(ert-deftest mastodon-tl--extract-hashtag-from-url-not-tag ()
+  (should (null (mastodon-tl--extract-hashtag-from-url
+		  "https://example.org/@userid"
+		  "https://example.org"))))
