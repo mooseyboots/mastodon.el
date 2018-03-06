@@ -600,9 +600,11 @@ webapp"
          (buffer (format "*mastodon-thread-%s*" id))
          (toot (mastodon-tl--property 'toot-json))
          (context (mastodon-http--get-json url)))
+    (when (member (cdr (assoc 'type toot)) '("reblog" "favourite"))
+      (setq toot (cdr(assoc 'status toot))))
     (if (> (+ (length (cdr (assoc 'ancestors context)))
               (length (cdr (assoc 'descendants context))))
-           0)
+           0)        
         (with-output-to-temp-buffer buffer
           (switch-to-buffer buffer)
           (mastodon-mode)
