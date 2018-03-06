@@ -328,8 +328,14 @@ E.g. this could return something like \"1 min ago\", \"yesterday\", etc.
 TIME-STAMP is assumed to be in the past."
   (car (mastodon-tl--relative-time-details timestamp current-time)))
 
-(defun mastodon-tl--byline (toot)
-  "Generate byline for TOOT."
+(defun mastodon-tl--byline (toot author-byline action-byline)
+  "Generate byline for TOOT.
+
+AUTHOR-BYLINE is function for adding the author portion of 
+the byline that takes one variable. By default it is `mastodon-tl--byline-author'
+ACTION-BYLINE is a function for adding an action, such as boosting
+favouriting and following to the byline. It also takes a single function. By default
+it is `mastodon-tl--byline-boosted'"
   (let ((id (cdr (assoc 'id toot)))
         (parsed-time (date-to-time (mastodon-tl--field 'created_at toot)))
         (faved (equal 't (mastodon-tl--field 'favourited toot)))
@@ -343,8 +349,8 @@ TIME-STAMP is assumed to be in the past."
               (when faved
                 (format "(%s) "
                         (propertize "F" 'face 'mastodon-boost-fave-face)))
-              (mastodon-tl--byline-author toot)
-              (mastodon-tl--byline-boosted toot)
+              (funcall author-byline toot)
+              (funcall action-byline toot)
               " "
               ;; TODO: Once we have a view for toot (responses etc.) make
               ;; this a tab stop and attach an action.
@@ -535,26 +541,39 @@ message is a link which unhides/hides the main body."
      (mastodon-tl--render-text content toot)
      (mastodon-tl--media toot))))
 
-(defun mastodon-tl--toot (toot)
-  "Display TOOT content and byline."
-  (insert
-   (concat
-    ;; remove trailing whitespace
+(defun mastodon-tl--insert (toot body author-byline action-byline)
+  "Display toot content and byline.
 
-    (replace-regexp-in-string
-     "[\t\n ]*\\'" ""
-     (if (mastodon-tl--has-spoiler toot)
-         (mastodon-tl--spoiler toot)
-       (mastodon-tl--content toot)))
-    (mastodon-tl--byline toot)
-    "\n\n")))
+BODY will form the section of the toot above the byline.
+AUTHOR-BYLINE and ACTION-BYLINE are optional functions that are passed to
+`mastodon-tl--byline'
+AUTHOR-BYLINE is an optional function for adding the author portion of 
+the byline that takes one variable. By default it is `mastodon-tl--byline-author'
+ACTION-BYLINE is also an optional function for adding an action, such as boosting
+favouriting and following to the byline. It also takes a single function. By default
+it is `mastodon-tl--byline-boosted'"
+  (insert
+   ;; remove trailing whitespace
+   body
+   (mastodon-tl--byline toot author-byline action-byline)
+   "\n\n"))
+
+(defun mastodon-tl--toot(toot)
+  "Formats TOOT and insertes it into the buffer."
+  (mastodon-tl--insert
+   toot
+   (replace-regexp-in-string
+    "[\t\n ]*\\'" ""
+    (if (mastodon-tl--has-spoiler toot)
+        (mastodon-tl--spoiler toot)
+      (mastodon-tl--content toot)))
+   'mastodon-tl--byline-author
+   'mastodon-tl--byline-boosted))
 
 (defun mastodon-tl--timeline (toots)
   "Display each toot in TOOTS."
   (mapc 'mastodon-tl--toot toots)
   (goto-char (point-min))
-  (while (search-forward "\n\n\n | " nil t)
-    (replace-match "\n | "))
   (when mastodon-tl--display-media-p
     (mastodon-media--inline-images)))
 
