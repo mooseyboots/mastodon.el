@@ -135,6 +135,7 @@ This also skips tab items in invisible text, i.e. hidden spoiler text."
         (search-pos (point)))
     (while (and (setq next-range (mastodon-tl--find-next-or-previous-property-range
                                   'mastodon-tab-stop search-pos nil))
+
                 (get-text-property (car next-range) 'invisible)
                 (setq search-pos (1+ (cdr next-range))))
       ;; do nothing, all the action in in the while condition
@@ -397,7 +398,6 @@ TIME-STAMP is assumed to be in the past."
                            (list 'invisible
                                  (not (get-text-property (car spoiler-text-region)
                                                          'invisible)))))))
-
 (defun mastodon-tl--make-link (string link-type)
   "Return a propertized version of STRING that will act like link.
 
@@ -488,6 +488,7 @@ message is a link which unhides/hides the main body."
   (insert
    (concat
     ;; remove trailing whitespace
+
     (replace-regexp-in-string
      "[\t\n ]*\\'" ""
      (if (mastodon-tl--has-spoiler toot)

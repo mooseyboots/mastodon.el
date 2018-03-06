@@ -43,6 +43,9 @@
 (defvar mastodon-auth--token-alist nil
   "Alist of User access tokens keyed by instance url.")
 
+(defvar mastodon-auth--acct-alist nil
+  "Alist of account accts (name@domain) keyed by instance url.")
+
 (defun mastodon-auth--generate-token ()
   "Make POST to generate auth token."
   (mastodon-http--post
@@ -78,6 +81,21 @@ Generate token and set if none known yet."
         (setq token (plist-get json :access_token))
         (push (cons mastodon-instance-url token) mastodon-auth--token-alist)))
     token))
+
+(defun mastodon-auth--get-account-name ()
+  "Request user credentials and return an account name."
+  (cdr (assoc
+        'acct
+        (mastodon-http--get-json
+         (mastodon-http--api
+          "accounts/verify_credentials")))))
+
+(defun mastodon-auth--user-acct ()
+  "Return a mastodon user acct name."
+  (or (cdr (assoc  mastodon-instance-url mastodon-auth--acct-alist))
+      (let ((acct (mastodon-auth--get-account-name)))
+        (push (cons mastodon-instance-url acct) mastodon-auth--acct-alist)
+        acct)))
 
 (provide 'mastodon-auth)
 ;;; mastodon-auth.el ends here

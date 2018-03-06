@@ -83,7 +83,7 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
         (url-request-extra-headers
 	 (append
 	  (unless unauthenticed-p
-	    `(("Authorization" . (concat "Bearer " (mastodon-auth--access-token)))))
+	    `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token)))))
 	  headers)))
     (with-temp-buffer
       (url-retrieve-synchronously url))))

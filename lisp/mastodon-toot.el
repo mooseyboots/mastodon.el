@@ -48,7 +48,6 @@
       map)
   "Keymap for `mastodon-toot'.")
 
-
 (defun mastodon-toot--action-success (marker &optional rm)
   "Insert MARKER with 'success face in byline.
 
@@ -142,14 +141,40 @@ Set `mastodon-toot--content-warning' to nil."
       (mastodon-http--triage response
                              (lambda () (message "Toot toot!"))))))
 
+(defun mastodon-toot--process-local (acct)
+  "Adds domain to local ACCT and replaces the curent user name with \"\".
+
+Mastodon requires the full user@domain, even in the case of local accts. 
+eg. \"user\" -> \"user@local.social \" (when local.social is the domain of the 
+mastodon-instance-url).
+eg. \"yourusername\" -> \"\"
+eg. \"feduser@fed.social\" -> \"feduser@fed.social\" "
+  (cond ((string-match-p "@" acct) (concat "@" acct " ")) ; federated acct
+        ((string= (mastodon-auth--user-acct) acct) "") ; your acct
+        (t (concat "@" acct "@" ; local acct
+                   (cadr (split-string mastodon-instance-url "/" t)) " "))))
+
+(defun mastodon-toot--mentions (status)
+  "Extract mentions from STATUS and process them into a string."
+  (interactive)
+  (let ((mentions (cdr (assoc 'mentions status))))
+    (mapconcat (lambda(x) (mastodon-toot--process-local
+                           (cdr (assoc 'acct x))))
+               ;; reverse does not work on vectors in 24.5
+               (reverse (append mentions nil))
+               "")))
+
 (defun mastodon-toot--reply ()
   "Reply to toot at `point'."
   (interactive)
   (let* ((toot (mastodon-tl--property 'toot-json))
          (id (mastodon-tl--as-string (mastodon-tl--field 'id toot)))
          (account (mastodon-tl--field 'account toot))
-         (user (cdr (assoc 'username account))))
-    (mastodon-toot user id)))
+         (user (cdr (assoc 'acct account)))
+         (mentions (mastodon-toot--mentions toot)))
+    (mastodon-toot (when user (concat (mastodon-toot--process-local user)
+                                      mentions))
+                   id)))
 
 (defun mastodon-toot--toggle-warning ()
   "Toggle `mastodon-toot--content-warning'."
@@ -211,7 +236,8 @@ e.g. mastodon-toot--send -> Send."
   "If REPLY-TO-USER is provided, inject their handle into the message.
 If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
   (when reply-to-user
-    (insert (format "@%s " reply-to-user))
+    (insert (format "%s " reply-to-user))
+    (make-variable-buffer-local 'mastodon-toot--reply-to-id)
     (setq mastodon-toot--reply-to-id reply-to-id)))
 
 (defun mastodon-toot--compose-buffer (reply-to-user reply-to-id)
