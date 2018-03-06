@@ -96,7 +96,8 @@ Make `mastodon-client--fetch' call to determine client values."
 
 Read plist from `mastodon-client--token-file' if variable is nil.
 Fetch and store plist if `mastodon-client--read' returns nil."
-  (let ((client-details (cdr (assoc mastodon-instance-url mastodon-client--client-details-alist))))
+  (let ((client-details
+         (cdr (assoc mastodon-instance-url mastodon-client--client-details-alist))))
     (unless client-details
       (setq client-details
             (or (mastodon-client--read)
