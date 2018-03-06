@@ -600,18 +600,24 @@ webapp"
          (buffer (format "*mastodon-thread-%s*" id))
          (toot (mastodon-tl--property 'toot-json))
          (context (mastodon-http--get-json url)))
-    (with-output-to-temp-buffer buffer
-      (switch-to-buffer buffer)
-      (mastodon-mode)
-      (setq mastodon-tl--buffer-spec
-            `(buffer-name ,buffer
-                          endpoint ,(format "statuses/%s/context" id)
-                          update-function
-                          (lambda(toot) (message "END of thread."))))
-      (mastodon-tl--timeline (vconcat
-                              (cdr (assoc 'ancestors context))
-                              `(,toot)
-                              (cdr (assoc 'descendants context)))))))
+    (when (member (cdr (assoc 'type toot)) '("reblog" "favourite"))
+      (setq toot (cdr(assoc 'status toot))))
+    (if (> (+ (length (cdr (assoc 'ancestors context)))
+              (length (cdr (assoc 'descendants context))))
+           0)        
+        (with-output-to-temp-buffer buffer
+          (switch-to-buffer buffer)
+          (mastodon-mode)
+          (setq mastodon-tl--buffer-spec
+                `(buffer-name ,buffer
+                              endpoint ,(format "statuses/%s/context" id)
+                              update-function
+                              (lambda(toot) (message "END of thread."))))
+          (mastodon-tl--timeline (vconcat
+                                  (cdr (assoc 'ancestors context))
+                                  `(,toot)
+                                  (cdr (assoc 'descendants context)))))
+      (message "No Thread!"))))
 
 (defun mastodon-tl--more ()
   "Append older toots to timeline."
