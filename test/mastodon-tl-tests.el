@@ -8,7 +8,7 @@
     (in_reply_to_id)
     (in_reply_to_account_id)
     (sensitive . :json-false)
-    (spoiler_text . "Spoiler text")
+    (spoiler_text . "")
     (visibility . "public")
     (account (id . 42)
              (username . "acct42")
@@ -25,6 +25,7 @@
     (tags . [])
     (uri . "tag:example.space,2017-04-24:objectId=654321:objectType=Status")
     (url . "https://example.space/users/acct42/updates/123456789")
+    (content . "<p>Just some text</p>")
     (reblogs_count . 0)
     (favourites_count . 0)
     (reblog))
@@ -36,7 +37,7 @@
     (in_reply_to_id)
     (in_reply_to_account_id)
     (sensitive . :json-false)
-    (spoiler_text . "Spoiler text")
+    (spoiler_text . "")
     (visibility . "public")
     (account (id . 42)
              (username . "acct42")
@@ -763,3 +764,60 @@ constant."
                                                        (tl-tests--all-regions-with-property 'timestamp))))
           (should (null (marker-position (nth 9 markers)))))))))
 
+(ert-deftest mastodon-tl--has-spoiler ()
+  "Should be able to detect toots with spoiler text as expected"
+  (let* ((normal-toot mastodon-tl-test-base-toot)
+         (normal-toot-with-spoiler (cons '(spoiler_text . "spoiler") normal-toot))
+         (boosted-toot mastodon-tl-test-base-boosted-toot)
+         (boosted-toot-with-spoiler (cons (cons 'reblog normal-toot-with-spoiler)
+                                          boosted-toot)))
+    (should (null (mastodon-tl--has-spoiler normal-toot)))
+    (should-not (null (mastodon-tl--has-spoiler normal-toot-with-spoiler)))
+    (should (null (mastodon-tl--has-spoiler boosted-toot)))
+    (should-not (null (mastodon-tl--has-spoiler boosted-toot-with-spoiler)))))
+
+(ert-deftest mastodon-tl--spoiler ()
+  "Should render a toot with spoiler properly, with link that toggles the body."
+  (let ((normal-toot-with-spoiler (cons '(spoiler_text . "This is the spoiler warning text")
+                                        mastodon-tl-test-base-toot))
+        toot-start
+        toot-end
+        link-region
+        body-position)
+    (with-temp-buffer
+      (insert "some text before\n")
+      (setq toot-start (point))
+      (with-mock
+       (stub create-image => '(image "fake data"))
+       (stub shr-render-region => nil) ;; Travis's Emacs doesn't have libxml
+       (insert
+        (mastodon-tl--spoiler normal-toot-with-spoiler)))
+      (setq toot-end (point))
+      (insert "\nsome more text.")
+
+      (goto-char toot-start)
+      (should (eq t (looking-at "This is the spoiler warning text")))
+
+      (setq link-region (mastodon-tl--find-next-or-previous-property-range
+                         'mastodon-tab-stop toot-start nil))
+      ;; There should be a link following the text:
+      (should-not (null link-region))
+      (goto-char (car link-region))
+      (should (eq t (looking-at "Content Warning")))
+
+      (setq body-position (+ 25 (cdr link-region))) ;; 25 is enough to skip the "\n--------------...."
+
+      ;; The text a bit after the link should be invisible:
+      (should (eq t (get-text-property body-position 'invisible)))
+
+      ;; Click the link:
+      (mastodon-tl--do-link-action-at-point (car link-region)) 
+
+      ;; The body is now visible:
+      (should (eq nil (get-text-property body-position 'invisible)))
+
+      ;; Click the link once more:
+      (mastodon-tl--do-link-action-at-point (car link-region)) 
+
+      ;; The body is invisible again:
+      (should (eq t (get-text-property body-position 'invisible))))))

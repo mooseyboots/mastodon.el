@@ -50,7 +50,7 @@
 (defcustom mastodon-tl--enable-relative-timestamps t
   "Nonnil to enable showing relative (to the current time) timestamps.
 
-This will require periodic updates of a timeline buffer to 
+This will require periodic updates of a timeline buffer to
 keep the timestamps current as time progresses."
   :group 'mastodon-tl
   :type '(boolean :tag "Enable relative timestamps and background updater task"))
@@ -79,13 +79,33 @@ keep the timestamps current as time progresses."
   "The timer that, when set will scan the buffer to update the timestamps.")
 (make-variable-buffer-local 'mastodon-tl--timestamp-update-timer)
 
+(defvar mastodon-tl--link-keymap
+  (let ((map (make-sparse-keymap)))
+    (define-key map [return] 'mastodon-tl--do-link-action-at-point)
+    (define-key map [mouse-2] 'mastodon-tl--do-link-action)
+    (define-key map [follow-link] 'mouse-face)
+    (define-key map [tab] 'mastodon-tl--next-tab-item)
+    (define-key map [M-tab] 'mastodon-tl--previous-tab-item)
+    (define-key map [S-tab] 'mastodon-tl--previous-tab-item)
+    (define-key map [backtab] 'mastodon-tl--previous-tab-item)
+    (keymap-canonicalize map))
+  "The keymap set for things in the buffer that act like links (except for shr.el generate links).
+
+This will make the region of text act like like a link with mouse
+highlighting, mouse click action tabbing to next/previous link
+etc.")
+
 (defvar mastodon-tl--shr-map-replacement
   (let ((map (copy-keymap shr-map)))
     ;; Replace the move to next/previous link bindings with our
     ;; version that knows about more types of links.
     (define-key map [remap shr-next-link] 'mastodon-tl--next-tab-item)
     (define-key map [remap shr-previous-link] 'mastodon-tl--previous-tab-item)
-    (keymap-canonicalize map)))
+    (keymap-canonicalize map))
+  "The keymap to be set for shr.el generated links that are not images.
+
+We need to override the keymap so tabbing will navigate to all
+types of mastodon links and not just shr.el-generated ones.")
 
 (defvar mastodon-tl--shr-image-map-replacement
   (let ((map (copy-keymap (if (boundp 'shr-image-map)
@@ -95,15 +115,26 @@ keep the timestamps current as time progresses."
     ;; version that knows about more types of links.
     (define-key map [remap shr-next-link] 'mastodon-tl--next-tab-item)
     (define-key map [remap shr-previous-link] 'mastodon-tl--previous-tab-item)
-    (keymap-canonicalize map)))
+    (keymap-canonicalize map))
+  "The keymap to be set for shr.el generated image links.
+
+We need to override the keymap so tabbing will navigate to all
+types of mastodon links and not just shr.el-generated ones.")
 
 (defun mastodon-tl--next-tab-item ()
   "Move to the next interesting item.
 
 This could be the next toot, link, or image; whichever comes first.
-Don't move if nothing else to move to is found, i.e. near the end of the buffer."
+Don't move if nothing else to move to is found, i.e. near the end of the buffer.
+This also skips tab items in invisible text, i.e. hidden spoiler text."
   (interactive)
-  (let ((next-range (mastodon-tl--find-next-or-previous-property-range 'mastodon-tab-stop (point) nil)))
+  (let (next-range
+        (search-pos (point)))
+    (while (and (setq next-range (mastodon-tl--find-next-or-previous-property-range 'mastodon-tab-stop search-pos nil))
+                (get-text-property (car next-range) 'invisible)
+                (setq search-pos (1+ (cdr next-range))))
+      ;; do nothing, all the action in in the while condition
+      )
     (if (null next-range)
         (message "Nothing else here.")
       (goto-char (car next-range))
@@ -113,9 +144,16 @@ Don't move if nothing else to move to is found, i.e. near the end of the buffer.
   "Move to the previous interesting item.
 
 This could be the previous toot, link, or image; whichever comes first.
-Don't move if nothing else to move to is found, i.e. near the start of the buffer."
+Don't move if nothing else to move to is found, i.e. near the start of the buffer.
+This also skips tab items in invisible text, i.e. hidden spoiler text."
   (interactive)
-  (let ((next-range (mastodon-tl--find-next-or-previous-property-range 'mastodon-tab-stop (point) t)))
+  (let (next-range
+        (search-pos (point)))
+    (while (and (setq next-range (mastodon-tl--find-next-or-previous-property-range 'mastodon-tab-stop search-pos t))
+                (get-text-property (car next-range) 'invisible)
+                (setq search-pos (1- (car next-range))))
+      ;; do nothing, all the action in in the while condition
+      )
     (if (null next-range)
         (message "Nothing else before this.")
       (goto-char (car next-range))
@@ -343,23 +381,72 @@ TIME-STAMP is assumed to be in the past."
   "Returns the propertized STRING with the face property set to FACE."
   (propertize string 'face face))
 
+(defun mastodon-tl--toggle-spoiler-text (position)
+  "Toggle the visibility of the spoiler text at/after POSITION."
+  (let ((inhibit-read-only t)
+        (spoiler-text-region (mastodon-tl--find-property-range 'mastodon-content-warning-body position nil)))
+    (if (not spoiler-text-region)
+        (message "No spoiler text here")
+      (add-text-properties (car spoiler-text-region) (cdr spoiler-text-region)
+                           (list 'invisible (not (get-text-property (car spoiler-text-region) 'invisible)))))))
+
+(defun mastodon-tl--make-link (string link-type)
+  "Return a propertized version of STRING that will act like link.
+
+LINK-TYPE is the type of link to produce."
+  (let ((help-text (cond
+                    ((eq link-type 'content-warning)
+                     "Toggle hidden text")
+                    (t
+                     (error "unknown link type %s" link-type)))))
+    (propertize
+   string
+   'mastodon-tab-stop link-type
+   'mouse-face 'highlight
+   'keymap mastodon-tl--link-keymap
+   'help-echo help-text)))
+
+(defun mastodon-tl--do-link-action-at-point (position)
+  (interactive "d")
+  (let ((link-type (get-text-property position 'mastodon-tab-stop)))
+    (cond ((eq link-type 'content-warning)
+           (mastodon-tl--toggle-spoiler-text position))
+          (t
+           (error "unknown link type %s" link-type)))))
+
+(defun mastodon-tl--do-link-action (event)
+  (interactive "e")
+  (mastodon-tl--do-link-action-at-point (posn-point (event-end event))))
+
+(defun mastodon-tl--has-spoiler (toot)
+  "Check if the given TOOT has a spoiler text that should initially be shown only while the main content should be hidden."
+  (let ((spoiler (mastodon-tl--field 'spoiler_text toot)))
+    (and spoiler (> (length spoiler) 0))))
+
 (defun mastodon-tl--spoiler (toot)
-  "Retrieve spoiler message from TOOT."
+  "Render TOOT with spoiler message.
+
+This assumes TOOT is a toot with a spoiler message.
+The main body gets hidden and only the spoiler text and the
+content warning message are displayed. The content warning
+message is a link which unhides/hides the main body."
   (let* ((spoiler (mastodon-tl--field 'spoiler_text toot))
          (string (mastodon-tl--set-face
-                  (mastodon-tl--render-text spoiler)
+                  ;; remove trailing whitespace
+                  (replace-regexp-in-string "[\t\n ]*\\'" ""
+                                            (mastodon-tl--render-text spoiler))
                   'default))
-         ;; TODO: Make this a tab stop and link; then hide the main
-         ;; text and make the link action a toggling of the
-         ;; visibility of that main body.
-         (message (concat "\n ---------------"
-                          "\n Content Warning"
-                          "\n ---------------\n"))
+         (message (concat "\n"
+                          " ---------------\n"
+                          " " (mastodon-tl--make-link "Content Warning" 'content-warning) "\n"
+                          " ---------------\n"))
          (cw (mastodon-tl--set-face message 'mastodon-cw-face)))
-    (if (> (length string) 0)
-        (replace-regexp-in-string "\n\n\n ---------------"
-                                  "\n ---------------" (concat string cw))
-      "")))
+    (concat
+     string
+     cw
+     (propertize (mastodon-tl--content toot)
+                 'invisible t
+                 'mastodon-content-warning-body t))))
 
 (defun mastodon-tl--media (toot)
   "Retrieve a media attachment link for TOOT if one exists."
@@ -382,16 +469,19 @@ TIME-STAMP is assumed to be in the past."
 (defun mastodon-tl--content (toot)
   "Retrieve text content from TOOT."
   (let ((content (mastodon-tl--field 'content toot)))
-    (mastodon-tl--render-text content)))
+    (concat
+     (mastodon-tl--render-text content)
+     (mastodon-tl--media toot))))
 
 (defun mastodon-tl--toot (toot)
   "Display TOOT content and byline."
   (insert
    (concat
-    (mastodon-tl--spoiler toot)
     ;; remove trailing whitespace
-    (replace-regexp-in-string "[\t\n ]*\\'" "" (mastodon-tl--content toot))
-    (mastodon-tl--media toot)
+    (replace-regexp-in-string "[\t\n ]*\\'" "" (if (mastodon-tl--has-spoiler toot)
+                                                   (mastodon-tl--spoiler toot)
+                                                 (mastodon-tl--content toot)))
+
     (mastodon-tl--byline toot)
     "\n\n")))
 
@@ -488,7 +578,7 @@ webapp"
   (let ((id (cdr (assoc 'id json)))
         (reblog (cdr (assoc 'reblog json))))
     (if reblog (cdr (assoc 'id reblog)) id)))
-  
+
 (defun mastodon-tl--thread ()
   "Open thread buffer for toot under `point'."
   (interactive)
@@ -526,9 +616,7 @@ webapp"
         (goto-char point-before)))))
 
 (defun mastodon-tl--find-property-range (property start-point &optional search-backwards)
-  "Finds (start . end) range around or before/after START-POINT where PROPERTY is set to a consistent value.
-
-Returns `nil` if no such range is found.
+" Returns `nil` if no such range is found.
 
 If PROPERTY is set at START-POINT returns a range around
 START-POINT otherwise before/after START-POINT.
