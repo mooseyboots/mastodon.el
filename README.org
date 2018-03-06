@@ -73,24 +73,27 @@ Opens a =*mastodon-home*= buffer in the major mode so you can see toots. You wil
 
 **** Keybindings
 
-|-----+------------------------------------------------|
-| Key | Action                                         |
-|-----+------------------------------------------------|
-| =?= | Open context menu (if =discover= is available) |
-| =b= | Boost toot under =point=                       |
-| =f= | Favourite toot under =point=                   |
-| =F= | Open federated timeline                        |
-| =H= | Open home timeline                             |
-| =j= | Go to next toot                                |
-| =k= | Go to previous toot                            |
-| =L= | Open local timeline                            |
-| =n= | Switch to =mastodon-toot= buffer               |
-| =q= | Quit mastodon buffer. Leave window open.       |
-| =Q= | Quit mastodon buffer and kill window.          |
-| =r= | Reply to toot under =point=.                   |
-| =t= | Open thread buffer for toot under =point=.     |
-| =T= | Prompt for tag and open its timeline           |
-|-----+------------------------------------------------|
+|--------------------------+-----------------------------------------------------------------------------------|
+| Key                      | Action                                                                            |
+|--------------------------+-----------------------------------------------------------------------------------|
+| =?=                      | Open context menu (if =discover= is available)                                    |
+| =b=                      | Boost toot under =point=                                                          |
+| =f=                      | Favourite toot under =point=                                                      |
+| =F=                      | Open federated timeline                                                           |
+| =H=                      | Open home timeline                                                                |
+| =j=                      | Go to next toot                                                                   |
+| =k=                      | Go to previous toot                                                               |
+| =L=                      | Open local timeline                                                               |
+| =n=                      | Switch to =mastodon-toot= buffer                                                  |
+| =q=                      | Quit mastodon buffer. Leave window open.                                          |
+| =Q=                      | Quit mastodon buffer and kill window.                                             |
+| =r=                      | Reply to toot under =point=.                                                      |
+| =t=                      | Open thread buffer for toot under =point=.                                        |
+| =T=                      | Prompt for tag and open its timeline                                              |
+| =<tab>=                  | Go to the next interesting thing that has an action.                              |
+| =<S-tab>=                | Go to the previous interesting thing that has an action.                          |
+| =<return>= / =<mouse-2>= | Perform action for the thing under point (or under mouse for =<mouse-2>=) if any. |
+|--------------------------+-----------------------------------------------------------------------------------|
 
 **** Legend
 
