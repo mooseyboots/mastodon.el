@@ -88,10 +88,6 @@ width fonts when rendering HTML text"))
     (define-key map [return] 'mastodon-tl--do-link-action-at-point)
     (define-key map [mouse-2] 'mastodon-tl--do-link-action)
     (define-key map [follow-link] 'mouse-face)
-    (define-key map [tab] 'mastodon-tl--next-tab-item)
-    (define-key map [M-tab] 'mastodon-tl--previous-tab-item)
-    (define-key map [S-tab] 'mastodon-tl--previous-tab-item)
-    (define-key map [backtab] 'mastodon-tl--previous-tab-item)
     (keymap-canonicalize map))
   "The keymap set for things in the buffer that act like links (except for shr.el generate links).
 
