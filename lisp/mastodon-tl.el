@@ -189,8 +189,12 @@ This also skips tab items in invisible text, i.e. hidden spoiler text."
   (let* ((word (or (word-at-point) ""))
          (input (read-string (format "Tag(%s): " word)))
          (tag (if (equal input "") word input)))
-    (mastodon-tl--init
-     (concat "tag-" tag) (concat "timelines/tag/" tag) 'mastodon-tl--timeline)))
+    (mastodon-tl--show-tag-timeline tag)))
+
+(defun mastodon-tl--show-tag-timeline (tag)
+  "Opens a new buffer showing the timeline of posts with hastag TAG."
+  (mastodon-tl--init
+   (concat "tag-" tag) (concat "timelines/tag/" tag) 'mastodon-tl--timeline))
 
 (defun mastodon-tl--goto-toot-pos (find-pos refresh &optional pos)
   "Search for toot with FIND-POS.
@@ -356,32 +360,78 @@ TIME-STAMP is assumed to be in the past."
       'toot-id      id
       'toot-json    toot))))
 
-(defun mastodon-tl--render-text (string)
-  "Returns a propertized text giving the rendering of the given HTML string."
+(defun mastodon-tl--render-text (string toot)
+  "Returns a propertized text giving the rendering of the given HTML string STRING.
+
+The contents comes from the given TOOT which is used in parsing
+links in the text."
   (with-temp-buffer
     (insert string)
     (let ((shr-use-fonts mastodon-tl--enable-proportional-fonts)
           (shr-width (when mastodon-tl--enable-proportional-fonts
                        (window-width))))
       (shr-render-region (point-min) (point-max)))
-    ;; Make all links a tab stop recognized by our own logic and
-    ;; update keymaps where needed.
-    ;;
-    ;; TODO: Once we have views for users and tags we need to
-    ;; recognize these links and turn them into links to our own
-    ;; views.
+    ;; Make all links a tab stop recognized by our own logic, make things point
+    ;; to our own logic (e.g. hashtags), and update keymaps where needed:
     (let (region)
       (while (setq region (mastodon-tl--find-property-range
                            'shr-url (or (cdr region) (point-min))))
-        (let* ((start (car region))
-               (end (cdr region))
-               (keymap (if (eq shr-map (get-text-property start 'keymap))
-                           mastodon-tl--shr-map-replacement
-                         mastodon-tl--shr-image-map-replacement)))
-          (add-text-properties start end
-                               (list 'mastodon-tab-stop 'shr-url
-                                     'keymap keymap)))))
+        (mastodon-tl--process-link toot
+                                   (car region) (cdr region)
+                                   (get-text-property (car region) 'shr-url))))
     (buffer-string)))
+
+(defun mastodon-tl--process-link (toot start end url)
+  (let* (mastodon-tab-stop-type
+         keymap
+         (help-echo (get-text-property start 'help-echo))
+         extra-properties
+         (parsed-url (url-generic-parse-url url))
+         (toot-url (mastodon-tl--field 'url toot))
+         (toot-url (when toot-url (url-generic-parse-url toot-url)))
+         (toot-instance-url (if toot-url
+                                (concat (url-type toot-url) "://"
+					(url-host toot-url))
+                              mastodon-instance-url))
+	 (maybe-hashtag (mastodon-tl--extract-hashtag-from-url
+			 url toot-instance-url)))
+    ;; TODO: Recognize user handles
+    (cond (;; Hashtags:
+	   maybe-hashtag
+	   (setq mastodon-tab-stop-type 'hashtag
+		 keymap mastodon-tl--link-keymap
+		 help-echo (concat "Browse tag #" maybe-hashtag)
+		 extra-properties (list 'mastodon-tag maybe-hashtag)))
+          ;; Anything else:
+          (t
+           ;; Leave it as a url handled by shr.el.
+           ;; (We still have to replace the keymap so that tabbing works.)
+           (setq keymap (if (eq shr-map (get-text-property start 'keymap))
+                            mastodon-tl--shr-map-replacement
+                          mastodon-tl--shr-image-map-replacement)
+                 mastodon-tab-stop-type 'shr-url)))
+    (add-text-properties start end
+                         (append
+                          (list 'mastodon-tab-stop mastodon-tab-stop-type
+                                'keymap keymap
+                                'help-echo help-echo)
+                          extra-properties))))
+
+(defun mastodon-tl--extract-hashtag-from-url (url instance-url)
+  "Returns the hashtag that URL points to or nil if URL is not a tag link.
+
+INSTANCE-URL is the url of the instance for the toot that the link
+came from (tag links always point to a page on the instance publishing
+the toot)."
+  (cond
+   ;; Mastodon type tag link:
+   ((string-prefix-p (concat instance-url "/tags/") url)
+    (substring url (length (concat instance-url "/tags/"))))
+   ;; Link from some other ostatus site we've encountered:
+   ((string-prefix-p (concat instance-url "/tag/") url)
+    (substring url (length (concat instance-url "/tag/"))))
+   ;; If nothing matches we assume it is not a hashtag link:
+   (t nil)))
 
 (defun mastodon-tl--set-face (string face)
   "Returns the propertized STRING with the face property set to FACE."
@@ -419,6 +469,8 @@ LINK-TYPE is the type of link to produce."
   (let ((link-type (get-text-property position 'mastodon-tab-stop)))
     (cond ((eq link-type 'content-warning)
            (mastodon-tl--toggle-spoiler-text position))
+          ((eq link-type 'hashtag)
+           (mastodon-tl--show-tag-timeline (get-text-property position 'mastodon-tag)))
           (t
            (error "unknown link type %s" link-type)))))
 
@@ -442,7 +494,7 @@ message is a link which unhides/hides the main body."
          (string (mastodon-tl--set-face
                   ;; remove trailing whitespace
                   (replace-regexp-in-string "[\t\n ]*\\'" ""
-                                            (mastodon-tl--render-text spoiler))
+                                            (mastodon-tl--render-text spoiler toot))
                   'default))
          (message (concat "\n"
                           " ---------------\n"
@@ -480,7 +532,7 @@ message is a link which unhides/hides the main body."
   "Retrieve text content from TOOT."
   (let ((content (mastodon-tl--field 'content toot)))
     (concat
-     (mastodon-tl--render-text content)
+     (mastodon-tl--render-text content toot)
      (mastodon-tl--media toot))))
 
 (defun mastodon-tl--toot (toot)
