@@ -32,6 +32,7 @@
 (autoload 'mastodon-http--get-json "mastodon-http")
 (autoload 'mastodon-media--inline-images "mastodon-media")
 (autoload 'mastodon-mode "mastodon")
+(autoload 'mastodon-tl--as-string "mastodon-tl")
 (autoload 'mastodon-tl--property "mastodon-tl")
 (autoload 'mastodon-tl--toot "mastodon-tl")
 

@@ -32,6 +32,8 @@
 (require 'plstore)
 
 (autoload 'mastodon-client "mastodon-client")
+(autoload 'mastodon-http--api "mastodon-http")
+(autoload 'mastodon-http--get-json "mastodon-http")
 (autoload 'mastodon-http--post "mastodon-http")
 (defvar mastodon-instance-url)
 

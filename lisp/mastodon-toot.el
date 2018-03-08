@@ -29,16 +29,22 @@
 
 ;;; Code:
 
-(defvar mastodon-toot--reply-to-id nil)
+(defvar mastodon-instance-url)
 (defvar mastodon-toot--content-warning nil)
 
+(autoload 'mastodon-auth--user-acct "mastodon-auth")
 (autoload 'mastodon-http--api "mastodon-http")
 (autoload 'mastodon-http--post "mastodon-http")
 (autoload 'mastodon-http--triage "mastodon-http")
+(autoload 'mastodon-tl--as-string "mastodon-tl")
 (autoload 'mastodon-tl--field "mastodon-tl")
 (autoload 'mastodon-tl--goto-next-toot "mastodon-tl")
 (autoload 'mastodon-tl--property "mastodon-tl")
 (autoload 'mastodon-toot "mastodon")
+
+(defvar mastodon-toot--reply-to-id nil
+  "Buffer-local variable to hold the id of the toot being replied to.")
+(make-variable-buffer-local 'mastodon-toot--reply-to-id)
 
 (defvar mastodon-toot-mode-map
   (let ((map (make-sparse-keymap)))
@@ -237,7 +243,6 @@ e.g. mastodon-toot--send -> Send."
 If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
   (when reply-to-user
     (insert (format "%s " reply-to-user))
-    (make-variable-buffer-local 'mastodon-toot--reply-to-id)
     (setq mastodon-toot--reply-to-id reply-to-id)))
 
 (defun mastodon-toot--compose-buffer (reply-to-user reply-to-id)
