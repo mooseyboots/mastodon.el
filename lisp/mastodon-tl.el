@@ -332,7 +332,7 @@ TIME-STAMP is assumed to be in the past."
   "Generate byline for TOOT.
 
 AUTHOR-BYLINE is function for adding the author portion of 
-the byline that takes one variable. By default it is `mastodon-tl--byline-author'
+the byline that takes one variable.
 ACTION-BYLINE is a function for adding an action, such as boosting
 favouriting and following to the byline. It also takes a single function. By default
 it is `mastodon-tl--byline-boosted'"
@@ -541,26 +541,23 @@ message is a link which unhides/hides the main body."
      (mastodon-tl--render-text content toot)
      (mastodon-tl--media toot))))
 
-(defun mastodon-tl--insert (toot body author-byline action-byline)
-  "Display toot content and byline.
+(defun mastodon-tl--insert-status (toot body author-byline action-byline)
+  "Display the content and byline of a timeline element.
 
 BODY will form the section of the toot above the byline.
-AUTHOR-BYLINE and ACTION-BYLINE are optional functions that are passed to
-`mastodon-tl--byline'
 AUTHOR-BYLINE is an optional function for adding the author portion of 
 the byline that takes one variable. By default it is `mastodon-tl--byline-author'
 ACTION-BYLINE is also an optional function for adding an action, such as boosting
 favouriting and following to the byline. It also takes a single function. By default
 it is `mastodon-tl--byline-boosted'"
   (insert
-   ;; remove trailing whitespace
    body
    (mastodon-tl--byline toot author-byline action-byline)
    "\n\n"))
 
 (defun mastodon-tl--toot(toot)
   "Formats TOOT and insertes it into the buffer."
-  (mastodon-tl--insert
+  (mastodon-tl--insert-status
    toot
    (replace-regexp-in-string
     "[\t\n ]*\\'" ""
@@ -672,10 +669,10 @@ webapp"
          (toot (mastodon-tl--property 'toot-json))
          (context (mastodon-http--get-json url)))
     (when (member (cdr (assoc 'type toot)) '("reblog" "favourite"))
-      (setq toot (cdr(assoc 'status toot))))
+      (setq toot (cdr (assoc 'status toot))))
     (if (> (+ (length (cdr (assoc 'ancestors context)))
               (length (cdr (assoc 'descendants context))))
-           0)        
+           0)
         (with-output-to-temp-buffer buffer
           (switch-to-buffer buffer)
           (mastodon-mode)
