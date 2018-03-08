@@ -257,7 +257,9 @@ a string or a numeric."
       (mock (format-time-string mastodon-toot-timestamp-format '(22782 21551)) => "2999-99-99 00:11:22")
 
       (should (string= (substring-no-properties
-                        (mastodon-tl--byline mastodon-tl-test-base-toot))
+                        (mastodon-tl--byline mastodon-tl-test-base-toot
+                                             'mastodon-tl--byline-author
+                                             'mastodon-tl--byline-boosted))
                        "
  | Account 42 (@acct42@example.space) 2999-99-99 00:11:22
   ------------")))))
@@ -272,7 +274,9 @@ a string or a numeric."
       (mock (format-time-string mastodon-toot-timestamp-format '(22782 21551)) => "2999-99-99 00:11:22")
 
       (should (string= (substring-no-properties
-                        (mastodon-tl--byline mastodon-tl-test-base-toot))
+                        (mastodon-tl--byline mastodon-tl-test-base-toot
+                                             'mastodon-tl--byline-author
+                                             'mastodon-tl--byline-boosted))
                        "
  |   Account 42 (@acct42@example.space) 2999-99-99 00:11:22
   ------------")))))
@@ -286,7 +290,10 @@ a string or a numeric."
       (mock (date-to-time timestamp) => '(22782 21551))
       (mock (format-time-string mastodon-toot-timestamp-format '(22782 21551)) => "2999-99-99 00:11:22")
 
-      (should (string= (substring-no-properties (mastodon-tl--byline toot))
+      (should (string= (substring-no-properties
+                        (mastodon-tl--byline toot
+                                             'mastodon-tl--byline-author
+                                             'mastodon-tl--byline-boosted))
                       "
  | (B) Account 42 (@acct42@example.space) 2999-99-99 00:11:22
   ------------")))))
@@ -300,7 +307,10 @@ a string or a numeric."
       (mock (date-to-time timestamp) => '(22782 21551))
       (mock (format-time-string mastodon-toot-timestamp-format '(22782 21551)) => "2999-99-99 00:11:22")
 
-      (should (string= (substring-no-properties (mastodon-tl--byline toot))
+      (should (string= (substring-no-properties
+                        (mastodon-tl--byline toot
+                                             'mastodon-tl--byline-author
+                                             'mastodon-tl--byline-boosted))
                        "
  | (F) Account 42 (@acct42@example.space) 2999-99-99 00:11:22
   ------------")))))
@@ -315,7 +325,10 @@ a string or a numeric."
       (mock (date-to-time timestamp) => '(22782 21551))
       (mock (format-time-string mastodon-toot-timestamp-format '(22782 21551)) => "2999-99-99 00:11:22")
 
-      (should (string= (substring-no-properties (mastodon-tl--byline toot))
+      (should (string= (substring-no-properties
+                        (mastodon-tl--byline toot
+                                             'mastodon-tl--byline-author
+                                             'mastodon-tl--byline-boosted))
                        "
  | (B) (F) Account 42 (@acct42@example.space) 2999-99-99 00:11:22
   ------------")))))
@@ -335,7 +348,10 @@ a string or a numeric."
       (mock (date-to-time original-timestamp) => '(3 4))
       (mock (format-time-string mastodon-toot-timestamp-format '(3 4)) => "original time")
 
-      (should (string= (substring-no-properties (mastodon-tl--byline toot))
+      (should (string= (substring-no-properties
+                        (mastodon-tl--byline toot
+                                             'mastodon-tl--byline-author
+                                             'mastodon-tl--byline-boosted))
                       "
  | Account 42 (@acct42@example.space) Boosted Account 43 (@acct43@example.space) original time
   ------------")))))
@@ -356,8 +372,10 @@ a string or a numeric."
       (mock (date-to-time original-timestamp) => '(3 4))
       (mock (format-time-string mastodon-toot-timestamp-format '(3 4)) => "original time")
 
-      (should (string= (substring-no-properties (mastodon-tl--byline toot))
-                      "
+      (should (string= (substring-no-properties
+                        (mastodon-tl--byline toot
+                                             'mastodon-tl--byline-author
+                                             'mastodon-tl--byline-boosted))"
  |   Account 42 (@acct42@example.space) Boosted   Account 43 (@acct43@example.space) original time
   ------------")))))
 
@@ -376,7 +394,10 @@ a string or a numeric."
       (mock (date-to-time original-timestamp) => '(3 4))
       (mock (format-time-string mastodon-toot-timestamp-format '(3 4)) => "original time")
 
-      (should (string= (substring-no-properties (mastodon-tl--byline toot))
+      (should (string= (substring-no-properties
+                        (mastodon-tl--byline toot
+                                             'mastodon-tl--byline-author
+                                             'mastodon-tl--byline-boosted))
                       "
  | (B) (F) Account 42 (@acct42@example.space) Boosted Account 43 (@acct43@example.space) original time
   ------------")))))
@@ -390,7 +411,9 @@ a string or a numeric."
       (mock (current-time) => '(22782 22000))
       (mock (format-time-string mastodon-toot-timestamp-format '(22782 21551)) => "2999-99-99 00:11:22")
 
-      (let* ((formatted-string (mastodon-tl--byline mastodon-tl-test-base-toot))
+      (let* ((formatted-string (mastodon-tl--byline mastodon-tl-test-base-toot
+                                                    'mastodon-tl--byline-author
+                                                    'mastodon-tl--byline-boosted))
              (timestamp-start (string-match "2999-99-99" formatted-string))
              (properties (text-properties-at timestamp-start formatted-string)))
         (should (equal '(22782 21551) (plist-get properties 'timestamp)))
