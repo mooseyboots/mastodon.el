@@ -558,7 +558,6 @@ message is a link which unhides/hides the main body."
      (mastodon-tl--render-text content toot)
      (mastodon-tl--media toot))))
 
-
 (defun mastodon-tl--insert-status (toot body author-byline action-byline)
   "Display the content and byline of a timeline element.
 
