@@ -140,6 +140,7 @@ If REPLY-TO-ID is non-nil, attach new toot to a conversation."
     (define-key map [backtab] #'mastodon-tl--previous-tab-item)
     (define-key map [?\S-\t] #'mastodon-tl--previous-tab-item)
     (define-key map [?\M-\t] #'mastodon-tl--previous-tab-item)
+    (define-key map (kbd "N") #'mastodon-notifications--get)    
     ))
 
 (with-eval-after-load 'mastodon
