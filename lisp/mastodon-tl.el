@@ -39,6 +39,7 @@
 (autoload 'mastodon-media--get-media-link-rendering "mastodon-media")
 (autoload 'mastodon-media--inline-images "mastodon-media")
 (autoload 'mastodon-mode "mastodon")
+(defvar mastodon-instance-url)
 (defvar mastodon-toot-timestamp-format)
 (defvar shr-use-fonts)  ;; need to declare it since Emacs24 didn't have this
 
@@ -392,7 +393,6 @@ links in the text."
          keymap
          (help-echo (get-text-property start 'help-echo))
          extra-properties
-         (parsed-url (url-generic-parse-url url))
          (toot-url (mastodon-tl--field 'url toot))
          (toot-url (when toot-url (url-generic-parse-url toot-url)))
          (toot-instance-url (if toot-url
