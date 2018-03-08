@@ -197,50 +197,6 @@ notification to be tested."
         (timestamp (cdr (assoc 'created_at  sample))))
     (with-temp-buffer (funcall fun sample)
                       (buffer-substring-no-properties (point-min) (point-max)))))
-
-(ert-deftest mastodon-notifications--test-boost ()
-  "Ensure boost notification is formated properly."
-  (should (string= (mastodon-notifications--test-type
-                    'mastodon-notifications--reblog
-                    mastodon-notifications-test-base-boosted)
-                   "Just some text
- | Account 42 (@acct42@example.space) Boosted your status reblogging time
-  ------------
-
-")))
-
-(ert-deftest mastodon-notifications--test-mention ()
-  "Ensure mention notification is formated properly."
-  (should (string= (mastodon-notifications--test-type
-                    'mastodon-notifications--mention
-                    mastodon-notifications-test-base-mentioned)
-                   "Just some text
- | Account 42 (@acct42@example.space) Mentioned you reblogging time
-  ------------
-
-")))
-
-(ert-deftest mastodon-notifications--test-follow ()
-  "Ensure follow notification is formated properly."
-  (should (string= (mastodon-notifications--test-type
-                    'mastodon-notifications--follow
-                    mastodon-notifications-test-base-followed)
-                   "Congratulations, you have a new follower!
- | Account 42 (@acct42@example.space) Followed you reblogging time
-  ------------
-
-")))
-
-(ert-deftest mastodon-notifications--test-favourite ()
-  "Ensure favourite notification is formated properly."
-  (should (string= (mastodon-notifications--test-type
-                    'mastodon-notifications--favourite
-                    mastodon-notifications-test-base-favourite)
-                   "Just some text
- | Account 42 (@acct42@example.space) Favourited your status reblogging time
-  ------------
-
-")))
          
 (ert-deftest mastodon-notifications--test-byline-concat ()
   "Ensure proper suffix is appended to action."
