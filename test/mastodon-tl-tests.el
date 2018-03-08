@@ -817,6 +817,10 @@ constant."
         (mastodon-tl--spoiler normal-toot-with-spoiler)))
       (setq toot-end (point))
       (insert "\nsome more text.")
+      (add-text-properties
+       toot-start toot-end
+       (list 'toot-json normal-toot-with-spoiler
+	     'toot-id (cdr (assoc 'id normal-toot-with-spoiler))))
 
       (goto-char toot-start)
       (should (eq t (looking-at "This is the spoiler warning text")))
@@ -843,7 +847,22 @@ constant."
       (mastodon-tl--do-link-action-at-point (car link-region)) 
 
       ;; The body is invisible again:
-      (should (eq t (get-text-property body-position 'invisible))))))
+      (should (eq t (get-text-property body-position 'invisible)))
+
+      ;; Go back to the toot's beginning
+      (goto-char toot-start)
+      ;; Press 'c' and the body is visible again and point hasn't changed:
+      (mastodon-tl--toggle-spoiler-text-in-toot)
+      (should (eq nil (get-text-property body-position 'invisible)))
+      (should (eq toot-start (point)))
+      
+      ;; Go to the toot's end
+      (goto-char toot-end)
+      ;; Press 'c' and the body is invisible again and point hasn't changed:
+      (mastodon-tl--toggle-spoiler-text-in-toot)
+      (should (eq t (get-text-property body-position 'invisible)))
+      (should (eq toot-end (point)))
+      )))
 
 (ert-deftest mastodon-tl--hashtag ()
   "Should recognise hashtags in a toot and add the required properties to it."
