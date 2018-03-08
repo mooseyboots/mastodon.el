@@ -6,4 +6,3 @@
 (load-file "lisp/mastodon-tl.el")
 (load-file "lisp/mastodon-notifications.el")
 (load-file "lisp/mastodon.el")
-

@@ -4,6 +4,7 @@
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
 ;; Version: 0.7.2
 ;; Homepage: https://github.com/jdenen/mastodon.el
+;; Package-Requires: ((emacs "24.4"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -54,7 +55,7 @@
   "Format for a `mention' NOTE."
   (let ((status (mastodon-tl--field 'status note)))
     (mastodon-tl--insert-status
-     status
+     note
      (replace-regexp-in-string
       "[\t\n ]*\\'" ""
       (if (mastodon-tl--has-spoiler status)
@@ -80,7 +81,7 @@
   "Format for a `favourite' NOTE."
   (let ((status (mastodon-tl--field 'status note)))
     (mastodon-tl--insert-status
-     status
+     note
      (replace-regexp-in-string
       "[\t\n ]*\\'" ""
       (if (mastodon-tl--has-spoiler status)
@@ -97,7 +98,7 @@
   "Format for a `boost' NOTE."
   (let ((status (mastodon-tl--field 'status note)))
     (mastodon-tl--insert-status
-     status
+     note
      (replace-regexp-in-string
       "[\t\n ]*\\'" ""
       (if (mastodon-tl--has-spoiler status)
