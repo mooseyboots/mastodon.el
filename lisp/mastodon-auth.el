@@ -43,6 +43,15 @@
   :prefix "mastodon-auth-"
   :group 'mastodon)
 
+(defcustom mastodon-auth-source-file ""
+  "Filename to use to store user names and passwords.
+
+Leave empty to not permanently store any secrets.
+Otherwise set to e.g. \"~/.authinfo.gpg\" to have encrypted storage, or
+if you are happy with unencryped storage use e.g. \"~/authinfo\"."
+  :group 'mastodon-auth
+  :type 'string)
+
 (defvar mastodon-auth--token-alist nil
   "Alist of User access tokens keyed by instance url.")
 
@@ -51,7 +60,30 @@
 
 (defun mastodon-auth--generate-token ()
   "Make POST to generate auth token."
-  (let* ((auth-source-creation-prompts
+  (if (or (null mastodon-auth-source-file)
+	  (string= "" mastodon-auth-source-file))
+      (mastodon-auth--generate-token-no-storing-credentials)
+    (mastodon-auth--generate-token-and-store)))
+
+(defun mastodon-auth--generate-token-no-storing-credentials ()
+  "Make POST to generate auth token."
+  (mastodon-http--post
+   (concat mastodon-instance-url "/oauth/token")
+   `(("client_id" . ,(plist-get (mastodon-client) :client_id))
+     ("client_secret" . ,(plist-get (mastodon-client) :client_secret))
+     ("grant_type" . "password")
+     ("username" . ,(read-string "Email: "))
+     ("password" . ,(read-passwd "Password: "))
+     ("scope" . "read write follow"))
+   nil
+   :unauthenticated))
+
+(defun mastodon-auth--generate-token-and-store ()
+  "Make POST to generate auth token.
+
+Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
+  (let* ((auth-sources (list mastodon-auth-source-file))
+	 (auth-source-creation-prompts
           '((user . "Enter email for %h: ")
             (secret . "Password: ")))
          (credentials-plist (nth 0 (auth-source-search

@@ -65,6 +65,10 @@ Set =mastodon-instance-url= in your =.emacs= or =customize=. Defaults to the [[h
     (setq mastodon-instance-url "https://my.instance.url")
 #+END_SRC
 
+There is an option to have your user credentials (email address and password) saved to disk so you don't have to re-enter them on every restart.
+The default is not to do this because if not properly configured it would save these unencrypted which is not a good default to have.
+Customize the variable =mastodon-auth-source-file= if you want to enable this feature.
+
 *** Timelines
 
 =M-x mastodon=
