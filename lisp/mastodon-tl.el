@@ -337,8 +337,7 @@ the byline that takes one variable.
 ACTION-BYLINE is a function for adding an action, such as boosting
 favouriting and following to the byline. It also takes a single function. By default
 it is `mastodon-tl--byline-boosted'"
-  (let ((id (cdr (assoc 'id toot)))
-        (parsed-time (date-to-time (mastodon-tl--field 'created_at toot)))
+  (let ((parsed-time (date-to-time (mastodon-tl--field 'created_at toot)))
         (faved (equal 't (mastodon-tl--field 'favourited toot)))
         (boosted (equal 't (mastodon-tl--field 'reblogged toot))))
     (concat
@@ -363,9 +362,7 @@ it is `mastodon-tl--byline-boosted'"
                           parsed-time))
               (propertize "\n  ------------" 'face 'default))
       'favourited-p faved
-      'boosted-p    boosted
-      'toot-id      id
-      'toot-json    toot))))
+      'boosted-p    boosted))))
 
 (defun mastodon-tl--render-text (string toot)
   "Returns a propertized text giving the rendering of the given HTML string STRING.
@@ -454,6 +451,26 @@ the toot)."
                            (list 'invisible
                                  (not (get-text-property (car spoiler-text-region)
                                                          'invisible)))))))
+
+(defun mastodon-tl--toggle-spoiler-text-in-toot ()
+  "Toggle the visibility of the spoiler text in the current toot."
+  (interactive)
+  (let* ((toot-range (or (mastodon-tl--find-property-range
+			  'toot-json (point))
+			 (mastodon-tl--find-property-range
+			  'toot-json (point) t)))
+	 (spoiler-range (when toot-range
+			  (mastodon-tl--find-property-range
+			   'mastodon-content-warning-body
+			   (car toot-range)))))
+    (cond ((null toot-range)
+	   (message "No toot here"))
+	  ((or (null spoiler-range)
+	       (> (car spoiler-range) (cdr toot-range)))
+	   (message "No content warning text here"))
+	  (t
+	   (mastodon-tl--toggle-spoiler-text (car spoiler-range))))))
+
 (defun mastodon-tl--make-link (string link-type)
   "Return a propertized version of STRING that will act like link.
 
@@ -551,8 +568,11 @@ ACTION-BYLINE is also an optional function for adding an action, such as boostin
 favouriting and following to the byline. It also takes a single function. By default
 it is `mastodon-tl--byline-boosted'"
   (insert
-   body
-   (mastodon-tl--byline toot author-byline action-byline)
+   (propertize
+    (concat body
+	    (mastodon-tl--byline toot author-byline action-byline))
+    'toot-id    (cdr (assoc 'id toot))
+    'toot-json  toot)
    "\n\n"))
 
 (defun mastodon-tl--toot(toot)

@@ -77,6 +77,7 @@ Opens a =*mastodon-home*= buffer in the major mode so you can see toots. You wil
 | Key                      | Action                                                                            |
 |--------------------------+-----------------------------------------------------------------------------------|
 | =?=                      | Open context menu (if =discover= is available)                                    |
+| =c=                      | Toggle the visibility of sensitive text (if there is text with a content warning) |
 | =b=                      | Boost toot under =point=                                                          |
 | =f=                      | Favourite toot under =point=                                                      |
 | =F=                      | Open federated timeline                                                           |
