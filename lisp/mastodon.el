@@ -41,6 +41,7 @@
 (autoload 'mastodon-tl--next-tab-item "mastodon-tl")
 (autoload 'mastodon-tl--previous-tab-item "mastodon-tl")
 (autoload 'mastodon-tl--thread "mastodon-tl")
+(autoload 'mastodon-tl--toggle-spoiler-text-in-toot "mastodon-tl")
 (autoload 'mastodon-tl--update "mastodon-tl")
 (autoload 'mastodon-toot--compose-buffer "mastodon-toot")
 (autoload 'mastodon-toot--reply "mastodon-toot")
@@ -120,6 +121,7 @@ If REPLY-TO-ID is non-nil, attach new toot to a conversation."
   "Major mode for Mastodon, the federated microblogging network."
   :group 'mastodon
   (let ((map mastodon-mode-map))
+    (define-key map (kbd "c") #'mastodon-tl--toggle-spoiler-text-in-toot)
     (define-key map (kbd "b") #'mastodon-toot--toggle-boost)
     (define-key map (kbd "f") #'mastodon-toot--toggle-favourite)
     (define-key map (kbd "F") #'mastodon-tl--get-federated-timeline)
