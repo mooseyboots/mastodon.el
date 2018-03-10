@@ -32,6 +32,7 @@
 ;;; Code:
 (declare-function discover-add-context-menu "discover")
 (declare-function emojify-mode "emojify")
+(autoload 'special-mode "simple")
 (autoload 'mastodon-tl--get-federated-timeline "mastodon-tl")
 (autoload 'mastodon-tl--get-home-timeline "mastodon-tl")
 (autoload 'mastodon-tl--get-local-timeline "mastodon-tl")
@@ -68,7 +69,33 @@ Use. e.g. \"%c\" for your locale's date and time format."
   :type 'string)
 
 (defvar mastodon-mode-map
-  (make-sparse-keymap)
+  (let ((map (make-sparse-keymap)))
+    ;; Navigation
+    (define-key map (kbd "j") #'mastodon-tl--goto-next-toot)
+    (define-key map (kbd "k") #'mastodon-tl--goto-prev-toot)
+    (define-key map [?\t] #'mastodon-tl--next-tab-item)
+    (define-key map [backtab] #'mastodon-tl--previous-tab-item)
+    (define-key map [?\S-\t] #'mastodon-tl--previous-tab-item)
+    (define-key map [?\M-\t] #'mastodon-tl--previous-tab-item)
+    ;; Navigating to other buffers:
+    (define-key map (kbd "N") #'mastodon-notifications--get)
+    (define-key map (kbd "F") #'mastodon-tl--get-federated-timeline)
+    (define-key map (kbd "H") #'mastodon-tl--get-home-timeline)
+    (define-key map (kbd "L") #'mastodon-tl--get-local-timeline)
+    (define-key map (kbd "t") #'mastodon-tl--thread)
+    (define-key map (kbd "T") #'mastodon-tl--get-tag-timeline)
+    (define-key map (kbd "q") #'kill-this-buffer)
+    (define-key map (kbd "Q") #'kill-buffer-and-window)
+    ;; Actions
+    (define-key map (kbd "c") #'mastodon-tl--toggle-spoiler-text-in-toot)
+    (define-key map (kbd "g") #'undefined) ;; override special mode binding
+    (define-key map (kbd "n") #'mastodon-toot)
+    (define-key map (kbd "r") #'mastodon-toot--reply)
+    (define-key map (kbd "u") #'mastodon-tl--update)
+    (define-key map (kbd "b") #'mastodon-toot--toggle-boost)
+    (define-key map (kbd "f") #'mastodon-toot--toggle-favourite)
+    ;; Finally, return the map:
+    map)
   "Keymap for `mastodon-mode'.")
 
 (defcustom mastodon-mode-hook nil
@@ -117,31 +144,10 @@ If REPLY-TO-ID is non-nil, attach new toot to a conversation."
                                 (when (require 'emojify nil :noerror)
                                   (emojify-mode t))))
 
-(define-derived-mode mastodon-mode nil "Mastodon"
+(define-derived-mode mastodon-mode special-mode "Mastodon"
   "Major mode for Mastodon, the federated microblogging network."
   :group 'mastodon
-  (let ((map mastodon-mode-map))
-    (define-key map (kbd "c") #'mastodon-tl--toggle-spoiler-text-in-toot)
-    (define-key map (kbd "b") #'mastodon-toot--toggle-boost)
-    (define-key map (kbd "f") #'mastodon-toot--toggle-favourite)
-    (define-key map (kbd "F") #'mastodon-tl--get-federated-timeline)
-    (define-key map (kbd "H") #'mastodon-tl--get-home-timeline)
-    (define-key map (kbd "j") #'mastodon-tl--goto-next-toot)
-    (define-key map (kbd "k") #'mastodon-tl--goto-prev-toot)
-    (define-key map (kbd "L") #'mastodon-tl--get-local-timeline)
-    (define-key map (kbd "n") #'mastodon-toot)
-    (define-key map (kbd "q") #'kill-this-buffer)
-    (define-key map (kbd "Q") #'kill-buffer-and-window)
-    (define-key map (kbd "r") #'mastodon-toot--reply)
-    (define-key map (kbd "t") #'mastodon-tl--thread)
-    (define-key map (kbd "T") #'mastodon-tl--get-tag-timeline)
-    (define-key map (kbd "u") #'mastodon-tl--update)
-    (define-key map [?\t] #'mastodon-tl--next-tab-item)
-    (define-key map [backtab] #'mastodon-tl--previous-tab-item)
-    (define-key map [?\S-\t] #'mastodon-tl--previous-tab-item)
-    (define-key map [?\M-\t] #'mastodon-tl--previous-tab-item)
-    (define-key map (kbd "N") #'mastodon-notifications--get)    
-    ))
+  (read-only-mode 1))
 
 (with-eval-after-load 'mastodon
   (when (require 'discover nil :noerror)
