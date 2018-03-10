@@ -701,10 +701,11 @@ webapp"
                               endpoint ,(format "statuses/%s/context" id)
                               update-function
                               (lambda(toot) (message "END of thread."))))
-          (mastodon-tl--timeline (vconcat
-                                  (cdr (assoc 'ancestors context))
-                                  `(,toot)
-                                  (cdr (assoc 'descendants context)))))
+          (let ((inhibit-read-only t))
+            (mastodon-tl--timeline (vconcat
+                                    (cdr (assoc 'ancestors context))
+                                    `(,toot)
+                                    (cdr (assoc 'descendants context))))))
       (message "No Thread!"))))
 
 (defun mastodon-tl--more ()
