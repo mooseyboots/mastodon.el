@@ -48,6 +48,7 @@
 (autoload 'mastodon-toot--reply "mastodon-toot")
 (autoload 'mastodon-toot--toggle-boost "mastodon-toot")
 (autoload 'mastodon-toot--toggle-favourite "mastodon-toot")
+(autoload 'mastodon-profile--get-next-author "mastodon-profile")
 
 (defgroup mastodon nil
   "Interface with Mastodon."
@@ -79,6 +80,7 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map [?\M-\t] #'mastodon-tl--previous-tab-item)
     ;; Navigating to other buffers:
     (define-key map (kbd "N") #'mastodon-notifications--get)
+    (define-key map (kbd "U") #'mastodon-profile--get-next-author)
     (define-key map (kbd "F") #'mastodon-tl--get-federated-timeline)
     (define-key map (kbd "H") #'mastodon-tl--get-home-timeline)
     (define-key map (kbd "L") #'mastodon-tl--get-local-timeline)
