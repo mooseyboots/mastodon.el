@@ -56,8 +56,7 @@
   (let ((status (mastodon-tl--field 'status note)))
     (mastodon-tl--insert-status
      note
-     (replace-regexp-in-string
-      "[\t\n ]*\\'" ""
+     (mastodon-tl--clean-tabs-and-nl
       (if (mastodon-tl--has-spoiler status)
           (mastodon-tl--spoiler status)
         (mastodon-tl--content status)))
@@ -82,14 +81,13 @@
   (let ((status (mastodon-tl--field 'status note)))
     (mastodon-tl--insert-status
      note
-     (replace-regexp-in-string
-      "[\t\n ]*\\'" ""
+     (mastodon-tl--clean-tabs-and-nl
       (if (mastodon-tl--has-spoiler status)
           (mastodon-tl--spoiler status)
         (mastodon-tl--content status)))
      (lambda (_status)
        (mastodon-tl--byline-author
-                            note))
+        note))
      (lambda (_status)
        (mastodon-notifications--byline-concat
         "Favourited")))))
@@ -99,11 +97,10 @@
   (let ((status (mastodon-tl--field 'status note)))
     (mastodon-tl--insert-status
      note
-     (replace-regexp-in-string
-      "[\t\n ]*\\'" ""
+     (mastodon-tl--clean-tabs-and-nl
       (if (mastodon-tl--has-spoiler status)
           (mastodon-tl--spoiler status)
-                            (mastodon-tl--content status)))
+        (mastodon-tl--content status)))
      (lambda (_status)
        (mastodon-tl--byline-author
         note))

@@ -506,6 +506,10 @@ LINK-TYPE is the type of link to produce."
   (let ((spoiler (mastodon-tl--field 'spoiler_text toot)))
     (and spoiler (> (length spoiler) 0))))
 
+(defun mastodon-tl--clean-tabs-and-nl (string)
+  (replace-regexp-in-string
+   "[\t\n ]*\\'" "" string))
+
 (defun mastodon-tl--spoiler (toot)
   "Render TOOT with spoiler message.
 
@@ -516,8 +520,8 @@ message is a link which unhides/hides the main body."
   (let* ((spoiler (mastodon-tl--field 'spoiler_text toot))
          (string (mastodon-tl--set-face
                   ;; remove trailing whitespace
-                  (replace-regexp-in-string "[\t\n ]*\\'" ""
-                                            (mastodon-tl--render-text spoiler toot))
+                  (mastodon-tl--clean-tabs-and-nl
+                   (mastodon-tl--render-text spoiler toot))
                   'default))
          (message (concat "\n"
                           " ---------------\n"
@@ -579,8 +583,7 @@ it is `mastodon-tl--byline-boosted'"
   "Formats TOOT and insertes it into the buffer."
   (mastodon-tl--insert-status
    toot
-   (replace-regexp-in-string
-    "[\t\n ]*\\'" ""
+   (mastodon-tl--clean-tabs-and-nl
     (if (mastodon-tl--has-spoiler toot)
         (mastodon-tl--spoiler toot)
       (mastodon-tl--content toot)))
