@@ -204,7 +204,7 @@ If search returns nil, execute REFRESH function.
 Optionally start from POS."
   (let* ((npos (funcall find-pos
                         (or pos (point))
-                        'toot-id
+                        'byline
                         (current-buffer))))
     (if npos
         (if (not (get-text-property npos 'toot-id))
@@ -362,7 +362,8 @@ it is `mastodon-tl--byline-boosted'"
                           parsed-time))
               (propertize "\n  ------------" 'face 'default))
       'favourited-p faved
-      'boosted-p    boosted))))
+      'boosted-p    boosted
+      'byline       t))))
 
 (defun mastodon-tl--render-text (string toot)
   "Returns a propertized text giving the rendering of the given HTML string STRING.
@@ -394,17 +395,17 @@ links in the text."
          (toot-url (when toot-url (url-generic-parse-url toot-url)))
          (toot-instance-url (if toot-url
                                 (concat (url-type toot-url) "://"
-					(url-host toot-url))
+                                        (url-host toot-url))
                               mastodon-instance-url))
-	 (maybe-hashtag (mastodon-tl--extract-hashtag-from-url
-			 url toot-instance-url)))
+         (maybe-hashtag (mastodon-tl--extract-hashtag-from-url
+                         url toot-instance-url)))
     ;; TODO: Recognize user handles
     (cond (;; Hashtags:
-	   maybe-hashtag
-	   (setq mastodon-tab-stop-type 'hashtag
-		 keymap mastodon-tl--link-keymap
-		 help-echo (concat "Browse tag #" maybe-hashtag)
-		 extra-properties (list 'mastodon-tag maybe-hashtag)))
+           maybe-hashtag
+           (setq mastodon-tab-stop-type 'hashtag
+                 keymap mastodon-tl--link-keymap
+                 help-echo (concat "Browse tag #" maybe-hashtag)
+                 extra-properties (list 'mastodon-tag maybe-hashtag)))
           ;; Anything else:
           (t
            ;; Leave it as a url handled by shr.el.
@@ -456,20 +457,20 @@ the toot)."
   "Toggle the visibility of the spoiler text in the current toot."
   (interactive)
   (let* ((toot-range (or (mastodon-tl--find-property-range
-			  'toot-json (point))
-			 (mastodon-tl--find-property-range
-			  'toot-json (point) t)))
-	 (spoiler-range (when toot-range
-			  (mastodon-tl--find-property-range
-			   'mastodon-content-warning-body
-			   (car toot-range)))))
+                          'toot-json (point))
+                         (mastodon-tl--find-property-range
+                          'toot-json (point) t)))
+         (spoiler-range (when toot-range
+                          (mastodon-tl--find-property-range
+                           'mastodon-content-warning-body
+                           (car toot-range)))))
     (cond ((null toot-range)
-	   (message "No toot here"))
-	  ((or (null spoiler-range)
-	       (> (car spoiler-range) (cdr toot-range)))
-	   (message "No content warning text here"))
-	  (t
-	   (mastodon-tl--toggle-spoiler-text (car spoiler-range))))))
+           (message "No toot here"))
+          ((or (null spoiler-range)
+               (> (car spoiler-range) (cdr toot-range)))
+           (message "No content warning text here"))
+          (t
+           (mastodon-tl--toggle-spoiler-text (car spoiler-range))))))
 
 (defun mastodon-tl--make-link (string link-type)
   "Return a propertized version of STRING that will act like link.
@@ -570,7 +571,7 @@ it is `mastodon-tl--byline-boosted'"
   (insert
    (propertize
     (concat body
-	    (mastodon-tl--byline toot author-byline action-byline))
+            (mastodon-tl--byline toot author-byline action-byline))
     'toot-id    (cdr (assoc 'id toot))
     'toot-json  toot)
    "\n\n"))
