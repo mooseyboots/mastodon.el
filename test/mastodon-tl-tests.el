@@ -910,3 +910,19 @@ constant."
   (should (null (mastodon-tl--extract-hashtag-from-url
 		  "https://example.org/@userid"
 		  "https://example.org"))))
+
+(ert-deftest mastodon-tl--extract-userhandle-from-url-correct-case ()
+  (should (equal (mastodon-tl--extract-userhandle-from-url
+                  "https://example.org/@someuser"
+                  "@SomeUser")
+                 "@SomeUser@example.org")))
+
+(ert-deftest mastodon-tl--extract-userhandle-from-url-missing-at-in-text ()
+  (should (null (mastodon-tl--extract-userhandle-from-url
+                 "https://example.org/@someuser"
+                 "SomeUser"))))
+
+(ert-deftest mastodon-tl--extract-userhandle-from-url-query-in-url ()
+  (should (null (mastodon-tl--extract-userhandle-from-url
+                 "https://example.org/@someuser?shouldnot=behere"
+                 "SomeUser"))))
