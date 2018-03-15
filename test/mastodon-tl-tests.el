@@ -256,13 +256,19 @@ a string or a numeric."
       (mock (date-to-time timestamp) => '(22782 21551))
       (mock (format-time-string mastodon-toot-timestamp-format '(22782 21551)) => "2999-99-99 00:11:22")
 
-      (should (string= (substring-no-properties
-                        (mastodon-tl--byline mastodon-tl-test-base-toot
+      (let ((byline (mastodon-tl--byline mastodon-tl-test-base-toot
                                              'mastodon-tl--byline-author
                                              'mastodon-tl--byline-boosted))
-                       "
+	    (handle-location 20))
+	(should (string= (substring-no-properties
+			  byline)
+			 "
  | Account 42 (@acct42@example.space) 2999-99-99 00:11:22
-  ------------")))))
+  ------------"))
+	(should (eq (get-text-property handle-location 'mastodon-tab-stop byline)
+                'shr-url))
+	(should (equal (get-text-property handle-location 'help-echo byline)
+                   "Browse user profile of @acct42@example.space"))))))
 
 (ert-deftest mastodon-tl--byline-regular-with-avatar ()
   "Should format the regular toot correctly."
@@ -348,13 +354,23 @@ a string or a numeric."
       (mock (date-to-time original-timestamp) => '(3 4))
       (mock (format-time-string mastodon-toot-timestamp-format '(3 4)) => "original time")
 
-      (should (string= (substring-no-properties
-                        (mastodon-tl--byline toot
-                                             'mastodon-tl--byline-author
-                                             'mastodon-tl--byline-boosted))
-                      "
+      (let ((byline (mastodon-tl--byline toot
+					 'mastodon-tl--byline-author
+					 'mastodon-tl--byline-boosted))
+	    (handle1-location 20)
+	    (handle2-location 65))
+	(should (string= (substring-no-properties byline)
+			 "
  | Account 42 (@acct42@example.space) Boosted Account 43 (@acct43@example.space) original time
-  ------------")))))
+  ------------"))
+	(should (eq (get-text-property handle1-location 'mastodon-tab-stop byline)
+                'shr-url))
+	(should (equal (get-text-property handle1-location 'help-echo byline)
+		       "Browse user profile of @acct42@example.space"))
+	(should (eq (get-text-property handle2-location 'mastodon-tab-stop byline)
+                'shr-url))
+	(should (equal (get-text-property handle2-location 'help-echo byline)
+                   "Browse user profile of @acct43@example.space"))))))
 
 (ert-deftest mastodon-tl--byline-reblogged-with-avatars ()
   "Should format the reblogged toot correctly."
@@ -910,6 +926,29 @@ constant."
   (should (null (mastodon-tl--extract-hashtag-from-url
 		  "https://example.org/@userid"
 		  "https://example.org"))))
+
+(ert-deftest mastodon-tl--userhandles ()
+  "Should recognise iserhandles in a toot and add the required properties to it."
+  ;; Travis's Emacs doesn't have libxml so we fake things by inputting
+  ;; propertized text and stubbing shr-render-region
+  (let* ((fake-input-text
+          (concat "mention: "
+                  (propertize
+                   "@foo"
+                   'shr-url "https://bar.example/@foo"
+                   'keymap shr-map
+                   'help-echo "https://bar.example/@foo")
+                  " some text after"))
+         (rendered (with-mock
+                    (stub shr-render-region => nil)
+                    (mastodon-tl--render-text
+                     fake-input-text
+                     mastodon-tl-test-base-toot)))
+         (mention-location 11))
+    (should (eq (get-text-property mention-location 'mastodon-tab-stop rendered)
+                'shr-url))
+    (should (equal (get-text-property mention-location 'help-echo rendered)
+                   "Browse user profile of @foo@bar.example"))))
 
 (ert-deftest mastodon-tl--extract-userhandle-from-url-correct-case ()
   (should (equal (mastodon-tl--extract-userhandle-from-url

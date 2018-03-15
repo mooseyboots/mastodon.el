@@ -231,6 +231,7 @@ Optionally start from POS."
   (let* ((account (cdr (assoc 'account toot)))
          (handle (cdr (assoc 'acct account)))
          (name (cdr (assoc 'display_name account)))
+         (profile-url (cdr (assoc 'url account)))
          (avatar-url (cdr (assoc 'avatar account))))
     ;; TODO: Once we have a view for a user (e.g. their posts
     ;; timeline) make this a tab-stop and attach an action
@@ -238,10 +239,16 @@ Optionally start from POS."
      (when (and mastodon-tl--show-avatars-p mastodon-tl--display-media-p)
        (mastodon-media--get-avatar-rendering avatar-url))
      (propertize name 'face 'mastodon-display-name-face)
-     (propertize (concat " (@"
-                         handle
-                         ")")
-                 'face 'mastodon-handle-face))))
+     " ("
+     (propertize (concat "@" handle)
+                 'face 'mastodon-handle-face
+                 'mouse-face 'highlight
+		 ;; TODO: Replace url browsing with native profile viewing
+		 'mastodon-tab-stop 'shr-url
+		 'shr-url profile-url
+		 'keymap mastodon-tl--shr-map-replacement
+		 'help-echo (concat "Browse user profile of @" handle))
+     ")")))
 
 (defun mastodon-tl--byline-boosted (toot)
   "Add byline for boosted data from TOOT."
@@ -410,7 +417,7 @@ links in the text."
            ;; links.
            (setq mastodon-tab-stop-type 'shr-url
                  keymap mastodon-tl--shr-map-replacement
-                 help-echo (concat "Browse user profile for " maybe-userhandle)))
+                 help-echo (concat "Browse user profile of " maybe-userhandle)))
 
           ;; Anything else:
           (t
