@@ -49,6 +49,7 @@
 (autoload 'mastodon-toot--toggle-boost "mastodon-toot")
 (autoload 'mastodon-toot--toggle-favourite "mastodon-toot")
 (autoload 'mastodon-profile--get-next-author "mastodon-profile")
+(autoload 'mastodon-notifications--get "mastodon-notifications")
 
 (defgroup mastodon nil
   "Interface with Mastodon."

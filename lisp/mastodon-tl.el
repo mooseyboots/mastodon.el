@@ -231,6 +231,7 @@ Optionally start from POS."
   (let* ((account (cdr (assoc 'account toot)))
          (handle (cdr (assoc 'acct account)))
          (name (cdr (assoc 'display_name account)))
+         (profile-url (cdr (assoc 'url account)))
          (avatar-url (cdr (assoc 'avatar account))))
     ;; TODO: Once we have a view for a user (e.g. their posts
     ;; timeline) make this a tab-stop and attach an action
@@ -238,10 +239,16 @@ Optionally start from POS."
      (when (and mastodon-tl--show-avatars-p mastodon-tl--display-media-p)
        (mastodon-media--get-avatar-rendering avatar-url))
      (propertize name 'face 'mastodon-display-name-face)
-     (propertize (concat " (@"
-                         handle
-                         ")")
-                 'face 'mastodon-handle-face))))
+     " ("
+     (propertize (concat "@" handle)
+                 'face 'mastodon-handle-face
+                 'mouse-face 'highlight
+		 ;; TODO: Replace url browsing with native profile viewing
+		 'mastodon-tab-stop 'shr-url
+		 'shr-url profile-url
+		 'keymap mastodon-tl--shr-map-replacement
+		 'help-echo (concat "Browse user profile of @" handle))
+     ")")))
 
 (defun mastodon-tl--byline-boosted (toot)
   "Add byline for boosted data from TOOT."
@@ -328,7 +335,7 @@ TIME-STAMP is assumed to be in the past."
 (defun mastodon-tl--byline (toot author-byline action-byline)
   "Generate byline for TOOT.
 
-AUTHOR-BYLINE is function for adding the author portion of 
+AUTHOR-BYLINE is function for adding the author portion of
 the byline that takes one variable.
 ACTION-BYLINE is a function for adding an action, such as boosting
 favouriting and following to the byline. It also takes a single function. By default
@@ -395,14 +402,24 @@ links in the text. If TOOT is nil no parsing occurs."
                                         (url-host toot-url))
                               mastodon-instance-url))
          (maybe-hashtag (mastodon-tl--extract-hashtag-from-url
-                         url toot-instance-url)))
-    ;; TODO: Recognize user handles
+                         url toot-instance-url))
+         (maybe-userhandle (mastodon-tl--extract-userhandle-from-url
+                            url (buffer-substring-no-properties start end))))
     (cond (;; Hashtags:
            maybe-hashtag
            (setq mastodon-tab-stop-type 'hashtag
                  keymap mastodon-tl--link-keymap
                  help-echo (concat "Browse tag #" maybe-hashtag)
                  extra-properties (list 'mastodon-tag maybe-hashtag)))
+
+          (;; User handles:
+           maybe-userhandle
+           ;; Until we have native profile page viewing we leave these as HTML
+           ;; links.
+           (setq mastodon-tab-stop-type 'shr-url
+                 keymap mastodon-tl--shr-map-replacement
+                 help-echo (concat "Browse user profile of " maybe-userhandle)))
+
           ;; Anything else:
           (t
            ;; Leave it as a url handled by shr.el.
@@ -417,6 +434,17 @@ links in the text. If TOOT is nil no parsing occurs."
                                 'keymap keymap
                                 'help-echo help-echo)
                           extra-properties))))
+
+(defun mastodon-tl--extract-userhandle-from-url (url buffer-text)
+  "Returns the user hande the URL points to or nil if it is not a profile link.
+
+BUFFER-TEXT is the text covered by the link with URL, for a user profile
+this should be of the form <at-sign><user id>, e.g. \"@Gargon\"."
+  (let ((parsed-url (url-generic-parse-url url)))
+    (when (and (string= "@" (substring buffer-text 0 1))
+               (string= (downcase buffer-text)
+                        (downcase (substring (url-filename parsed-url) 1))))
+      (concat buffer-text "@" (url-host parsed-url)))))
 
 (defun mastodon-tl--extract-hashtag-from-url (url instance-url)
   "Returns the hashtag that URL points to or nil if URL is not a tag link.
@@ -564,7 +592,7 @@ message is a link which unhides/hides the main body."
   "Display the content and byline of a timeline element.
 
 BODY will form the section of the toot above the byline.
-AUTHOR-BYLINE is an optional function for adding the author portion of 
+AUTHOR-BYLINE is an optional function for adding the author portion of
 the byline that takes one variable. By default it is `mastodon-tl--byline-author'
 ACTION-BYLINE is also an optional function for adding an action, such as boosting
 favouriting and following to the byline. It also takes a single function. By default
