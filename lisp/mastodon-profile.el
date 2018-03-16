@@ -44,18 +44,16 @@
   (interactive)
   (mastodon-tl--property 'toot-json))
 
-(defun mastodon-profile--make-author-buffer (status)
-  "Take a STATUS and inserts a user account into a new buffer."
-  (let* ((id (mastodon-profile--field status 'id))
-         (acct (mastodon-profile--field status 'acct))
-         accounts/id/statuses
+(defun mastodon-profile--make-author-buffer (account)
+  "Take a ACCOUNT and inserts a user account into a new buffer."
+  (let* ((id (mastodon-profile--account-field account 'id))
+         (acct (mastodon-profile--account-field account 'acct))         
          (url (mastodon-http--api
                (concat "accounts/"
                        (format "%s" id)
                        "/statuses" )))
-         (buffer (concat "*mastodon-" acct  "*"))
-         (account (cdr(assoc 'account status)))
-         (note (mastodon-profile--field status 'note))
+         (buffer (concat "*mastodon-" acct  "*"))         
+         (note (mastodon-profile--account-field account 'note))
          (json (mastodon-http--get-json url)))
     (with-output-to-temp-buffer buffer
       (switch-to-buffer buffer)
@@ -64,42 +62,45 @@
             `(buffer-name ,buffer
                           endpoint ,(format "accounts/%s/statuses" id)
                           update-function
-                          ,'mastodon-tl--timeline json))
+                          ,'mastodon-tl--timeline json))      
       (let ((inhibit-read-only t))
-        "\n"
-        (mastodon-profile--image-from-status account)
-        "\n"
-        (propertize (mastodon-profile--field status 'display_name
-                                             'face 'mastodon-display-name-face))
-        "\n"
-        (propertize acct
-                    'face 'default)
-        "\n ------------\n"
-        (mastodon-tl--render-text note status)
-        (mastodon-tl--set-face
-         (concat " ------------\n"
-                 "     TOOTS   \n"
-                 " ------------\n")
-         'success)
-        (mastodon-tl--timeline json)))
+        (insert
+         "\n"
+         (mastodon-profile--image-from-account account)
+         "\n"
+         (propertize (mastodon-profile--account-field
+                      account 'display_name)
+                     'face 'mastodon-display-name-face)
+         "\n"
+         (propertize acct
+                     'face 'default)
+         "\n ------------\n"
+         (mastodon-tl--render-text note nil)
+         (mastodon-tl--set-face
+          (concat " ------------\n"
+                  "     TOOTS   \n"
+                  " ------------\n")
+          'success))
+        (mastodon-tl--timeline json)))    
     (mastodon-tl--goto-next-toot)))
 
-(defun mastodon-profile--get-next-author ()
-  "Jump to the next author and generate a buffer."
+(defun mastodon-profile--get-toot-author ()
+  "Opens authors profile of toot under point."
   (interactive)
-  (mastodon-profile--make-author-buffer (mastodon-profile--toot-json)))
+  (mastodon-profile--make-author-buffer
+   (cdr (assoc 'account (mastodon-profile--toot-json)))))
 
-(defun mastodon-profile--image-from-status (status)
+(defun mastodon-profile--image-from-account (status)
   "Generate an image from a STATUS."
-  (let ((url (cdr(assoc 'avatar_static status))))
+  (let ((url (cdr (assoc 'avatar_static status))))
     (unless (equal url "/avatars/original/missing.png")
       (mastodon-media--get-media-link-rendering url))))
 
-(defun mastodon-profile--field (status field)
-  "The STATUS is a nested alist.
+(defun mastodon-profile--account-field (account field)
+  "Return FIELD from the ACCOUNT.
 
 FIELD is used to identify regions under 'account"
-  (cdr (assoc field (assoc 'account status))))
+  (cdr (assoc field account)))
 
 (defun mastodon-profile--get-next-authour-id ()
   "Get the author id of the next toot."
@@ -110,10 +111,11 @@ FIELD is used to identify regions under 'account"
   "Convert TOOTV into a author-bylines and insert."
   (let ((inhibit-read-only t))
     (mapc (lambda(toot)
-            (insert (propertize (mastodon-tl--byline-author
-                                 (list (append (list 'account) toot)))
-                                'byline  't
-                                'toot-id (cdr(assoc 'id toot)) 'toot-json toot)
+            (insert (propertize
+                     (mastodon-tl--byline-author
+                      (list (append (list 'account) toot)))
+                     'byline  't
+                     'toot-id (cdr (assoc 'id toot)) 'toot-json toot)
                     "\n"))
           tootv))
   (mastodon-media--inline-images))
@@ -133,8 +135,12 @@ FIELD is used to identify regions under 'account"
   "Make a buffer contining followers or following of user under point.
 
 STRING is an endpoint, either following or followers."
-  (let* ((id (mastodon-profile--field (mastodon-profile--toot-json) 'id))
-         (acct (mastodon-profile--field (mastodon-profile--toot-json) 'acct))
+  (let* ((account
+          (cdr (assoc 'account (mastodon-profile--toot-json))))
+         (id (mastodon-profile--account-field
+              account 'id))
+         (acct (mastodon-profile--account-field
+                account 'acct))
          (buffer (format  "*%s-%s*" string acct))
          (tootv (mastodon-http--get-json
                  (mastodon-http--api (format "accounts/%s/%s"

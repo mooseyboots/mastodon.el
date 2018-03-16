@@ -87,8 +87,8 @@ Opens a =*mastodon-home*= buffer in the major mode so you can see toots. You wil
 | =>=                      | Move to end of buffer                                                             |
 | =j=                      | Go to next item (toot, notification)                                              |
 | =k=                      | Go to previous item (toot, notification)                                          |
-| =<tab>=                  | Go to the next interesting thing that has an action                               |
-| =<S-tab>=                | Go to the previous interesting thing that has an action                           |
+| =<tab>= / =h=            | Go to the next interesting thing that has an action                               |
+| =<S-tab>= / =l=          | Go to the previous interesting thing that has an action                           |
 |                          | /In-buffer actions/                                                               |
 | =?=                      | Open context menu (if =discover= is available)                                    |
 | =c=                      | Toggle the visibility of sensitive text (if there is text with a content warning) |
@@ -102,6 +102,7 @@ Opens a =*mastodon-home*= buffer in the major mode so you can see toots. You wil
 | =F=                      | Open federated timeline                                                           |
 | =H=                      | Open home timeline                                                                |
 | =L=                      | Open local timeline                                                               |
+| =U=                      | Open User Profile                                                                 |
 | =t=                      | Open thread buffer for toot under =point=                                         |
 | =T=                      | Prompt for tag and open its timeline                                              |
 | =q=                      | Quit mastodon buffer, leave window open                                           |
