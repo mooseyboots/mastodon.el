@@ -244,9 +244,10 @@ Optionally start from POS."
                  'face 'mastodon-handle-face
                  'mouse-face 'highlight
 		 ;; TODO: Replace url browsing with native profile viewing
-		 'mastodon-tab-stop 'shr-url
+		 'mastodon-tab-stop 'handle
 		 'shr-url profile-url
-		 'keymap mastodon-tl--shr-map-replacement
+		 'keymap mastodon-tl--link-keymap
+                 'mastodon-handle (concat "@" handle)
 		 'help-echo (concat "Browse user profile of @" handle))
      ")")))
 
@@ -416,10 +417,10 @@ links in the text. If TOOT is nil no parsing occurs."
            maybe-userhandle
            ;; Until we have native profile page viewing we leave these as HTML
            ;; links.
-           (setq mastodon-tab-stop-type 'shr-url
-                 keymap mastodon-tl--shr-map-replacement
-                 help-echo (concat "Browse user profile of " maybe-userhandle)))
-
+           (setq mastodon-tab-stop-type 'handle
+                 keymap mastodon-tl--link-keymap
+                 help-echo (concat "Browse user profile of " maybe-userhandle)
+                 extra-properties (list 'mastodon-handle maybe-userhandle)))
           ;; Anything else:
           (t
            ;; Leave it as a url handled by shr.el.
@@ -513,6 +514,21 @@ LINK-TYPE is the type of link to produce."
      'keymap mastodon-tl--link-keymap
      'help-echo help-text)))
 
+(defun mastodon-tl--handle-to-account (handle)
+  "Return an account based on a users HANDLE.
+
+If the handle does not match a search return then retun NIL."
+  (let* ((handle (if (string= "@" (substring handle 0 1))
+                     (substring handle 1 (length handle))
+                   handle))
+         (matching-account
+          (remove-if-not
+           (lambda(x) (string= (cdr (assoc 'acct x)) handle))
+           (mastodon-http--get-json
+            (mastodon-http--api (format "accounts/search?q=%s" handle))))))
+    (when (equal 1 (length matching-account))
+      (elt matching-account 0))))
+
 (defun mastodon-tl--do-link-action-at-point (position)
   (interactive "d")
   (let ((link-type (get-text-property position 'mastodon-tab-stop)))
@@ -520,6 +536,11 @@ LINK-TYPE is the type of link to produce."
            (mastodon-tl--toggle-spoiler-text position))
           ((eq link-type 'hashtag)
            (mastodon-tl--show-tag-timeline (get-text-property position 'mastodon-tag)))
+          ((eq link-type 'handle)
+           ;; replace message with mastodon-profile--make-author-buffer
+           (message "its a handle: %s"
+                    (mastodon-tl--handle-to-account
+                     (get-text-property position 'mastodon-handle))))
           (t
            (error "unknown link type %s" link-type)))))
 
