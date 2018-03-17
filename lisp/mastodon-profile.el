@@ -32,6 +32,23 @@
 ;;  - Show only Media
 
 ;;; Code:
+(require 'seq)
+
+(autoload 'mastodon-http--api "mastodon-http.el")
+(autoload 'mastodon-http--get-json "mastodon-http.el")
+(autoload 'mastodon-media--get-media-link-rendering "mastodon-media.el")
+(autoload 'mastodon-media--inline-images "mastodon-media.el")
+(autoload 'mastodon-mode "mastodon.el")
+(autoload 'mastodon-tl--byline-author "mastodon-tl.el")
+(autoload 'mastodon-tl--goto-next-toot "mastodon-tl.el")
+(autoload 'mastodon-tl--property "mastodon-tl.el")
+(autoload 'mastodon-tl--render-text "mastodon-tl.el")
+(autoload 'mastodon-tl--set-face "mastodon-tl.el")
+(autoload 'mastodon-tl--timeline "mastodon-tl.el")
+
+(defvar mastodon-instance-url)
+(defvar mastodon-tl--buffer-spec)
+(defvar mastodon-tl--update-point)
 
 (defun mastodon-profile--toot-json ()
   "Get the next toot-json."
@@ -75,7 +92,7 @@
                   "     TOOTS   \n"
                   " ------------\n")
           'success))
-        (setq mastodon-tl-update-point (point))
+        (setq mastodon-tl--update-point (point))
         (mastodon-media--inline-images (point-min) (point))
         (mastodon-tl--timeline json)))
     (mastodon-tl--goto-next-toot)))
@@ -92,16 +109,27 @@
     (unless (equal url "/avatars/original/missing.png")
       (mastodon-media--get-media-link-rendering url))))
 
+(defun mastodon-profile--show-user (user-handle)
+  "Query user for user id from current status and show that user's profile."
+  (interactive
+   (list
+    (let ((user-handles (mastodon-profile--extract-users-handles
+                         (mastodon-profile--toot-json))))
+      (completing-read "User handle: "
+                       user-handles
+                       nil
+                       'confirm))))
+  (let ((account (mastodon-profile--lookup-account-in-status
+                  user-handle (mastodon-profile--toot-json))))
+    (if account
+	(mastodon-profile--make-author-buffer account)
+      (message "Cannot find a user with handle %S" user-handle))))
+
 (defun mastodon-profile--account-field (account field)
   "Return FIELD from the ACCOUNT.
 
 FIELD is used to identify regions under 'account"
   (cdr (assoc field account)))
-
-(defun mastodon-profile--get-next-authour-id ()
-  "Get the author id of the next toot."
-  (interactive)
-  (get-authour-id (toot-proporties)))
 
 (defun mastodon-profile--add-author-bylines (tootv)
   "Convert TOOTV into a author-bylines and insert."
@@ -157,8 +185,8 @@ If the handle does not match a search return then retun NIL."
                      (substring handle 1 (length handle))
                    handle))
          (matching-account
-          (remove-if-not
-           (lambda(x) (string= (cdr (assoc 'acct x)) handle))
+          (seq-remove
+           (lambda(x) (not (string= (cdr (assoc 'acct x)) handle)))
            (mastodon-http--get-json
             (mastodon-http--api (format "accounts/search?q=%s" handle))))))
     (when (equal 1 (length matching-account))
@@ -168,6 +196,50 @@ If the handle does not match a search return then retun NIL."
   "Request an account object relating to a USER-ID from Mastodon."
   (mastodon-http--get-json
    (mastodon-http--api (format "accounts/%s" user-id))))
+
+(defun mastodon-profile--extract-users-handles (status)
+  "Return all user handles found in STATUS.
+
+These include the author, author of reblogged entries and any user mentioned."
+  (when status
+    (let ((this-account (cdr (assoc 'account status)))
+	  (mentions (cdr (assoc 'mentions status)))
+	  (reblog (cdr (assoc 'reblog status))))
+      (seq-filter
+       'stringp
+       (seq-uniq
+        (seq-concatenate
+         'list
+         (list (cdr (assoc 'acct this-account)))
+         (mastodon-profile--extract-users-handles reblog)
+         (mapcar (lambda (mention)
+                   (cdr (assoc 'acct mention)))
+                 mentions)))))))
+
+(defun mastodon-profile--lookup-account-in-status (handle status)
+  "Return account for HANDLE using hints in STATUS if possible."
+  (let* ((this-account (cdr (assoc 'account status)))
+         (reblog-account (cdr (assoc 'account (cdr (assoc 'reblog status)))))
+         (mention-id (seq-some
+                      (lambda (mention)
+                        (when (string= handle
+                                       (cdr (assoc 'acct mention)))
+                          (cdr (assoc 'id mention))))
+                      (cdr (assoc 'mentions status)))))
+    (cond ((string= handle
+                    (cdr (assoc 'acct this-account)))
+           (message "Found %S as status's account" handle)
+           this-account)
+          ((string= handle
+                    (cdr (assoc 'acct reblog-account)))
+           (message "Found %S as reblogged status's account" handle)
+           reblog-account)
+          (mention-id
+           (message "Found %S as mentioned id %S" handle mention-id)
+           (mastodon-profile--account-from-id mention-id))
+          (t
+           (message "Did not find %S - searching" handle)
+           (mastodon-profile--search-account-by-handle handle)))))
 
 (provide 'mastodon-profile)
 ;;; mastodon-profile.el ends here
