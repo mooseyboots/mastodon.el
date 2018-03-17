@@ -25,17 +25,11 @@
 
 ;;; Commentary:
 
-;; mastodon-profile.el generates stream of users toots.
-;; To fix
-;; 1. Render Image at top of frame [x]
-;; 2. Get toot author [x]
-;; 3. Load more toots [x]
-;; Later
-;; 1. List followers [x]
-;; 2. List people they follow [x]
-;; 3. Option to follow
-;; 4. wheather they follow you or not
-;; 5. Show only Media
+;; mastodon-profile.el generates a stream of users toots.
+;; To add
+;;  - Option to follow
+;;  - wheather they follow you or not
+;;  - Show only Media
 
 ;;; Code:
 
@@ -81,6 +75,7 @@
                   "     TOOTS   \n"
                   " ------------\n")
           'success))
+        (setq mastodon-tl-update-point (point))
         (mastodon-tl--timeline json)))    
     (mastodon-tl--goto-next-toot)))
 
@@ -120,7 +115,6 @@ FIELD is used to identify regions under 'account"
           tootv))
   (mastodon-media--inline-images))
 
-
 (defun mastodon-profile--get-following ()
   "Request a list of those who the user under point follows."
   (interactive)
@@ -155,6 +149,25 @@ STRING is an endpoint, either following or followers."
                           ,'mastodon-profile--add-author-bylines))
       (mastodon-profile--add-author-bylines tootv))))
 
+(defun mastodon-profile--search-account-by-handle (handle)  
+  "Return an account based on a users HANDLE.
+
+If the handle does not match a search return then retun NIL."  
+  (let* ((handle (if (string= "@" (substring handle 0 1))
+                     (substring handle 1 (length handle))
+                   handle))
+         (matching-account
+          (remove-if-not
+           (lambda(x) (string= (cdr (assoc 'acct x)) handle))
+           (mastodon-http--get-json
+            (mastodon-http--api (format "accounts/search?q=%s" handle))))))
+    (when (equal 1 (length matching-account))
+      (elt matching-account 0))))
+
+(defun mastodon-profile--account-from-id (user-id)
+  "Request an account object relating to a USER-ID from Mastodon."
+  (mastodon-http--get-json
+   (mastodon-http--api (format "accounts/%s" user-id))))
 
 (provide 'mastodon-profile)
 ;;; mastodon-profile.el ends here

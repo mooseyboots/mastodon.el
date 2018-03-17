@@ -266,7 +266,9 @@ a string or a numeric."
  | Account 42 (@acct42@example.space) 2999-99-99 00:11:22
   ------------"))
 	(should (eq (get-text-property handle-location 'mastodon-tab-stop byline)
-                'shr-url))
+                    'user-handle))
+        (should (string= (get-text-property handle-location 'mastodon-handle byline)
+                         "@acct42@example.space"))
 	(should (equal (get-text-property handle-location 'help-echo byline)
                    "Browse user profile of @acct42@example.space"))))))
 
@@ -364,11 +366,11 @@ a string or a numeric."
  | Account 42 (@acct42@example.space) Boosted Account 43 (@acct43@example.space) original time
   ------------"))
 	(should (eq (get-text-property handle1-location 'mastodon-tab-stop byline)
-                'shr-url))
+                'user-handle))
 	(should (equal (get-text-property handle1-location 'help-echo byline)
 		       "Browse user profile of @acct42@example.space"))
 	(should (eq (get-text-property handle2-location 'mastodon-tab-stop byline)
-                'shr-url))
+                'user-handle))
 	(should (equal (get-text-property handle2-location 'help-echo byline)
                    "Browse user profile of @acct43@example.space"))))))
 
@@ -946,7 +948,7 @@ constant."
                      mastodon-tl-test-base-toot)))
          (mention-location 11))
     (should (eq (get-text-property mention-location 'mastodon-tab-stop rendered)
-                'shr-url))
+                'user-handle))
     (should (equal (get-text-property mention-location 'help-echo rendered)
                    "Browse user profile of @foo@bar.example"))))
 
