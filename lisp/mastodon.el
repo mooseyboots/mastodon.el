@@ -50,6 +50,7 @@
 (autoload 'mastodon-toot--toggle-favourite "mastodon-toot")
 (autoload 'mastodon-profile--get-next-author "mastodon-profile")
 (autoload 'mastodon-notifications--get "mastodon-notifications")
+(autoload 'mastodon-profile--make-author-buffer "mastodon-profile")
 
 (defgroup mastodon nil
   "Interface with Mastodon."

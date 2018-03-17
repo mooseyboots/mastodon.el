@@ -72,6 +72,12 @@ width fonts when rendering HTML text"))
   (image-type-available-p 'imagemagick)
   "A boolean value stating whether to show avatars in timelines.")
 
+(defvar mastodon-tl-update-point nil
+  "When updating a mastodon buffer this is where new toots will be inserted.
+
+If nil `(point-min)' is used instead.")
+(make-variable-buffer-local 'mastodon-tl-update-point)
+
 (defvar mastodon-tl--display-media-p t
   "A boolean value stating whether to show media in timelines.")
 
@@ -244,7 +250,8 @@ Optionally start from POS."
                  'face 'mastodon-handle-face
                  'mouse-face 'highlight
 		 ;; TODO: Replace url browsing with native profile viewing
-		 'mastodon-tab-stop 'handle
+		 'mastodon-tab-stop 'user-handle
+                 'account (cdr (assoc 'account toot))
 		 'shr-url profile-url
 		 'keymap mastodon-tl--link-keymap
                  'mastodon-handle (concat "@" handle)
@@ -415,12 +422,15 @@ links in the text. If TOOT is nil no parsing occurs."
 
           (;; User handles:
            maybe-userhandle
-           ;; Until we have native profile page viewing we leave these as HTML
-           ;; links.
-           (setq mastodon-tab-stop-type 'handle
-                 keymap mastodon-tl--link-keymap
-                 help-echo (concat "Browse user profile of " maybe-userhandle)
-                 extra-properties (list 'mastodon-handle maybe-userhandle)))
+           (let ((maybe-userid (mastodon-tl--extract-userid-toot
+                                toot maybe-userhandle)))
+             (setq mastodon-tab-stop-type 'user-handle
+                   keymap mastodon-tl--link-keymap
+                   help-echo (concat "Browse user profile of " maybe-userhandle)
+                   extra-properties (append
+                                     (list 'mastodon-handle maybe-userhandle)
+                                     (when maybe-userid
+                                       (list 'acccount-id maybe-userid))))))
           ;; Anything else:
           (t
            ;; Leave it as a url handled by shr.el.
@@ -436,6 +446,19 @@ links in the text. If TOOT is nil no parsing occurs."
                                 'help-echo help-echo)
                           extra-properties))))
 
+(defun mastodon-tl--extract-userid-toot (toot acct)
+  "Extract a user id for an ACCT from mentions in a TOOT."
+  (let* ((mentions (append (cdr (assoc 'mentions toot)) nil))
+         (mention (pop mentions))
+         (short-acct (substring acct 1 (length acct)))
+         return)
+    (while mention
+      (when (string= (cdr (assoc 'acct mention))
+                     short-acct)
+        (setq return (cdr (assoc 'id  mention))))
+      (setq mention (pop mentions)))    
+    return))
+      
 (defun mastodon-tl--extract-userhandle-from-url (url buffer-text)
   "Returns the user hande the URL points to or nil if it is not a profile link.
 
@@ -514,21 +537,6 @@ LINK-TYPE is the type of link to produce."
      'keymap mastodon-tl--link-keymap
      'help-echo help-text)))
 
-(defun mastodon-tl--handle-to-account (handle)
-  "Return an account based on a users HANDLE.
-
-If the handle does not match a search return then retun NIL."
-  (let* ((handle (if (string= "@" (substring handle 0 1))
-                     (substring handle 1 (length handle))
-                   handle))
-         (matching-account
-          (remove-if-not
-           (lambda(x) (string= (cdr (assoc 'acct x)) handle))
-           (mastodon-http--get-json
-            (mastodon-http--api (format "accounts/search?q=%s" handle))))))
-    (when (equal 1 (length matching-account))
-      (elt matching-account 0))))
-
 (defun mastodon-tl--do-link-action-at-point (position)
   (interactive "d")
   (let ((link-type (get-text-property position 'mastodon-tab-stop)))
@@ -536,11 +544,20 @@ If the handle does not match a search return then retun NIL."
            (mastodon-tl--toggle-spoiler-text position))
           ((eq link-type 'hashtag)
            (mastodon-tl--show-tag-timeline (get-text-property position 'mastodon-tag)))
-          ((eq link-type 'handle)
-           ;; replace message with mastodon-profile--make-author-buffer
-           (message "its a handle: %s"
-                    (mastodon-tl--handle-to-account
-                     (get-text-property position 'mastodon-handle))))
+          ((eq link-type 'user-handle)
+           (let ((account-json (get-text-property position 'account))
+                 (account-id (get-text-property position 'account-id)))
+             (cond
+              (account-json
+               (mastodon-profile--make-author-buffer
+                account-json))
+              (account-id
+               (mastodon-profile--make-author-buffer
+                (mastodon-profile--account-from-id account-id)))
+              (t
+               (mastodon-profile--make-author-buffer
+                (mastodon-profile--search-account-by-handle
+                 (get-text-property position 'mastodon-handle)))))))
           (t
            (error "unknown link type %s" link-type)))))
 
@@ -923,7 +940,7 @@ from the start if it is nil."
          (json (mastodon-tl--updated-json endpoint id)))
     (when json
       (let ((inhibit-read-only t))
-        (goto-char (point-min))
+        (goto-char (or mastodon-tl-update-point (point-min)))
         (funcall update-function json)))))
 
 (defun mastodon-tl--init (buffer-name endpoint update-function)
