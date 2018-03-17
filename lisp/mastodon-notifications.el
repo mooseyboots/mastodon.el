@@ -111,15 +111,17 @@
 (defun mastodon-notifications--by-type (note)
   "Filters NOTE for those listed in `mastodon-notifications--types-alist'."
   (let* ((type (mastodon-tl--field 'type note))
-         (fun (cdr (assoc type mastodon-notifications--types-alist))))
-    (when fun (funcall fun note))))
+         (fun (cdr (assoc type mastodon-notifications--types-alist)))
+         (start-pos (point)))
+    (when fun
+      (funcall fun note)
+      (when mastodon-tl--display-media-p
+        (mastodon-media--inline-images start-pos (point))))))
 
 (defun mastodon-notifications--timeline (json)
   "Format JSON in Emacs buffer."
   (mapc #'mastodon-notifications--by-type json)
-  (goto-char (point-min))
-  (when mastodon-tl--display-media-p
-    (mastodon-media--inline-images)))
+  (goto-char (point-min)))
 
 (defun mastodon-notifications--get ()
   "Display NOTIFICATIONS in buffer."
