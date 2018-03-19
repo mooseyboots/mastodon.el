@@ -193,8 +193,8 @@ MEDIA-TYPE is a symbol and either 'avatar or 'media-link."
                                     'loading-failed)
                  :loading-failed))))))
 
-(defun mastodon-media--select-next-media-line ()
-  "Find coordinates of the next media to load.
+(defun mastodon-media--select-next-media-line (end-pos)
+  "Find coordinates of the next media to load before END-POS.
 
 Returns the list of (`start' . `end', `media-symbol') points of
 that line and string found or nil no more media links were
@@ -206,7 +206,7 @@ found."
                     (null (get-text-property next-pos 'media-type))))
       ;; do nothing - the loop will proceed
       )
-    (when next-pos
+    (when (and next-pos (< next-pos end-pos))
       (let ((media-type (get-text-property next-pos 'media-type)))
         (cond
          ;; Avatars are just one character in the buffer
@@ -225,23 +225,25 @@ not been returned."
        (or (string= "http://" (substring link 0 7))
            (string= "https://" (substring link 0 8)))))
 
-(defun mastodon-media--inline-images ()
-  "Find all `Media_Links:' in the buffer replacing them with the referenced image."
-  (interactive)
-  (goto-char (point-min))
-  (let (line-details)
-    (while (setq line-details (mastodon-media--select-next-media-line))
-      (let* ((start (car line-details))
-             (end (cadr line-details))
-             (media-type (cadr (cdr line-details)))
-             (image-url (get-text-property start 'media-url)))
-        (if (not (mastodon-media--valid-link-p image-url))
-            ;; mark it at least as not needing loading any more
-            (put-text-property start end 'media-state 'invalid-url)
-          ;; proceed to load this image asynchronously
-          (put-text-property start end 'media-state 'loading)
-          (mastodon-media--load-image-from-url
-           image-url media-type start (- end start)))))))
+(defun mastodon-media--inline-images (search-start search-end)
+  "Find all `Media_Links:' in the range from SEARCH-START to SEARCH-END
+replacing them with the referenced image."
+  (save-excursion
+    (goto-char search-start)
+    (let (line-details)
+      (while (setq line-details (mastodon-media--select-next-media-line
+                                 search-end))
+        (let* ((start (car line-details))
+               (end (cadr line-details))
+               (media-type (cadr (cdr line-details)))
+               (image-url (get-text-property start 'media-url)))
+          (if (not (mastodon-media--valid-link-p image-url))
+              ;; mark it at least as not needing loading any more
+              (put-text-property start end 'media-state 'invalid-url)
+            ;; proceed to load this image asynchronously
+            (put-text-property start end 'media-state 'loading)
+            (mastodon-media--load-image-from-url
+             image-url media-type start (- end start))))))))
 
 (defun mastodon-media--get-avatar-rendering (avatar-url)
   "Returns the string to be written that renders the avatar at AVATAR-URL."

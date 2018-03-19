@@ -76,7 +76,8 @@
                   " ------------\n")
           'success))
         (setq mastodon-tl-update-point (point))
-        (mastodon-tl--timeline json)))    
+        (mastodon-media--inline-images (point-min) (point))
+        (mastodon-tl--timeline json)))
     (mastodon-tl--goto-next-toot)))
 
 (defun mastodon-profile--get-toot-author ()
@@ -112,8 +113,7 @@ FIELD is used to identify regions under 'account"
                      'byline  't
                      'toot-id (cdr (assoc 'id toot)) 'toot-json toot)
                     "\n"))
-          tootv))
-  (mastodon-media--inline-images))
+          tootv)))
 
 (defun mastodon-profile--get-following ()
   "Request a list of those who the user under point follows."
