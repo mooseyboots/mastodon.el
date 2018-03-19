@@ -75,7 +75,7 @@
         (goto-char (point-min))
         (while (search-forward "\n\n\n | " nil t)
           (replace-match "\n | "))
-        (mastodon-media--inline-images)))
+        (mastodon-media--inline-images (point-min) (point-max))))
     (switch-to-buffer-other-window buffer)
     (mastodon-mode)))
 
