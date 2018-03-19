@@ -635,13 +635,16 @@ the byline that takes one variable. By default it is `mastodon-tl--byline-author
 ACTION-BYLINE is also an optional function for adding an action, such as boosting
 favouriting and following to the byline. It also takes a single function. By default
 it is `mastodon-tl--byline-boosted'"
-  (insert
-   (propertize
-    (concat body
-            (mastodon-tl--byline toot author-byline action-byline))
-    'toot-id    (cdr (assoc 'id toot))
-    'toot-json  toot)
-   "\n\n"))
+  (let ((start-pos (point)))
+    (insert
+     (propertize
+      (concat body
+              (mastodon-tl--byline toot author-byline action-byline))
+      'toot-id    (cdr (assoc 'id toot))
+      'toot-json  toot)
+     "\n\n")
+    (when mastodon-tl--display-media-p
+      (mastodon-media--inline-images start-pos (point)))))
 
 (defun mastodon-tl--toot(toot)
   "Formats TOOT and insertes it into the buffer."
@@ -657,9 +660,7 @@ it is `mastodon-tl--byline-boosted'"
 (defun mastodon-tl--timeline (toots)
   "Display each toot in TOOTS."
   (mapc 'mastodon-tl--toot toots)
-  (goto-char (point-min))
-  (when mastodon-tl--display-media-p
-    (mastodon-media--inline-images)))
+  (goto-char (point-min)))
 
 (defun mastodon-tl--get-update-function (&optional buffer)
   "Get the UPDATE-FUNCTION stored in `mastodon-tl--buffer-spec'"

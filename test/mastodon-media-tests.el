@@ -189,7 +189,7 @@
 
         ;; stub for the actual test:
         (stub mastodon-media--load-image-from-url)
-        (mastodon-media--inline-images)
+        (mastodon-media--inline-images (point-min) (point-max))
 
         (should (eq 'loading (get-text-property marker-media-link 'media-state)))
         (should (eq 'invalid-url (get-text-property marker-media-link-bad-url 'media-state)))
