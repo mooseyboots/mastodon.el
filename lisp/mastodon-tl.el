@@ -254,7 +254,7 @@ Optionally start from POS."
                  'mouse-face 'highlight
 		 ;; TODO: Replace url browsing with native profile viewing
 		 'mastodon-tab-stop 'user-handle
-                 'account (cdr (assoc 'account toot))
+                 'account account
 		 'shr-url profile-url
 		 'keymap mastodon-tl--link-keymap
                  'mastodon-handle (concat "@" handle)

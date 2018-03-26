@@ -50,6 +50,23 @@
 (defvar mastodon-tl--buffer-spec)
 (defvar mastodon-tl--update-point)
 
+(defvar mastodon-profile--account nil
+  "The data for the account being described in the current profile buffer.")
+(make-variable-buffer-local 'mastodon-profile--account)
+
+(define-minor-mode mastodon-profile-mode
+  "Toggle mastodon profile minor mode.
+
+This minor mode is used for mastodon profile pages and adds a couple of
+extra keybindings."
+  :init-value nil
+  ;; The mode line indicator.
+  :lighter " Profile"
+  ;; The key bindings
+  :keymap '(((kbd "F") . mastodon-profile--open-followers)
+            ((kbd "f") . mastodon-profile--open-following))
+  :group 'mastodon)
+
 (defun mastodon-profile--toot-json ()
   "Get the next toot-json."
   (interactive)
@@ -57,24 +74,56 @@
 
 (defun mastodon-profile--make-author-buffer (account)
   "Take a ACCOUNT and inserts a user account into a new buffer."
+  (mastodon-profile--make-profile-buffer-for
+   account "statuses" #'mastodon-tl--timeline))
+
+(defun mastodon-profile--open-following ()
+  "Open a profile buffer for the current profile showing the accounts
+that current profile follows."
+  (interactive)
+  (if mastodon-profile--account
+      (mastodon-profile--make-profile-buffer-for
+       mastodon-profile--account
+       "following"
+       #'mastodon-profile--add-author-bylines)
+    (error "Not in a mastodon profile")))
+
+(defun mastodon-profile--open-followers ()
+  "Open a profile buffer for the current profile showing the accounts
+following the current profile."
+  (interactive)
+  (if mastodon-profile--account
+      (mastodon-profile--make-profile-buffer-for
+       mastodon-profile--account
+       "followers"
+       #'mastodon-profile--add-author-bylines)
+    (error "Not in a mastodon profile")))
+
+(defun mastodon-profile--make-profile-buffer-for (account endpoint-type update-function)
   (let* ((id (mastodon-profile--account-field account 'id))
-         (acct (mastodon-profile--account-field account 'acct))         
-         (url (mastodon-http--api
-               (concat "accounts/"
-                       (format "%s" id)
-                       "/statuses" )))
-         (buffer (concat "*mastodon-" acct  "*"))         
+         (acct (mastodon-profile--account-field account 'acct))
+         (url (mastodon-http--api (format "accounts/%s/%s"
+                                          id endpoint-type)))
+         (buffer (concat "*mastodon-" acct "-" endpoint-type  "*"))
          (note (mastodon-profile--account-field account 'note))
          (json (mastodon-http--get-json url)))
     (with-output-to-temp-buffer buffer
       (switch-to-buffer buffer)
       (mastodon-mode)
-      (setq mastodon-tl--buffer-spec
+      (mastodon-profile-mode)
+      (setq mastodon-profile--account account
+            mastodon-tl--buffer-spec
             `(buffer-name ,buffer
-                          endpoint ,(format "accounts/%s/statuses" id)
-                          update-function
-                          ,'mastodon-tl--timeline json))      
-      (let ((inhibit-read-only t))
+                          endpoint ,(format "accounts/%s/%s" id endpoint-type)
+                          update-function ,update-function))
+      (let* ((inhibit-read-only t)
+             (is-statuses (string= endpoint-type "statuses"))
+             (is-followers (string= endpoint-type "followers"))
+             (is-following (string= endpoint-type "following"))
+             (endpoint-name (cond
+                              (is-statuses "     TOOTS   ")
+                              (is-followers "  FOLLOWERS  ")
+                              (is-following "  FOLLOWING  "))))
         (insert
          "\n"
          (mastodon-profile--image-from-account account)
@@ -89,12 +138,12 @@
          (mastodon-tl--render-text note nil)
          (mastodon-tl--set-face
           (concat " ------------\n"
-                  "     TOOTS   \n"
+                  endpoint-name "\n"
                   " ------------\n")
           'success))
         (setq mastodon-tl--update-point (point))
         (mastodon-media--inline-images (point-min) (point))
-        (mastodon-tl--timeline json)))
+        (funcall update-function json)))
     (mastodon-tl--goto-next-toot)))
 
 (defun mastodon-profile--get-toot-author ()
@@ -117,12 +166,12 @@
                          (mastodon-profile--toot-json))))
       (completing-read "User handle: "
                        user-handles
-                       nil
+                       nil ; predicate
                        'confirm))))
   (let ((account (mastodon-profile--lookup-account-in-status
                   user-handle (mastodon-profile--toot-json))))
     (if account
-	(mastodon-profile--make-author-buffer account)
+        (mastodon-profile--make-author-buffer account)
       (message "Cannot find a user with handle %S" user-handle))))
 
 (defun mastodon-profile--account-field (account field)
@@ -134,53 +183,24 @@ FIELD is used to identify regions under 'account"
 (defun mastodon-profile--add-author-bylines (tootv)
   "Convert TOOTV into a author-bylines and insert."
   (let ((inhibit-read-only t))
-    (mapc (lambda(toot)
-            (insert (propertize
-                     (mastodon-tl--byline-author
-                      (list (append (list 'account) toot)))
-                     'byline  't
-                     'toot-id (cdr (assoc 'id toot)) 'toot-json toot)
-                    "\n"))
+    (mapc (lambda (toot)
+            (let ((start-pos (point)))
+              (insert "\n"
+                      (propertize
+                       (mastodon-tl--byline-author `((account . ,toot)))
+                       'byline  't
+                       'toot-id (cdr (assoc 'id toot))
+                       'toot-json toot))
+              (mastodon-media--inline-images start-pos (point))
+              (insert "\n"
+                      (mastodon-tl--render-text (cdr (assoc 'note toot)) nil)
+                      "\n")))
           tootv)))
 
-(defun mastodon-profile--get-following ()
-  "Request a list of those who the user under point follows."
-  (interactive)
-  (mastodon-profile--make-follow-buffer "following"))
-
-(defun mastodon-profile--followers ()
-  "Request a list of those following the user under point."
-  (interactive)
-  (mastodon-profile--make-follow-buffer "followers"))
-
-(defun mastodon-profile--make-follow-buffer (string)
-  "Make a buffer contining followers or following of user under point.
-
-STRING is an endpoint, either following or followers."
-  (let* ((account
-          (cdr (assoc 'account (mastodon-profile--toot-json))))
-         (id (mastodon-profile--account-field
-              account 'id))
-         (acct (mastodon-profile--account-field
-                account 'acct))
-         (buffer (format  "*%s-%s*" string acct))
-         (tootv (mastodon-http--get-json
-                 (mastodon-http--api (format "accounts/%s/%s"
-                                             id string)))))
-    (with-output-to-temp-buffer buffer
-      (switch-to-buffer buffer)
-      (mastodon-mode)
-      (setq mastodon-tl--buffer-spec
-            `(buffer-name ,buffer
-                          endpoint ,(format "accounts/%s/%s" id string)
-                          update-function
-                          ,'mastodon-profile--add-author-bylines))
-      (mastodon-profile--add-author-bylines tootv))))
-
-(defun mastodon-profile--search-account-by-handle (handle)  
+(defun mastodon-profile--search-account-by-handle (handle)
   "Return an account based on a users HANDLE.
 
-If the handle does not match a search return then retun NIL."  
+If the handle does not match a search return then retun NIL."
   (let* ((handle (if (string= "@" (substring handle 0 1))
                      (substring handle 1 (length handle))
                    handle))
@@ -228,17 +248,13 @@ These include the author, author of reblogged entries and any user mentioned."
                       (cdr (assoc 'mentions status)))))
     (cond ((string= handle
                     (cdr (assoc 'acct this-account)))
-           (message "Found %S as status's account" handle)
            this-account)
           ((string= handle
                     (cdr (assoc 'acct reblog-account)))
-           (message "Found %S as reblogged status's account" handle)
            reblog-account)
           (mention-id
-           (message "Found %S as mentioned id %S" handle mention-id)
            (mastodon-profile--account-from-id mention-id))
           (t
-           (message "Did not find %S - searching" handle)
            (mastodon-profile--search-account-by-handle handle)))))
 
 (provide 'mastodon-profile)
