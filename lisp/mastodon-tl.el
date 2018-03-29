@@ -711,7 +711,7 @@ it is `mastodon-tl--byline-boosted'"
 
 Move forward (down) the timeline unless BACKWARD is non-nil."
   (or (get-text-property (point) prop)
-      (progn
+      (save-excursion
         (if backward
             (mastodon-tl--goto-prev-toot)
           (mastodon-tl--goto-next-toot))
@@ -719,13 +719,15 @@ Move forward (down) the timeline unless BACKWARD is non-nil."
 
 (defun mastodon-tl--newest-id ()
   "Return toot-id from the top of the buffer."
-  (goto-char (point-min))
-  (mastodon-tl--property 'toot-id))
+  (save-excursion
+    (goto-char (point-min))
+    (mastodon-tl--property 'toot-id)))
 
 (defun mastodon-tl--oldest-id ()
   "Return toot-id from the bottom of the buffer."
-  (goto-char (point-max))
-  (mastodon-tl--property 'toot-id t))
+  (save-excursion
+    (goto-char (point-max))
+    (mastodon-tl--property 'toot-id t)))
 
 (defun mastodon-tl--as-string(numeric)
   "Convert NUMERIC to string."
