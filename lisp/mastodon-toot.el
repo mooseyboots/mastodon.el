@@ -54,22 +54,26 @@
       map)
   "Keymap for `mastodon-toot'.")
 
-(defun mastodon-toot--action-success (marker &optional rm)
-  "Insert MARKER with 'success face in byline.
+(defun mastodon-toot--action-success (marker byline-region remove)
+  "Insert/remove the text MARKER with 'success face in byline.
 
-Remove MARKER if RM is non-nil."
+BYLINE-REGION is a cons of start and end pos of the byline to be 
+modified.
+Remove MARKER if REMOVE is non-nil, otherwise add it."
   (let ((inhibit-read-only t)
-        (bol (progn (move-beginning-of-line nil) (point)))
-        (eol (progn (move-end-of-line nil) (point))))
-    (when rm
-      (goto-char bol)
-      (if (search-forward (format "(%s) " marker) eol t)
-          (replace-match "")))
-    (move-beginning-of-line nil)
-    (mastodon-tl--goto-next-toot)
-    (unless rm
-      (insert (format "(%s) "
-                      (propertize marker 'face 'success))))))
+        (bol (car byline-region))
+        (eol (cdr byline-region)))
+    (save-excursion
+      (when remove
+        (goto-char bol)
+        (beginning-of-line) ;; The marker is not part of the byline
+        (if (search-forward (format "(%s) " marker) eol t)
+            (replace-match "")
+          (message "Oops: could not find marker '(%s)'" marker)))
+      (unless remove
+        (goto-char bol)
+        (insert (format "(%s) "
+                        (propertize marker 'face 'success)))))))
 
 (defun mastodon-toot--action (action callback)
   "Take ACTION on toot at point, then execute CALLBACK."
@@ -84,29 +88,49 @@ Remove MARKER if RM is non-nil."
 (defun mastodon-toot--toggle-boost ()
   "Boost/unboost toot at `point'."
   (interactive)
-  (let* ((id (mastodon-tl--as-string
-              (mastodon-tl--property 'toot-id)))
-         (boosted (get-text-property (point) 'boosted-p))
+  (let* ((byline-region (mastodon-tl--find-property-range 'byline (point)))
+         (id (when byline-region
+               (mastodon-tl--as-string (mastodon-tl--property 'toot-id))))
+         (boosted (when byline-region
+                    (get-text-property (car byline-region) 'boosted-p)))
          (action (if boosted "unreblog" "reblog"))
          (msg (if boosted "unboosted" "boosted"))
          (remove (when boosted t)))
-    (mastodon-toot--action action
-                           (lambda ()
-                             (mastodon-toot--action-success "B" remove)
-                             (message (format "%s #%s" msg id))))))
+    (if byline-region
+        (mastodon-toot--action action
+                               (lambda ()
+                                 (let ((inhibit-read-only t))
+                                   (add-text-properties (car byline-region)
+                                                        (cdr byline-region)
+                                                        (list 'boosted-p
+                                                              (not boosted)))
+                                   (mastodon-toot--action-success
+                                    "B" byline-region remove))
+                                 (message (format "%s #%s" msg id))))
+      (message "Nothing to boost here?!?"))))
 
 (defun mastodon-toot--toggle-favourite ()
   "Favourite/unfavourite toot at `point'."
   (interactive)
-  (let* ((id (mastodon-tl--as-string
-              (mastodon-tl--property 'toot-id)))
-         (faved (get-text-property (point) 'favourited-p))
+  (let* ((byline-region (mastodon-tl--find-property-range 'byline (point)))
+         (id (when byline-region
+               (mastodon-tl--as-string (mastodon-tl--property 'toot-id))))
+         (faved (when byline-region
+                  (get-text-property (car byline-region) 'favourited-p)))
          (action (if faved "unfavourite" "favourite"))
          (remove (when faved t)))
-    (mastodon-toot--action action
-                           (lambda ()
-                             (mastodon-toot--action-success "F" remove)
-                             (message (format "%s #%s" action id))))))
+    (if byline-region
+        (mastodon-toot--action action
+                               (lambda ()
+                                 (let ((inhibit-read-only t))
+                                   (add-text-properties (car byline-region)
+                                                        (cdr byline-region)
+                                                        (list 'favourited-p
+                                                              (not faved)))
+                                   (mastodon-toot--action-success
+                                    "F" byline-region remove))
+                                 (message (format "%s #%s" action id))))
+      (message "Nothing to favorite here?!?"))))
 
 (defun mastodon-toot--kill ()
   "Kill `mastodon-toot-mode' buffer and window.
