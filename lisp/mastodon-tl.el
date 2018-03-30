@@ -39,6 +39,9 @@
 (autoload 'mastodon-media--get-media-link-rendering "mastodon-media")
 (autoload 'mastodon-media--inline-images "mastodon-media")
 (autoload 'mastodon-mode "mastodon")
+(autoload 'mastodon-profile--account-from-id "mastodon.el-profile.el")
+(autoload 'mastodon-profile--make-author-buffer "mastodon-profile.el")
+(autoload 'mastodon-profile--search-account-by-handle "mastodon.el-profile.el")
 (defvar mastodon-instance-url)
 (defvar mastodon-toot-timestamp-format)
 (defvar shr-use-fonts)  ;; need to declare it since Emacs24 didn't have this
@@ -72,11 +75,11 @@ width fonts when rendering HTML text"))
   (image-type-available-p 'imagemagick)
   "A boolean value stating whether to show avatars in timelines.")
 
-(defvar mastodon-tl-update-point nil
+(defvar mastodon-tl--update-point nil
   "When updating a mastodon buffer this is where new toots will be inserted.
 
 If nil `(point-min)' is used instead.")
-(make-variable-buffer-local 'mastodon-tl-update-point)
+(make-variable-buffer-local 'mastodon-tl--update-point)
 
 (defvar mastodon-tl--display-media-p t
   "A boolean value stating whether to show media in timelines.")
@@ -251,7 +254,7 @@ Optionally start from POS."
                  'mouse-face 'highlight
 		 ;; TODO: Replace url browsing with native profile viewing
 		 'mastodon-tab-stop 'user-handle
-                 'account (cdr (assoc 'account toot))
+                 'account account
 		 'shr-url profile-url
 		 'keymap mastodon-tl--link-keymap
                  'mastodon-handle (concat "@" handle)
@@ -941,7 +944,7 @@ from the start if it is nil."
          (json (mastodon-tl--updated-json endpoint id)))
     (when json
       (let ((inhibit-read-only t))
-        (goto-char (or mastodon-tl-update-point (point-min)))
+        (goto-char (or mastodon-tl--update-point (point-min)))
         (funcall update-function json)))))
 
 (defun mastodon-tl--init (buffer-name endpoint update-function)
