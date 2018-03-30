@@ -44,13 +44,14 @@
 (autoload 'mastodon-tl--thread "mastodon-tl")
 (autoload 'mastodon-tl--toggle-spoiler-text-in-toot "mastodon-tl")
 (autoload 'mastodon-tl--update "mastodon-tl")
+(autoload 'mastodon-notifications--get "mastodon-notifications")
+(autoload 'mastodon-profile--get-toot-author "mastodon-profile")
+(autoload 'mastodon-profile--make-author-buffer "mastodon-profile")
+(autoload 'mastodon-profile--show-user "mastodon-profile")
 (autoload 'mastodon-toot--compose-buffer "mastodon-toot")
 (autoload 'mastodon-toot--reply "mastodon-toot")
 (autoload 'mastodon-toot--toggle-boost "mastodon-toot")
 (autoload 'mastodon-toot--toggle-favourite "mastodon-toot")
-(autoload 'mastodon-profile--get-next-author "mastodon-profile")
-(autoload 'mastodon-notifications--get "mastodon-notifications")
-(autoload 'mastodon-profile--make-author-buffer "mastodon-profile")
 
 (defgroup mastodon nil
   "Interface with Mastodon."
@@ -85,6 +86,7 @@ Use. e.g. \"%c\" for your locale's date and time format."
     ;; Navigating to other buffers:
     (define-key map (kbd "N") #'mastodon-notifications--get)
     (define-key map (kbd "U") #'mastodon-profile--get-toot-author)
+    (define-key map (kbd "P") #'mastodon-profile--show-user)
     (define-key map (kbd "F") #'mastodon-tl--get-federated-timeline)
     (define-key map (kbd "H") #'mastodon-tl--get-home-timeline)
     (define-key map (kbd "L") #'mastodon-tl--get-local-timeline)
