@@ -45,6 +45,7 @@
 (autoload 'mastodon-tl--render-text "mastodon-tl.el")
 (autoload 'mastodon-tl--set-face "mastodon-tl.el")
 (autoload 'mastodon-tl--timeline "mastodon-tl.el")
+(autoload 'mastodon-tl--toot-id "mastodon-tl")
 
 (defvar mastodon-instance-url)
 (defvar mastodon-tl--buffer-spec)
@@ -190,6 +191,7 @@ FIELD is used to identify regions under 'account"
                        (mastodon-tl--byline-author `((account . ,toot)))
                        'byline  't
                        'toot-id (cdr (assoc 'id toot))
+                       'base-toot-id (mastodon-tl--toot-id toot)
                        'toot-json toot))
               (mastodon-media--inline-images start-pos (point))
               (insert "\n"
