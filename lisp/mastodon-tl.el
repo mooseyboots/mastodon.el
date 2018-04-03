@@ -643,8 +643,9 @@ it is `mastodon-tl--byline-boosted'"
      (propertize
       (concat body
               (mastodon-tl--byline toot author-byline action-byline))
-      'toot-id    (cdr (assoc 'id toot))
-      'toot-json  toot)
+      'toot-id      (cdr (assoc 'id toot))
+      'base-toot-id (mastodon-tl--toot-id toot)
+      'toot-json    toot)
      "\n\n")
     (when mastodon-tl--display-media-p
       (mastodon-media--inline-images start-pos (point)))))
