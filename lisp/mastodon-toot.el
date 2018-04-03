@@ -40,6 +40,7 @@
 (autoload 'mastodon-tl--field "mastodon-tl")
 (autoload 'mastodon-tl--goto-next-toot "mastodon-tl")
 (autoload 'mastodon-tl--property "mastodon-tl")
+(autoload 'mastodon-tl--find-property-range "mastodon-tl")
 (autoload 'mastodon-toot "mastodon")
 
 (defvar mastodon-toot--reply-to-id nil
@@ -77,7 +78,7 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
 
 (defun mastodon-toot--action (action callback)
   "Take ACTION on toot at point, then execute CALLBACK."
-  (let* ((id (mastodon-tl--property 'toot-id))
+  (let* ((id (mastodon-tl--property 'base-toot-id))
          (url (mastodon-http--api (concat "statuses/"
                                          (mastodon-tl--as-string id)
                                          "/"
@@ -90,7 +91,7 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (interactive)
   (let* ((byline-region (mastodon-tl--find-property-range 'byline (point)))
          (id (when byline-region
-               (mastodon-tl--as-string (mastodon-tl--property 'toot-id))))
+               (mastodon-tl--as-string (mastodon-tl--property 'base-toot-id))))
          (boosted (when byline-region
                     (get-text-property (car byline-region) 'boosted-p)))
          (action (if boosted "unreblog" "reblog"))
@@ -114,7 +115,7 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (interactive)
   (let* ((byline-region (mastodon-tl--find-property-range 'byline (point)))
          (id (when byline-region
-               (mastodon-tl--as-string (mastodon-tl--property 'toot-id))))
+               (mastodon-tl--as-string (mastodon-tl--property 'base-toot-id))))
          (faved (when byline-region
                   (get-text-property (car byline-region) 'favourited-p)))
          (action (if faved "unfavourite" "favourite"))
