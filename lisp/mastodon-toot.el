@@ -30,18 +30,48 @@
 ;;; Code:
 
 (defvar mastodon-instance-url)
-(defvar mastodon-toot--content-warning nil)
 
 (autoload 'mastodon-auth--user-acct "mastodon-auth")
 (autoload 'mastodon-http--api "mastodon-http")
 (autoload 'mastodon-http--post "mastodon-http")
 (autoload 'mastodon-http--triage "mastodon-http")
 (autoload 'mastodon-tl--as-string "mastodon-tl")
+(autoload 'mastodon-tl--clean-tabs-and-nl "mastodon-tl")
 (autoload 'mastodon-tl--field "mastodon-tl")
+(autoload 'mastodon-tl--find-property-range "mastodon-tl")
 (autoload 'mastodon-tl--goto-next-toot "mastodon-tl")
 (autoload 'mastodon-tl--property "mastodon-tl")
 (autoload 'mastodon-tl--find-property-range "mastodon-tl")
 (autoload 'mastodon-toot "mastodon")
+
+(defgroup mastodon-toot nil
+  "Tooting in Mastodon."
+  :prefix "mastodon-toot-"
+  :group 'mastodon)
+
+(defcustom mastodon-toot--default-visibility "public"
+  "The default visibility for new toots.
+
+Must be one of \"public\", \"unlisted\", \"private\", or \"direct\"."
+  :group 'mastodon-toot
+  :type '(choice ("public"
+                  "unlisted"
+                  "private"
+                  "direct")))
+
+(defvar mastodon-toot--content-warning nil
+  "A flag whether the toot should be marked with a content warning.")
+(make-variable-buffer-local 'mastodon-toot--content-warning)
+
+(defvar mastodon-toot--content-nsfw nil
+  "A flag indicating whether the toot should be marked as NSFW.")
+(make-variable-buffer-local 'mastodon-toot--content-nsfw)
+
+(defvar mastodon-toot--visibility "public"
+  "A string indicating the visibility of the toot being composed.
+
+Valid values are \"direct\", \"private\", \"unlisted\", and \"public\".")
+(make-variable-buffer-local 'mastodon-toot--visibility)
 
 (defvar mastodon-toot--reply-to-id nil
   "Buffer-local variable to hold the id of the toot being replied to.")
@@ -52,7 +82,9 @@
     (define-key map (kbd "C-c C-c") #'mastodon-toot--send)
     (define-key map (kbd "C-c C-k") #'mastodon-toot--cancel)
     (define-key map (kbd "C-c C-w") #'mastodon-toot--toggle-warning)
-      map)
+    ;;(define-key map (kbd "C-c C-n") #'mastodon-toot--toggle-nsfw)
+    (define-key map (kbd "C-c C-v") #'mastodon-toot--change-visibility)
+    map)
   "Keymap for `mastodon-toot'.")
 
 (defun mastodon-toot--action-success (marker byline-region remove)
@@ -138,13 +170,8 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
       (message "Nothing to favorite here?!?"))))
 
 (defun mastodon-toot--kill ()
-  "Kill `mastodon-toot-mode' buffer and window.
-
-Set `mastodon-toot--reply-to-id' to nil.
-Set `mastodon-toot--content-warning' to nil."
-  (kill-buffer-and-window)
-  (setq mastodon-toot--reply-to-id     nil
-        mastodon-toot--content-warning nil))
+  "Kill `mastodon-toot-mode' buffer and window."
+  (kill-buffer-and-window))
 
 (defun mastodon-toot--cancel ()
   "Kill new-toot buffer/window. Does not POST content to Mastodon."
@@ -153,28 +180,31 @@ Set `mastodon-toot--content-warning' to nil."
 
 (defun mastodon-toot--remove-docs ()
   "Get the body of a toot from the current compose buffer."
-  (let ((re "^|=+=|$"))
-    (save-excursion
-      (goto-char 0)
-      (re-search-forward re nil nil 2)
-      (buffer-substring (+ 2 (point)) (+ 1 (length (buffer-string)))))))
+  (let ((header-region (mastodon-tl--find-property-range 'toot-post-header
+                                                         (point-min))))
+    (buffer-substring (cdr header-region) (point-max))))
 
 (defun mastodon-toot--send ()
   "Kill new-toot buffer/window and POST contents to the Mastodon instance."
   (interactive)
   (let* ((toot (mastodon-toot--remove-docs))
+         (empty-toot-p (string= "" (mastodon-tl--clean-tabs-and-nl toot)))
          (endpoint (mastodon-http--api "statuses"))
-         (spoiler (when mastodon-toot--content-warning
+         (spoiler (when (and (not empty-toot-p)
+                             mastodon-toot--content-warning)
                     (read-string "Warning: ")))
          (args `(("status" . ,toot)
                  ("in_reply_to_id" . ,mastodon-toot--reply-to-id)
-                 ("sensitive" . ,(when mastodon-toot--content-warning
+                 ("visibility" . ,mastodon-toot--visibility)
+                 ("sensitive" . ,(when mastodon-toot--content-nsfw
                                    (symbol-name t)))
                  ("spoiler_text" . ,spoiler))))
-    (mastodon-toot--kill)
-    (let ((response (mastodon-http--post endpoint args nil)))
-      (mastodon-http--triage response
-                             (lambda () (message "Toot toot!"))))))
+    (if empty-toot-p
+        (message "Empty toot. Cowardly refusing to post this.")
+      (mastodon-toot--kill)
+      (let ((response (mastodon-http--post endpoint args nil)))
+        (mastodon-http--triage response
+                               (lambda () (message "Toot toot!")))))))
 
 (defun mastodon-toot--process-local (acct)
   "Adds domain to local ACCT and replaces the curent user name with \"\".
@@ -215,7 +245,30 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\" "
   "Toggle `mastodon-toot--content-warning'."
   (interactive)
   (setq mastodon-toot--content-warning
-        (not mastodon-toot--content-warning)))
+        (not mastodon-toot--content-warning))
+  (mastodon-toot--update-status-fields))
+
+(defun mastodon-toot--toggle-nsfw ()
+  "Toggle `mastodon-toot--content-nsfw'."
+  ;; This only makes sense once we have attachments.
+  (interactive)
+  (setq mastodon-toot--content-nsfw
+        (not mastodon-toot--content-nsfw))
+  (mastodon-toot--update-status-fields))
+
+(defun mastodon-toot--change-visibility ()
+  "Change the current visibility to the next valid value."
+  (interactive)
+  (setq mastodon-toot--visibility
+        (cond ((string= mastodon-toot--visibility "public")
+               "unlisted")
+              ((string= mastodon-toot--visibility "unlisted")
+               "private")
+              ((string= mastodon-toot--visibility "private")
+               "direct")
+              (t
+               "public")))
+  (mastodon-toot--update-status-fields))
 
 ;; we'll need to revisit this if the binds get
 ;; more diverse than two-chord bindings
@@ -255,17 +308,40 @@ e.g. mastodon-toot--send -> Send."
   "Create formatted documentation text for the mastodon-toot-mode."
   (let ((kbinds (mastodon-toot--get-mode-kbinds)))
     (concat
-     "|=================================================================|\n"
      " Compose a new toot here. The following keybindings are available:"
-     (mastodon-toot--format-kbinds kbinds)
-     "\n|=================================================================|\n\n")))
+     (mastodon-toot--format-kbinds kbinds))))
 
-(defun mastodon-toot--display-docs ()
-  "Display documentation about mastodon-toot mode."
-  (insert
-   (propertize
-    (mastodon-toot--make-mode-docs)
-    'face 'comment)))
+(defun mastodon-toot--display-docs-and-status-fields ()
+  "Insert propertized text with documentation about mastodon-toot mode and the
+status fields which will get updated based on the status of NSFW, content
+warning flags etc."
+  (let ((divider
+         "|=================================================================|"))
+    (insert
+     (propertize
+      (concat
+       divider "\n"
+       (mastodon-toot--make-mode-docs) "\n"
+       divider "\n"
+       " "
+       (propertize "Count"
+                   'toot-post-counter t)
+       " ⋅ "
+       (propertize "Visibility"
+                   'toot-post-visibility t)
+       " ⋅ "
+       (propertize "CW"
+                   'toot-post-cw-flag t)
+       ;; " "
+       ;; (propertize "NSFW"
+       ;;             'toot-post-nsfw-flag t)
+       "\n"
+       divider
+       (propertize "\n"
+                   'rear-nonsticky t))
+      'face 'font-lock-comment-face
+      'read-only "Edit your message below."
+      'toot-post-header t))))
 
 (defun mastodon-toot--setup-as-reply (reply-to-user reply-to-id)
   "If REPLY-TO-USER is provided, inject their handle into the message.
@@ -274,16 +350,48 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
     (insert (format "%s " reply-to-user))
     (setq mastodon-toot--reply-to-id reply-to-id)))
 
+(defun mastodon-toot--update-status-fields (&rest args)
+  "Update the status fields in the header based on the current state."
+  (let ((inhibit-read-only t)
+        (header-region (mastodon-tl--find-property-range 'toot-post-header
+                                                         (point-min)))
+        (count-region (mastodon-tl--find-property-range 'toot-post-counter
+                                                        (point-min)))
+        (visibility-region (mastodon-tl--find-property-range
+                            'toot-post-visibility (point-min)))
+        ;; (nsfw-region (mastodon-tl--find-property-range 'toot-post-nsfw-flag
+        ;;                                                (point-min)))
+        (cw-region (mastodon-tl--find-property-range 'toot-post-cw-flag
+                                                     (point-min)))
+        )
+    (add-text-properties (car count-region) (cdr count-region)
+                         (list 'display
+                               (format "%s characters in message"
+                                       (- (point-max) (cdr header-region)))))
+    (add-text-properties (car visibility-region) (cdr visibility-region)
+                         (list 'display
+                               (format "Visibility: %s"
+                                       mastodon-toot--visibility)))
+    ;; (add-text-properties (car nsfw-region) (cdr nsfw-region)
+    ;;                      (list 'invisible (not mastodon-toot--content-nsfw)
+    ;;                            'face 'mastodon-cw-face))
+    (add-text-properties (car cw-region) (cdr cw-region)
+                         (list 'invisible (not mastodon-toot--content-warning)
+                               'face 'mastodon-cw-face))))
+
 (defun mastodon-toot--compose-buffer (reply-to-user reply-to-id)
   "Create a new buffer to capture text for a new toot.
 If REPLY-TO-USER is provided, inject their handle into the message.
 If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
   (let* ((buffer-exists (get-buffer "*new toot*"))
-         (buffer (or buffer-exists (get-buffer-create "*new toot*"))))
+         (buffer (or buffer-exists (get-buffer-create "*new toot*")))
+         (inhibit-read-only t))
     (switch-to-buffer-other-window buffer)
     (when (not buffer-exists)
-      (mastodon-toot--display-docs)
+      (mastodon-toot--display-docs-and-status-fields)
       (mastodon-toot--setup-as-reply reply-to-user reply-to-id))
+    (push #'mastodon-toot--update-status-fields after-change-functions)
+    (mastodon-toot--update-status-fields)
     (mastodon-toot-mode t)))
 
 (define-minor-mode mastodon-toot-mode
