@@ -67,7 +67,7 @@
   "Format for a `mention' NOTE."
   (let ((status (mastodon-tl--field 'status note)))
     (mastodon-tl--insert-status
-     note
+     status
      (mastodon-tl--clean-tabs-and-nl
       (if (mastodon-tl--has-spoiler status)
           (mastodon-tl--spoiler status)
@@ -80,7 +80,9 @@
 (defun mastodon-notifications--follow (note)
   "Format for a `follow' NOTE."
   (mastodon-tl--insert-status
-   note
+   ;; Using reblog with an empty id will mark this as something
+   ;; non-boostable/non-favable.
+   (cons '(reblog (id . nil)) note)
    (propertize "Congratulations, you have a new follower!"
                'face 'default)
    'mastodon-tl--byline-author
@@ -92,7 +94,7 @@
   "Format for a `favourite' NOTE."
   (let ((status (mastodon-tl--field 'status note)))
     (mastodon-tl--insert-status
-     note
+     status
      (mastodon-tl--clean-tabs-and-nl
       (if (mastodon-tl--has-spoiler status)
           (mastodon-tl--spoiler status)
@@ -108,7 +110,7 @@
   "Format for a `boost' NOTE."
   (let ((status (mastodon-tl--field 'status note)))
     (mastodon-tl--insert-status
-     note
+     status
      (mastodon-tl--clean-tabs-and-nl
       (if (mastodon-tl--has-spoiler status)
           (mastodon-tl--spoiler status)
