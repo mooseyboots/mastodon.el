@@ -142,7 +142,7 @@ a string or a numeric."
   "Should request toots more recent than since_id.
 
 `mastodon-tl--updated-json' should accept and id that is either
-a string or a numeric."  
+a string or a numeric."
   (let ((mastodon-instance-url "https://instance.url"))
     (with-mock
       (mock (mastodon-http--get-json "https://instance.url/api/v1/timelines/foo?since_id=12345"))
@@ -775,7 +775,7 @@ constant."
       (with-temp-buffer
         (cl-dotimes (n 12) (insert-timestamp (+ n 2)))
         (setq markers (nreverse markers))
-        
+
         (with-mock
           (mock (current-time) => now)
           (stub run-at-time => 'fake-timer)
@@ -856,13 +856,13 @@ constant."
       (should (eq t (get-text-property body-position 'invisible)))
 
       ;; Click the link:
-      (mastodon-tl--do-link-action-at-point (car link-region)) 
+      (mastodon-tl--do-link-action-at-point (car link-region))
 
       ;; The body is now visible:
       (should (eq nil (get-text-property body-position 'invisible)))
 
       ;; Click the link once more:
-      (mastodon-tl--do-link-action-at-point (car link-region)) 
+      (mastodon-tl--do-link-action-at-point (car link-region))
 
       ;; The body is invisible again:
       (should (eq t (get-text-property body-position 'invisible)))
@@ -873,7 +873,7 @@ constant."
       (mastodon-tl--toggle-spoiler-text-in-toot)
       (should (eq nil (get-text-property body-position 'invisible)))
       (should (eq toot-start (point)))
-      
+
       ;; Go to the toot's end
       (goto-char toot-end)
       ;; Press 'c' and the body is invisible again and point hasn't changed:
