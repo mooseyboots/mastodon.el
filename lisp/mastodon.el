@@ -85,8 +85,8 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map [?\M-\t] #'mastodon-tl--previous-tab-item)
     ;; Navigating to other buffers:
     (define-key map (kbd "N") #'mastodon-notifications--get)
-    (define-key map (kbd "U") #'mastodon-profile--get-toot-author)
-    (define-key map (kbd "P") #'mastodon-profile--show-user)
+    (define-key map (kbd "A") #'mastodon-profile--get-toot-author)
+    (define-key map (kbd "U") #'mastodon-profile--show-user)
     (define-key map (kbd "F") #'mastodon-tl--get-federated-timeline)
     (define-key map (kbd "H") #'mastodon-tl--get-home-timeline)
     (define-key map (kbd "L") #'mastodon-tl--get-local-timeline)
@@ -167,18 +167,22 @@ If REPLY-TO-ID is non-nil, attach new toot to a conversation."
                      (description "Mastodon feed viewer")
                      (actions
                       ("Toots"
+                       ("A" "Author" mastodon-profile--get-toot-author)
                        ("b" "Boost" mastodon-toot--boost)
+                       ("c" "Toggle content" mastodon-tl--toggle-spoiler-text-in-toot)
                        ("f" "Favourite" mastodon-toot--favourite)
                        ("j" "Next" mastodon-tl--goto-next-toot)
                        ("k" "Prev" mastodon-tl--goto-prev-toot)
                        ("n" "Send" mastodon-toot)
                        ("r" "Reply" mastodon-toot--reply)
                        ("t" "Thread" mastodon-tl--thread)
-                       ("u" "Update" mastodon-tl--update))
+                       ("u" "Update" mastodon-tl--update)
+                       ("U" "Users" mastodon-profile--show-user))
                       ("Timelines"
                        ("F" "Federated" mastodon-tl--get-federated-timeline)
                        ("H" "Home" mastodon-tl--get-home-timeline)
                        ("L" "Local" mastodon-tl--get-local-timeline)
+                       ("N" "Notifications" mastodon-notifications--get)
                        ("T" "Tag" mastodon-tl--get-tag-timeline))
                       ("Quit"
                        ("q" "Quit mastodon buffer. Leave window open." kill-this-buffer)
