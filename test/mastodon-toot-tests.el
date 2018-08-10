@@ -20,7 +20,7 @@
 
 (ert-deftest toot-multi-mentions ()
   (let ((mastodon-auth--acct-alist '(("https://local.social". "null")))
-        (mastodon-instance-url "https://local.social"))    
+        (mastodon-instance-url "https://local.social"))
     (should (string=
              (mastodon-toot--mentions mastodon-toot-multi-mention)
              "@local@local.social @federated@federated.social @federated@federated.cafe "))))
@@ -36,7 +36,7 @@
 (ert-deftest toot-no-mention ()
   (let ((mastodon-auth--acct-alist
          '(("https://local.social". "null")))
-        (mastodon-instance-url "https://local.social"))    
+        (mastodon-instance-url "https://local.social"))
     (should (string= (mastodon-toot--mentions mastodon-toot-no-mention) ""))))
 
 (ert-deftest cancel ()

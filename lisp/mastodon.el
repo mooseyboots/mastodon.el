@@ -78,7 +78,7 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map (kbd "j") #'mastodon-tl--goto-next-toot)
     (define-key map (kbd "k") #'mastodon-tl--goto-prev-toot)
     (define-key map (kbd "h") #'mastodon-tl--next-tab-item)
-    (define-key map (kbd "l") #'mastodon-tl--previous-tab-item)    
+    (define-key map (kbd "l") #'mastodon-tl--previous-tab-item)
     (define-key map [?\t] #'mastodon-tl--next-tab-item)
     (define-key map [backtab] #'mastodon-tl--previous-tab-item)
     (define-key map [?\S-\t] #'mastodon-tl--previous-tab-item)

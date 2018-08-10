@@ -459,9 +459,9 @@ links in the text. If TOOT is nil no parsing occurs."
       (when (string= (cdr (assoc 'acct mention))
                      short-acct)
         (setq return (cdr (assoc 'id  mention))))
-      (setq mention (pop mentions)))    
+      (setq mention (pop mentions)))
     return))
-      
+
 (defun mastodon-tl--extract-userhandle-from-url (url buffer-text)
   "Returns the user hande the URL points to or nil if it is not a profile link.
 

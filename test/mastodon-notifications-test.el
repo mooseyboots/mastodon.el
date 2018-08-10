@@ -197,7 +197,7 @@ notification to be tested."
         (timestamp (cdr (assoc 'created_at  sample))))
     (with-temp-buffer (funcall fun sample)
                       (buffer-substring-no-properties (point-min) (point-max)))))
-         
+
 (ert-deftest mastodon-notifications--test-byline-concat ()
   "Ensure proper suffix is appended to action."
   (should (and
