@@ -89,7 +89,9 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
 (defun mastodon-toot--toggle-boost ()
   "Boost/unboost toot at `point'."
   (interactive)
-  (let* ((byline-region (mastodon-tl--find-property-range 'byline (point)))
+  (let* ((has-id (mastodon-tl--property 'base-toot-id))
+         (byline-region (when has-id
+                          (mastodon-tl--find-property-range 'byline (point))))
          (id (when byline-region
                (mastodon-tl--as-string (mastodon-tl--property 'base-toot-id))))
          (boosted (when byline-region
@@ -113,7 +115,9 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
 (defun mastodon-toot--toggle-favourite ()
   "Favourite/unfavourite toot at `point'."
   (interactive)
-  (let* ((byline-region (mastodon-tl--find-property-range 'byline (point)))
+  (let* ((has-id (mastodon-tl--property 'base-toot-id))
+         (byline-region (when has-id
+                          (mastodon-tl--find-property-range 'byline (point))))
          (id (when byline-region
                (mastodon-tl--as-string (mastodon-tl--property 'base-toot-id))))
          (faved (when byline-region
