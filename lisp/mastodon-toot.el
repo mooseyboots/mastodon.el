@@ -31,6 +31,11 @@
 
 (defvar mastodon-instance-url)
 (defvar mastodon-toot--content-warning nil)
+(defvar mastodon-toot--visibility)
+(defvar mastodon-toot--default-visibility "public"
+  "Default visiblity for toots.
+Valid values: \"public\", \"unlisted\", \"private\", \"direct\".")
+(setq mastodon-toot--visibility mastodon-toot--default-visibility)
 
 (autoload 'mastodon-auth--user-acct "mastodon-auth")
 (autoload 'mastodon-http--api "mastodon-http")
@@ -52,7 +57,8 @@
     (define-key map (kbd "C-c C-c") #'mastodon-toot--send)
     (define-key map (kbd "C-c C-k") #'mastodon-toot--cancel)
     (define-key map (kbd "C-c C-w") #'mastodon-toot--toggle-warning)
-      map)
+    (define-key map (kbd "C-c C-v") #'mastodon-toot--set-visibility)
+    map)
   "Keymap for `mastodon-toot'.")
 
 (defun mastodon-toot--action-success (marker byline-region remove)
@@ -141,10 +147,12 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   "Kill `mastodon-toot-mode' buffer and window.
 
 Set `mastodon-toot--reply-to-id' to nil.
-Set `mastodon-toot--content-warning' to nil."
+Set `mastodon-toot--content-warning' to nil.
+Set `mastodon-toot--visiblity' to `mastodon-toot--default-visiblity' (default \"public\")."
   (kill-buffer-and-window)
   (setq mastodon-toot--reply-to-id     nil
-        mastodon-toot--content-warning nil))
+        mastodon-toot--content-warning nil
+	mastodon-toot--visibility      mastodon-toot--default-visibility))
 
 (defun mastodon-toot--cancel ()
   "Kill new-toot buffer/window. Does not POST content to Mastodon."
@@ -159,6 +167,16 @@ Set `mastodon-toot--content-warning' to nil."
       (re-search-forward re nil nil 2)
       (buffer-substring (+ 2 (point)) (+ 1 (length (buffer-string)))))))
 
+(defun mastodon-toot--set-visibility (visibility)
+  "Sets the visiblity of the next toot"
+  (interactive
+   (list (completing-read "Visiblity: " '("public"
+					  "unlisted"
+					  "private"
+					  "direct"))))
+  (setq mastodon-toot--visibility visibility)
+  (message "Visibility set to %s" visibility))
+
 (defun mastodon-toot--send ()
   "Kill new-toot buffer/window and POST contents to the Mastodon instance."
   (interactive)
@@ -170,6 +188,7 @@ Set `mastodon-toot--content-warning' to nil."
                  ("in_reply_to_id" . ,mastodon-toot--reply-to-id)
                  ("sensitive" . ,(when mastodon-toot--content-warning
                                    (symbol-name t)))
+		 ("visibility" . ,mastodon-toot--visibility)
                  ("spoiler_text" . ,spoiler))))
     (mastodon-toot--kill)
     (let ((response (mastodon-http--post endpoint args nil)))
