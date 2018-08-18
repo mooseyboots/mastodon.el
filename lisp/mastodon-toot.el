@@ -90,7 +90,7 @@ Valid values are \"direct\", \"private\", \"unlisted\", and \"public\".")
 (defun mastodon-toot--action-success (marker byline-region remove)
   "Insert/remove the text MARKER with 'success face in byline.
 
-BYLINE-REGION is a cons of start and end pos of the byline to be 
+BYLINE-REGION is a cons of start and end pos of the byline to be
 modified.
 Remove MARKER if REMOVE is non-nil, otherwise add it."
   (let ((inhibit-read-only t)
@@ -184,6 +184,16 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
                                                          (point-min))))
     (buffer-substring (cdr header-region) (point-max))))
 
+(defun mastodon-toot--set-visibility (visibility)
+  "Sets the visiblity of the next toot"
+  (interactive
+   (list (completing-read "Visiblity: " '("public"
+                                          "unlisted"
+                                          "private"
+                                          "direct"))))
+  (setq mastodon-toot--visibility visibility)
+  (message "Visibility set to %s" visibility))
+
 (defun mastodon-toot--send ()
   "Kill new-toot buffer/window and POST contents to the Mastodon instance."
   (interactive)
@@ -198,6 +208,7 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
                  ("visibility" . ,mastodon-toot--visibility)
                  ("sensitive" . ,(when mastodon-toot--content-nsfw
                                    (symbol-name t)))
+                 ("visibility" . ,mastodon-toot--visibility)
                  ("spoiler_text" . ,spoiler))))
     (if empty-toot-p
         (message "Empty toot. Cowardly refusing to post this.")
@@ -209,8 +220,8 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
 (defun mastodon-toot--process-local (acct)
   "Adds domain to local ACCT and replaces the curent user name with \"\".
 
-Mastodon requires the full user@domain, even in the case of local accts. 
-eg. \"user\" -> \"user@local.social \" (when local.social is the domain of the 
+Mastodon requires the full user@domain, even in the case of local accts.
+eg. \"user\" -> \"user@local.social \" (when local.social is the domain of the
 mastodon-instance-url).
 eg. \"yourusername\" -> \"\"
 eg. \"feduser@fed.social\" -> \"feduser@fed.social\" "
