@@ -72,7 +72,7 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
    `(("client_id" . ,(plist-get (mastodon-client) :client_id))
      ("client_secret" . ,(plist-get (mastodon-client) :client_secret))
      ("grant_type" . "password")
-     ("username" . ,(read-string "Email: "))
+     ("username" . ,(read-string "Email: " user-mail-address))
      ("password" . ,(read-passwd "Password: "))
      ("scope" . "read write follow"))
    nil
