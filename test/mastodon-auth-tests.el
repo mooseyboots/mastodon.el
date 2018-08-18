@@ -6,7 +6,7 @@
    (let ((mastodon-auth-source-file "")
 	 (mastodon-instance-url "https://instance.url"))
      (mock (mastodon-client) => '(:client_id "id" :client_secret "secret"))
-     (mock (read-string "Email: ") => "foo@bar.com")
+     (mock (read-string "Email: " user-mail-address) => "foo@bar.com")
      (mock (read-passwd "Password: ") => "password")
      (mock (mastodon-http--post "https://instance.url/oauth/token"
                                 '(("client_id" . "id")
