@@ -152,7 +152,7 @@ Set `mastodon-toot--visiblity' to `mastodon-toot--default-visiblity' (default \"
   (kill-buffer-and-window)
   (setq mastodon-toot--reply-to-id     nil
         mastodon-toot--content-warning nil
-	mastodon-toot--visibility      mastodon-toot--default-visibility))
+        mastodon-toot--visibility      mastodon-toot--default-visibility))
 
 (defun mastodon-toot--cancel ()
   "Kill new-toot buffer/window. Does not POST content to Mastodon."
@@ -171,9 +171,9 @@ Set `mastodon-toot--visiblity' to `mastodon-toot--default-visiblity' (default \"
   "Sets the visiblity of the next toot"
   (interactive
    (list (completing-read "Visiblity: " '("public"
-					  "unlisted"
-					  "private"
-					  "direct"))))
+                                          "unlisted"
+                                          "private"
+                                          "direct"))))
   (setq mastodon-toot--visibility visibility)
   (message "Visibility set to %s" visibility))
 
@@ -188,7 +188,7 @@ Set `mastodon-toot--visiblity' to `mastodon-toot--default-visiblity' (default \"
                  ("in_reply_to_id" . ,mastodon-toot--reply-to-id)
                  ("sensitive" . ,(when mastodon-toot--content-warning
                                    (symbol-name t)))
-		 ("visibility" . ,mastodon-toot--visibility)
+                 ("visibility" . ,mastodon-toot--visibility)
                  ("spoiler_text" . ,spoiler))))
     (mastodon-toot--kill)
     (let ((response (mastodon-http--post endpoint args nil)))
