@@ -136,15 +136,21 @@ Authentication stores your access token in the =mastodon-auth--token=
 variable. It is not stored on your filesystem, so you will have to 
 re-authenticate when you close/reopen Emacs.
 
+**** Customization
+The default toot visibility can be changed by setting or customizing the =mastodon-toot--default-visibility= variable. Valid values are ="public"=, ="unlisted"=, ="private"=, or =direct=.
+
+Toot visibility can also be changed on a per-toot basis from the new toot buffer.
+
 **** Keybindings
 
-|-----------+---------------------|
-| Key       | Action              |
-|-----------+---------------------|
-| =C-c C-c= | Send toot           |
-| =C-c C-k= | Cancel toot         |
-| =C-c C-w= | Add content warning |
-|-----------+---------------------|
+|-----------+------------------------|
+| Key       | Action                 |
+|-----------+------------------------|
+| =C-c C-c= | Send toot              |
+| =C-c C-k= | Cancel toot            |
+| =C-c C-w= | Add content warning    |
+| =C-c C-v= | Change toot visibility |
+|-----------+------------------------|
 
 ** Roadmap
 

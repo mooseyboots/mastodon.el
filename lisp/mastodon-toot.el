@@ -32,9 +32,16 @@
 (defvar mastodon-instance-url)
 (defvar mastodon-toot--content-warning nil)
 (defvar mastodon-toot--visibility)
-(defvar mastodon-toot--default-visibility "public"
+(defcustom mastodon-toot--default-visibility "public"
   "Default visiblity for toots.
-Valid values: \"public\", \"unlisted\", \"private\", \"direct\".")
+Valid values: \"public\", \"unlisted\", \"private\", \"direct\"."
+  :tag "Default Toot Visibility"
+  :group 'mastodon
+  :type '(radio (const :tag "Public" "public")
+                (const :tag "Unlisted" "unlisted")
+                (const :tag "Private" "private")
+                (const :tag "Direct" "direct")))
+
 (setq mastodon-toot--visibility mastodon-toot--default-visibility)
 
 (autoload 'mastodon-auth--user-acct "mastodon-auth")
