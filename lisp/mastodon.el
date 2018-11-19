@@ -75,35 +75,37 @@ Use. e.g. \"%c\" for your locale's date and time format."
 
 (defvar mastodon-mode-map
   (let ((map (make-sparse-keymap)))
-    ;; Navigation
-    (define-key map (kbd "j") #'mastodon-tl--goto-next-toot)
-    (define-key map (kbd "k") #'mastodon-tl--goto-prev-toot)
-    (define-key map (kbd "h") #'mastodon-tl--next-tab-item)
-    (define-key map (kbd "l") #'mastodon-tl--previous-tab-item)
+    ;; navigation inside a timeline
+    (define-key map (kbd "n") #'mastodon-tl--goto-next-toot)
+    (define-key map (kbd "p") #'mastodon-tl--goto-prev-toot)
+    (define-key map (kbd "M-n") #'mastodon-tl--next-tab-item)
+    (define-key map (kbd "M-p") #'mastodon-tl--previous-tab-item)
     (define-key map [?\t] #'mastodon-tl--next-tab-item)
     (define-key map [backtab] #'mastodon-tl--previous-tab-item)
     (define-key map [?\S-\t] #'mastodon-tl--previous-tab-item)
     (define-key map [?\M-\t] #'mastodon-tl--previous-tab-item)
-    ;; Navigating to other buffers:
-    (define-key map (kbd "N") #'mastodon-notifications--get)
+    ;; navigation between timelines
+    (define-key map (kbd "#") #'mastodon-tl--get-tag-timeline)
     (define-key map (kbd "A") #'mastodon-profile--get-toot-author)
-    (define-key map (kbd "U") #'mastodon-profile--show-user)
     (define-key map (kbd "F") #'mastodon-tl--get-federated-timeline)
     (define-key map (kbd "H") #'mastodon-tl--get-home-timeline)
     (define-key map (kbd "L") #'mastodon-tl--get-local-timeline)
-    (define-key map (kbd "t") #'mastodon-tl--thread)
-    (define-key map (kbd "T") #'mastodon-tl--get-tag-timeline)
+    (define-key map (kbd "N") #'mastodon-notifications--get)
+    (define-key map (kbd "P") #'mastodon-profile--show-user)
+    (define-key map (kbd "T") #'mastodon-tl--thread)
+    ;; navigation out of mastodon
     (define-key map (kbd "q") #'kill-this-buffer)
     (define-key map (kbd "Q") #'kill-buffer-and-window)
-    ;; Actions
+    ;; timeline actions
+    (define-key map (kbd "b") #'mastodon-toot--toggle-boost)
     (define-key map (kbd "c") #'mastodon-tl--toggle-spoiler-text-in-toot)
-    (define-key map (kbd "g") #'undefined) ;; override special mode binding
-    (define-key map (kbd "n") #'mastodon-toot)
+    (define-key map (kbd "f") #'mastodon-toot--toggle-favourite)
     (define-key map (kbd "r") #'mastodon-toot--reply)
     (define-key map (kbd "u") #'mastodon-tl--update)
-    (define-key map (kbd "b") #'mastodon-toot--toggle-boost)
-    (define-key map (kbd "f") #'mastodon-toot--toggle-favourite)
-    ;; Finally, return the map:
+    ;; new toot
+    (define-key map (kbd "t") #'mastodon-toot)
+    ;; override special mode binding
+    (define-key map (kbd "g") #'undefined)
     map)
   "Keymap for `mastodon-mode'.")
 
