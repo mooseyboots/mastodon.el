@@ -42,4 +42,5 @@
 (ert-deftest cancel ()
   (with-mock
     (mock (kill-buffer-and-window))
-    (should (eq nil (mastodon-toot--cancel)))))
+    (mastodon-toot--cancel)
+    (mock-verify)))
