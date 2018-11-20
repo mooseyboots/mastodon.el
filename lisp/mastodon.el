@@ -135,6 +135,15 @@ Use. e.g. \"%c\" for your locale's date and time format."
   '((t :inherit success))
   "Face used for content warning.")
 
+(defface mastodon-title-face
+  '((t :inherit highlight :weight bold :height 2.0))
+  "Face for buffer titles/headings.")
+
+(defface mastodon-temp-message-face
+  '((t :inherit highlight :weight bold
+       :foreground "black" :backgroud "red"))
+  "Face for temporary, in-buffer messages.")
+
 ;;;###autoload
 (defun mastodon ()
   "Connect Mastodon client to `mastodon-instance-url' instance."

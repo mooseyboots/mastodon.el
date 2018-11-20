@@ -363,6 +363,7 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
 
 (defun mastodon-toot--update-status-fields (&rest args)
   "Update the status fields in the header based on the current state."
+  (ignore args)
   (let ((inhibit-read-only t)
         (header-region (mastodon-tl--find-property-range 'toot-post-header
                                                          (point-min)))

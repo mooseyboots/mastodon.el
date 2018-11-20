@@ -132,15 +132,20 @@
       (when mastodon-tl--display-media-p
         (mastodon-media--inline-images start-pos (point))))))
 
-(defun mastodon-notifications--timeline (json)
+(defun mastodon-notifications--timeline (json insert-at-end-p)
   "Format JSON in Emacs buffer."
-  (mapc #'mastodon-notifications--by-type json)
-  (goto-char (point-min)))
+  (let ((insert-point (if insert-at-end-p
+                          (point-max)
+                        (point-min))))
+    (goto-char insert-point)
+    (mapc #'mastodon-notifications--by-type json)
+    (goto-char insert-point)))
 
 (defun mastodon-notifications--get ()
   "Display NOTIFICATIONS in buffer."
   (interactive)
   (mastodon-tl--init
+   "Notifications"
    "*mastodon-notifications*"
    "notifications"
    'mastodon-notifications--timeline))

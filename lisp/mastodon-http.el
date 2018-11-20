@@ -81,10 +81,10 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
                       args
                       "&")))
         (url-request-extra-headers
-	 (append
-	  (unless unauthenticed-p
-	    `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token)))))
-	  headers)))
+         (append
+          (unless unauthenticed-p
+            `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token)))))
+          headers)))
     (with-temp-buffer
       (url-retrieve-synchronously url))))
 
@@ -111,6 +111,58 @@ Pass response buffer to CALLBACK function."
              (kill-buffer)
              (json-read-from-string json-string)))))
     json-vector))
+
+(defun mastodon-http--get-json-async (url callback &optional cbargs)
+  "Make an async get request to URL.  On completion CALLBACK will be called with
+at least three argumnts:
+1) a success boolean (true of the request succeeded),
+2) the list of headers, and
+3) the response body (parsed json if success, raw text if failed),
+any other arguments passed as CBARGS."
+  (let ((url-request-method "GET")
+        (url-request-extra-headers
+         `(("Authorization" . ,(concat "Bearer "
+                                       (mastodon-auth--access-token)))))
+        ;; Keep url.el from spamming us with messages about connecting to hosts:
+	(url-show-status nil))
+    ;; Show anything already done before we go off making an HTTP request.
+    (redisplay) 
+    (url-retrieve url
+                  #'mastodon-http--process-async-response
+                  (list callback cbargs)
+                  t)))
+
+(defun mastodon-http--process-async-response (status callback cbargs)
+  "Process the response of an async get request to URL.
+
+STATUS is the retrieval status as described in `url-retrieve'.
+URL, CALLBACK and CBARGS are the arguments originally passed in the
+`mastodon-http--get-json-async' call."
+  (goto-char (point-min))
+  (let* ((is-error (eq :error (car status)))
+         (body-start
+          (progn
+            (goto-char (point-min))
+            (re-search-forward "^$" nil 'move)
+            (point)))
+         (header-text
+          (decode-coding-string
+           (buffer-substring-no-properties (point-min) (1- body-start))
+           'utf-8))
+         (body-text
+          (decode-coding-string
+           (buffer-substring-no-properties body-start (point-max))
+           'utf-8)))
+
+    (kill-buffer)
+
+    (apply callback
+           (not is-error)
+           (cdr (split-string header-text "\n"))
+           (if is-error
+               body-text
+             (json-read-from-string body-text))
+           cbargs)))
 
 (provide 'mastodon-http)
 ;;; mastodon-http.el ends here

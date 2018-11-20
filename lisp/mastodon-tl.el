@@ -35,6 +35,7 @@
 
 (autoload 'mastodon-http--api "mastodon-http")
 (autoload 'mastodon-http--get-json "mastodon-http")
+(autoload 'mastodon-http--get-json-async "mastodon-http")
 (autoload 'mastodon-media--get-avatar-rendering "mastodon-media")
 (autoload 'mastodon-media--get-media-link-rendering "mastodon-media")
 (autoload 'mastodon-media--inline-images "mastodon-media")
@@ -175,18 +176,21 @@ This also skips tab items in invisible text, i.e. hidden spoiler text."
   "Opens federated timeline."
   (interactive)
   (mastodon-tl--init
+   "Federated timeline"
    "federated" "timelines/public" 'mastodon-tl--timeline))
 
 (defun mastodon-tl--get-home-timeline ()
   "Opens home timeline."
   (interactive)
   (mastodon-tl--init
+   "Home timeline"
    "home" "timelines/home" 'mastodon-tl--timeline))
 
 (defun mastodon-tl--get-local-timeline ()
   "Opens local timeline."
   (interactive)
   (mastodon-tl--init
+   "Local timeline"
    "local" "timelines/public?local=true" 'mastodon-tl--timeline))
 
 (defun mastodon-tl--get-tag-timeline ()
@@ -200,6 +204,7 @@ This also skips tab items in invisible text, i.e. hidden spoiler text."
 (defun mastodon-tl--show-tag-timeline (tag)
   "Opens a new buffer showing the timeline of posts with hastag TAG."
   (mastodon-tl--init
+   (concat "Toots for tag #" tag)
    (concat "tag-" tag) (concat "timelines/tag/" tag) 'mastodon-tl--timeline))
 
 (defun mastodon-tl--goto-toot-pos (find-pos refresh &optional pos)
@@ -661,10 +666,21 @@ it is `mastodon-tl--byline-boosted'"
    'mastodon-tl--byline-author
    'mastodon-tl--byline-boosted))
 
-(defun mastodon-tl--timeline (toots)
-  "Display each toot in TOOTS."
-  (mapc 'mastodon-tl--toot toots)
-  (goto-char (point-min)))
+(defun mastodon-tl--timeline (toots insert-at-end-p)
+  "Display each toot in TOOTS.
+
+If INSERT-AT-END-P then they are added at the end otherwise at the beginning."
+  (let ((insert-point (if insert-at-end-p
+                          (point-max)
+                        (or mastodon-tl--update-point (point-min)))))
+    (mapc (lambda (toot)
+            (goto-char insert-point)
+            (mastodon-tl--toot toot)
+            ;; Display the work done so far:
+            (redisplay)
+            (sit-for 0))
+          (reverse toots))
+        (goto-char insert-point)))
 
 (defun mastodon-tl--get-update-function (&optional buffer)
   "Get the UPDATE-FUNCTION stored in `mastodon-tl--buffer-spec'"
@@ -685,30 +701,6 @@ it is `mastodon-tl--byline-boosted'"
         (plist-get mastodon-tl--buffer-spec property)
       (error "mastodon-tl--buffer-spec is not defined for buffer %s"
              (or buffer (current-buffer))))))
-
-(defun mastodon-tl--more-json (endpoint id)
-  "Return JSON for timeline ENDPOINT before ID."
-  (let* ((url (mastodon-http--api (concat
-                                   endpoint
-                                   (if (string-match-p "?" endpoint)
-                                       "&"
-                                     "?")
-                                   "max_id="
-                                   (mastodon-tl--as-string id)))))
-    (mastodon-http--get-json url)))
-
-;; TODO
-;; Look into the JSON returned here by Local
-(defun mastodon-tl--updated-json (endpoint id)
-  "Return JSON for timeline ENDPOINT since ID."
-  (let ((url (mastodon-http--api (concat
-                                  endpoint
-                                  (if (string-match-p "?" endpoint)
-                                      "&"
-                                    "?")
-                                  "since_id="
-                                  (mastodon-tl--as-string id)))))
-    (mastodon-http--get-json url)))
 
 (defun mastodon-tl--property (prop &optional backward)
   "Get property PROP for toot at point.
@@ -759,42 +751,80 @@ webapp"
   (let* ((id (mastodon-tl--as-string (mastodon-tl--toot-id
                                       (mastodon-tl--property 'toot-json))))
          (url (mastodon-http--api (format "statuses/%s/context" id)))
-         (buffer (format "*mastodon-thread-%s*" id))
-         (toot (mastodon-tl--property 'toot-json))
-         (context (mastodon-http--get-json url)))
-    (when (member (cdr (assoc 'type toot)) '("reblog" "favourite"))
-      (setq toot (cdr (assoc 'status toot))))
-    (if (> (+ (length (cdr (assoc 'ancestors context)))
-              (length (cdr (assoc 'descendants context))))
-           0)
-        (with-output-to-temp-buffer buffer
-          (switch-to-buffer buffer)
-          (mastodon-mode)
-          (setq mastodon-tl--buffer-spec
-                `(buffer-name ,buffer
-                              endpoint ,(format "statuses/%s/context" id)
-                              update-function
-                              (lambda(toot) (message "END of thread."))))
-          (let ((inhibit-read-only t))
-            (mastodon-tl--timeline (vconcat
-                                    (cdr (assoc 'ancestors context))
-                                    `(,toot)
-                                    (cdr (assoc 'descendants context))))))
-      (message "No Thread!"))))
+         (toot (mastodon-tl--property 'toot-json)))
+    (mastodon-http--get-json-async
+     url #'mastodon-tl--thread-after-load (list id toot))))
+
+(defun mastodon-tl--thread-after-load (success headers context id toot)
+  "Second part of `mastodon-tl--thread' functionality, executed after the
+toot's context has been loaded asyc."
+  (ignore headers)
+  (cond ((not success) (message "Error loading toot context"))
+        (t (when (member (cdr (assoc 'type toot)) '("reblog" "favourite"))
+             (setq toot (cdr (assoc 'status toot))))
+           (if (> (+ (length (cdr (assoc 'ancestors context)))
+                     (length (cdr (assoc 'descendants context))))
+                  0)
+               (let* ((buffer (format "*mastodon-thread-%s*" id))
+                      (toot-account (cdr (assoc 'account toot)))
+                      (toot-url (cdr (assoc 'uri toot)))
+                      (title (format "Thread for toot #%s by %s"
+                                     id
+                                     (cdr (assoc 'display_name toot-account))))
+                      (inhibit-read-only t))
+                 (with-output-to-temp-buffer buffer
+                  (switch-to-buffer buffer)
+                  (mastodon-mode)
+                  (insert (propertize title 'face 'mastodon-title-face)
+                          "\n"
+                          (propertize toot-url
+                                      'mastodon-tab-stop 'mastodon-tab-stop-type
+                                      'shr-url toot-url
+                                      'keymap mastodon-tl--shr-map-replacement
+                                      'help-echo "Open browser for original toot")
+                          "\n\n")
+                  (setq mastodon-tl--update-point (point)
+                        mastodon-tl--buffer-spec
+                        `(buffer-name ,buffer
+                                      endpoint ,(format "statuses/%s/context" id)
+                                      update-function
+                                      (lambda(toot) (message "END of thread."))))
+                  (mastodon-tl--timeline (vconcat
+                                          (cdr (assoc 'ancestors context))
+                                          `(,toot)
+                                          (cdr (assoc 'descendants context)))
+                                         nil)))
+             (message "No Thread!")))))
 
 (defun mastodon-tl--more ()
   "Append older toots to timeline."
   (interactive)
-  (let* ((point-before (point))
-         (endpoint (mastodon-tl--get-endpoint))
+  (let* ((endpoint (mastodon-tl--get-endpoint))
          (update-function (mastodon-tl--get-update-function))
          (id (mastodon-tl--oldest-id))
-         (json (mastodon-tl--more-json endpoint id)))
-    (when json
-      (let ((inhibit-read-only t))
-        (goto-char (point-max))
-        (funcall update-function json)
-        (goto-char point-before)))))
+         (url (mastodon-http--api (concat
+                                   endpoint
+                                   (if (string-match-p "?" endpoint)
+                                       "&"
+                                     "?")
+                                   "max_id="
+                                   (mastodon-tl--as-string id)))))
+    (mastodon-http--get-json-async
+     url
+     #'mastodon-tl--more-after-load
+     (list (current-buffer) update-function))))
+
+(defun mastodon-tl--more-after-load (success headers body buffer update-function)
+  (ignore headers)
+  (cond ((not success) (message "Error loading more data"))
+        ((not (buffer-live-p buffer))
+         (message "Ignoring data for deleted buffer."))
+        (t
+         (with-current-buffer buffer
+           (save-excursion
+             (let ((inhibit-read-only t))
+               (goto-char (point-max))
+               (funcall update-function body t)))))))
 
 (defun mastodon-tl--find-property-range (property start-point &optional search-backwards)
   " Returns `nil` if no such range is found.
@@ -944,41 +974,88 @@ from the start if it is nil."
   (let* ((endpoint (mastodon-tl--get-endpoint))
          (update-function (mastodon-tl--get-update-function))
          (id (mastodon-tl--newest-id))
-         (json (mastodon-tl--updated-json endpoint id)))
-    (when json
-      (let ((inhibit-read-only t))
-        (goto-char (or mastodon-tl--update-point (point-min)))
-        (funcall update-function json)))))
+         (url (mastodon-http--api (concat
+                                   endpoint
+                                   (if (string-match-p "?" endpoint)
+                                       "&"
+                                     "?")
+                                   "since_id="
+                                   (mastodon-tl--as-string id)))))
+    (mastodon-http--get-json-async
+     url
+     (lambda (success headers json buffer)
+       (ignore headers)
+       (cond ((not success) (message "Error loading data"))
+             ((not (buffer-live-p buffer)) (message "Dead buffer"))
+             (t
+              (with-current-buffer buffer
+                (save-excursion
+                  (let ((inhibit-read-only t))
+                    (goto-char (or mastodon-tl--update-point (point-min)))
+                    (funcall update-function json nil)))))))
+     (list (current-buffer)))))
 
-(defun mastodon-tl--init (buffer-name endpoint update-function)
+(defun mastodon-tl--init (buffer-title buffer-name endpoint update-function)
   "Initialize BUFFER-NAME with timeline targeted by ENDPOINT.
 
-UPDATE-FUNCTION is used to recieve more toots."
+UPDATE-FUNCTION is used to retrieve more toots and insert them in the buffer."
   (let* ((url (mastodon-http--api endpoint))
-         (buffer (concat "*mastodon-" buffer-name "*"))
-         (json (mastodon-http--get-json url)))
+         (buffer (concat "*mastodon-" buffer-name "*")))
     (with-output-to-temp-buffer buffer
       (switch-to-buffer buffer)
+      (mastodon-mode)
       (setq
        ;; Initialize with a minimal interval; we re-scan at least once
        ;; every 5 minutes to catch any timestamps we may have missed
        mastodon-tl--timestamp-next-update (time-add (current-time)
                                                     (seconds-to-time 300)))
-      (funcall update-function json))
-    (mastodon-mode)
-    (with-current-buffer buffer
-      (setq mastodon-tl--buffer-spec
-            `(buffer-name ,buffer-name
-                          endpoint ,endpoint update-function
-                          ,update-function)
-            mastodon-tl--timestamp-update-timer
-            (when mastodon-tl--enable-relative-timestamps
-              (run-at-time mastodon-tl--timestamp-next-update
-                           nil ;; don't repeat
-                           #'mastodon-tl--update-timestamps-callback
-                           (current-buffer)
-                           nil))))
+      (let ((inhibit-read-only t))
+        (insert (propertize
+                 buffer-title
+                 'face 'mastodon-title-face)
+                "\n\n")
+        (setq mastodon-tl--update-point (point))
+
+        (insert (propertize
+                 "Loading data..."
+                 'face 'mastodon-temp-message-face))
+        (mastodon-http--get-json-async url
+                                       #'mastodon-tl--init-after-load
+                                       (list (current-buffer)
+                                             buffer-name
+                                             endpoint
+                                             update-function))))
     buffer))
+
+(defun mastodon-tl--init-after-load
+    (success headers body buffer buffer-name endpoint update-function)
+  "Perform the second stage of buffer setup after the data has been loaded
+async."
+  (ignore headers)
+  (message "Async initial load... data loaded")
+  (if (not (buffer-live-p buffer))
+      (message "Ignoring data for deleted buffer %S." buffer)
+    (with-current-buffer buffer
+      (save-excursion
+        (let ((inhibit-read-only t))
+          ;; Remove the "loading data..." notification.
+          (delete-region mastodon-tl--update-point (point-max))
+          (goto-char mastodon-tl--update-point)
+
+          (if (not success)
+              (message "Error loading")
+            (funcall update-function body nil)
+            (setq mastodon-tl--buffer-spec
+                  `(buffer-name ,buffer-name
+                                endpoint ,endpoint update-function
+                                ,update-function)
+                  mastodon-tl--timestamp-update-timer
+                  (when mastodon-tl--enable-relative-timestamps
+                    (run-at-time mastodon-tl--timestamp-next-update
+                                 nil ;; don't repeat
+                                 #'mastodon-tl--update-timestamps-callback
+                                 (current-buffer)
+                                 nil)))))))))
 
 (provide 'mastodon-tl)
 ;;; mastodon-tl.el ends here

@@ -36,6 +36,7 @@
 
 (autoload 'mastodon-http--api "mastodon-http.el")
 (autoload 'mastodon-http--get-json "mastodon-http.el")
+(autoload 'mastodon-http--get-json-async "mastodon-http.el")
 (autoload 'mastodon-media--get-media-link-rendering "mastodon-media.el")
 (autoload 'mastodon-media--inline-images "mastodon-media.el")
 (autoload 'mastodon-mode "mastodon.el")
@@ -103,11 +104,9 @@ following the current profile."
 (defun mastodon-profile--make-profile-buffer-for (account endpoint-type update-function)
   (let* ((id (mastodon-profile--account-field account 'id))
          (acct (mastodon-profile--account-field account 'acct))
-         (url (mastodon-http--api (format "accounts/%s/%s"
-                                          id endpoint-type)))
          (buffer (concat "*mastodon-" acct "-" endpoint-type  "*"))
-         (note (mastodon-profile--account-field account 'note))
-         (json (mastodon-http--get-json url)))
+         (url (mastodon-http--api (format "accounts/%s/%s"
+                                          id endpoint-type))))
     (with-output-to-temp-buffer buffer
       (switch-to-buffer buffer)
       (mastodon-mode)
@@ -117,35 +116,56 @@ following the current profile."
             `(buffer-name ,buffer
                           endpoint ,(format "accounts/%s/%s" id endpoint-type)
                           update-function ,update-function))
+      (let ((inhibit-read-only t))
+        (insert (propertize "Loading account details..."
+                            'face 'mastodon-temp-message-face)
+                "\n"))
+      (mastodon-http--get-json-async
+       url
+       #'mastodon-profile--make-profile-buffer-after-load
+       (list (current-buffer) account endpoint-type update-function)))))
+
+(defun mastodon-profile--make-profile-buffer-after-load
+    (success _headers json buffer account endpoint-type update-function)
+  (when (buffer-live-p buffer)
+    (with-current-buffer buffer
       (let* ((inhibit-read-only t)
+             (acct (mastodon-profile--account-field account 'acct))
+             (note (mastodon-profile--account-field account 'note))
              (is-statuses (string= endpoint-type "statuses"))
              (is-followers (string= endpoint-type "followers"))
              (is-following (string= endpoint-type "following"))
              (endpoint-name (cond
-                              (is-statuses "     TOOTS   ")
-                              (is-followers "  FOLLOWERS  ")
-                              (is-following "  FOLLOWING  "))))
-        (insert
-         "\n"
-         (mastodon-profile--image-from-account account)
-         "\n"
-         (propertize (mastodon-profile--account-field
-                      account 'display_name)
-                     'face 'mastodon-display-name-face)
-         "\n"
-         (propertize acct
-                     'face 'default)
-         "\n ------------\n"
-         (mastodon-tl--render-text note nil)
-         (mastodon-tl--set-face
-          (concat " ------------\n"
-                  endpoint-name "\n"
-                  " ------------\n")
-          'success))
-        (setq mastodon-tl--update-point (point))
-        (mastodon-media--inline-images (point-min) (point))
-        (funcall update-function json)))
-    (mastodon-tl--goto-next-toot)))
+                             (is-statuses "     TOOTS   ")
+                             (is-followers "  FOLLOWERS  ")
+                             (is-following "  FOLLOWING  "))))
+        ;; Clear the temporary "loading..." message.
+        (erase-buffer)
+        
+        (if (not success)
+            (insert (propertize "Failed loading profile data"
+                                'face 'mastodon-temp-message-face))
+          (insert
+           (propertize (format "Profile of %s"
+                               (mastodon-profile--account-field
+                                account 'display_name))
+                       'face 'mastodon-title-face)
+           "\n"
+           (mastodon-profile--image-from-account account)
+           "\n"
+           (propertize acct
+                       'face 'default)
+           "\n ------------\n"
+           (mastodon-tl--render-text note nil)
+           (mastodon-tl--set-face
+            (concat " ------------\n"
+                    endpoint-name "\n"
+                    " ------------\n")
+            'success))
+         (setq mastodon-tl--update-point (point))
+         (mastodon-media--inline-images (point-min) (point))
+         (funcall update-function json nil)
+         (goto-char mastodon-tl--update-point))))))
 
 (defun mastodon-profile--get-toot-author ()
   "Opens authors profile of toot under point."

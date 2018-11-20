@@ -181,13 +181,6 @@
              (statuses_count . 101)
              (note . "E"))))
 
-(ert-deftest notification-get ()
-  "Ensure get request format for notifictions is accurate."
-  (let ((mastodon-instance-url "https://instance.url"))
-    (with-mock
-      (mock (mastodon-http--get-json "https://instance.url/api/v1/notifications"))
-      (mastodon-notifications--get))))
-
 (defun mastodon-notifications--test-type (fun sample)
   "Test notification draw functions.
 
