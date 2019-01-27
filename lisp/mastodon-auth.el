@@ -4,7 +4,7 @@
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
 ;; Version: 0.8.0
 ;; Homepage: https://github.com/jdenen/mastodon.el
-;; Package-Requires: ((emacs "24.4"))
+;; Package-Requires: ((emacs "24.4") (oauth2))
 
 ;; This file is not part of GNU Emacs.
 
@@ -31,6 +31,7 @@
 
 (require 'plstore)
 (require 'auth-source)
+(require 'oauth2)
 
 (autoload 'mastodon-client "mastodon-client")
 (autoload 'mastodon-http--api "mastodon-http")
@@ -63,7 +64,9 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
   (if (or (null mastodon-auth-source-file)
 	  (string= "" mastodon-auth-source-file))
       (mastodon-auth--generate-token-no-storing-credentials)
-    (mastodon-auth--generate-token-and-store)))
+    (if (string= "OAuth2" mastodon-auth-mechanism)
+        (mastodon-oauth2--generate-token-and-store)
+      (mastodon-auth--generate-token-and-store))))
 
 (defun mastodon-auth--generate-token-no-storing-credentials ()
   "Make POST to generate auth token."
@@ -108,6 +111,24 @@ Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
       (when (functionp (plist-get credentials-plist :save-function))
         (funcall (plist-get credentials-plist :save-function))))))
 
+;; OAuth2
+(defun mastodon-oauth2--generate-token-and-store ()
+  "Generate OAuth2 token.
+
+Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
+  (let* ((auth-sources (list mastodon-auth-source-file))
+         (credentials-plist (nth 0 (auth-source-search
+                                    :create t
+                                    :host mastodon-instance-url
+                                    :port 443
+                                    :require '(:user :secret)))))
+    (message "We are generating oauth2 token")
+    (oauth2-auth-and-store oauth-test-auth-url
+                           oauth-test-token-url
+                           oauth-test-resource-url
+                           oauth-test-client-id
+                           oauth-test-client-secret)))
+
 (defun mastodon-auth--get-token ()
   "Make auth token request and return JSON response."
   (with-current-buffer (mastodon-auth--generate-token)
@@ -130,6 +151,9 @@ Generate token and set if none known yet."
         (setq token (plist-get json :access_token))
         (push (cons mastodon-instance-url token) mastodon-auth--token-alist)))
     token))
+
+(defun mastodon-oauth2--access-token ()
+  "Return the OAuth2 access token.")
 
 (defun mastodon-auth--get-account-name ()
   "Request user credentials and return an account name."

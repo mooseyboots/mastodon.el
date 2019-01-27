@@ -8,4 +8,5 @@
  (depends-on "ert-runner")
  (depends-on "el-mock")
  (depends-on "ecukes")
- (depends-on "package-lint"))
+ (depends-on "package-lint")
+ (depends-on "oauth2"))
