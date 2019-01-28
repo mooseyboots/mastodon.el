@@ -64,7 +64,7 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
   (if (or (null mastodon-auth-source-file)
 	  (string= "" mastodon-auth-source-file))
       (mastodon-auth--generate-token-no-storing-credentials)
-    (if (string= "OAuth2" mastodon-auth-mechanism)
+    (if (string= "oauth2" mastodon-auth-mechanism)
         (mastodon-oauth2--generate-token-and-store)
       (mastodon-auth--generate-token-and-store))))
 

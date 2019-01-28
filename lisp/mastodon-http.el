@@ -96,7 +96,7 @@ Pass response buffer to CALLBACK function."
         (url-request-extra-headers
          `(("Authorization" . ,(concat "Bearer "
                                        (mastodon-auth--access-token))))))
-    (if (string= "OAuth2" mastodon-auth-mechanism)
+    (if (string= "oauth2" mastodon-auth-mechanism)
         (oauth2-url-retrieve (mastodon-oauth2--access-token) url)
       (url-retrieve-synchronously url))))
 
