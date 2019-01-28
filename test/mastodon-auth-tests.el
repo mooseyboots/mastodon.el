@@ -59,7 +59,8 @@
 (ert-deftest access-token-2 ()
   "Should set and return `mastodon-auth--token' if nil."
   (let ((mastodon-instance-url "https://instance.url")
-        (mastodon-auth--token nil))
+        (mastodon-auth--token nil)
+        (mastodon-auth-mechanism "plain"))
     (with-mock
       (mock (mastodon-auth--get-token) => '(:access_token "foobaz"))
       (should (string= (mastodon-auth--access-token) "foobaz"))
