@@ -136,18 +136,15 @@ Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
 (defun mastodon-oauth2--generate-token-and-store ()
   "Generate OAuth2 token.
 
-Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
-  (let* ((auth-sources (list mastodon-auth-source-file))
-         (credentials-plist (nth 0 (auth-source-search
-                                    :create t
-                                    :host mastodon-instance-url
-                                    :port 443
-                                    :require '(:user :secret)))))
-    (oauth2-auth-and-store oauth2-auth-url
-                           oauth2-token-url
-                           oauth2-resource-url
-                           oauth2-client-id
-                           oauth2-client-secret)))
+Reads and/or stores secres in `OAUTH2-TOKEN-FILE'."
+  (if (member 'uninitialized
+              (list oauth2-client-id oauth2-client-secret))
+      (customize-group "mastodon"))
+  (oauth2-auth-and-store (concat mastodon-instance-url "/oauth/authorize")
+                         (concat mastodon-instance-url "/oauth/token")
+                         "read write follow"
+                         oauth2-client-id
+                         oauth2-client-secret))
 
 (defun mastodon-auth--get-token ()
   "Make auth token request and return JSON response."
