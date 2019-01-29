@@ -53,6 +53,26 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
   :group 'mastodon-auth
   :type 'string)
 
+(defcustom oauth2-client-id ""
+  "* Client ID of the application you created.
+
+You MUST set this value.
+You need to create your own application on your mastodon instance.
+Upon creating the application, you will be given the client id."
+  :group 'mastodon-auth
+  :type 'string)
+
+(defcustom oauth2-client-secret ""
+  "* Client secret of the application you created.
+
+You MUST set this value.
+You need to create your own application on your mastodon instance.
+Upon creating the application, you will be given the client secret.
+Keep in mind that this is a secret value that is not to be shared with anyone.
+Please do not commit it in your own repos."
+  :group 'mastodon-auth
+  :type 'string)
+
 (defvar mastodon-auth--token-alist nil
   "Alist of User access tokens keyed by instance url.")
 
