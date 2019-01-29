@@ -53,7 +53,7 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
   :group 'mastodon-auth
   :type 'string)
 
-(defcustom oauth2-client-id ""
+(defcustom mastodon-oauth2-client-id ""
   "* Client ID of the application you created.
 
 You MUST set this value.
@@ -62,7 +62,7 @@ Upon creating the application, you will be given the client id."
   :group 'mastodon-auth
   :type 'string)
 
-(defcustom oauth2-client-secret ""
+(defcustom mastodon-oauth2-client-secret ""
   "* Client secret of the application you created.
 
 You MUST set this value.
@@ -138,13 +138,13 @@ Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
 
 Reads and/or stores secres in `OAUTH2-TOKEN-FILE'."
   (if (member 'uninitialized
-              (list oauth2-client-id oauth2-client-secret))
+              (list mastodon-oauth2-client-id mastodon-oauth2-client-secret))
       (customize-group "mastodon"))
   (oauth2-auth-and-store (concat mastodon-instance-url "/oauth/authorize")
                          (concat mastodon-instance-url "/oauth/token")
                          "read write follow"
-                         oauth2-client-id
-                         oauth2-client-secret))
+                         mastodon-oauth2-client-id
+                         mastodon-oauth2-client-secret))
 
 (defun mastodon-auth--get-token ()
   "Make auth token request and return JSON response."
