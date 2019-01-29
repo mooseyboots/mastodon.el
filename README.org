@@ -53,10 +53,6 @@ there's no need to write your own hook anymore. =emojify-mode= is not required.
 installed. It is not required.
 
 ** Usage
-*** 2 Factor Auth
-2FA is not supported yet. It is in the [[https://github.com/jdenen/mastodon.el/milestone/2][plans]] for the =1.0.0= release.
-
-If you have 2FA enabled and try to use mastodon.el, your Emacs client will hang until you `C-g` your way out.
 *** Instance
 
 Set =mastodon-instance-url= in your =.emacs= or =customize=. Defaults to the [[https://mastodon.social][flagship]].
@@ -68,6 +64,24 @@ Set =mastodon-instance-url= in your =.emacs= or =customize=. Defaults to the [[h
 There is an option to have your user credentials (email address and password) saved to disk so you don't have to re-enter them on every restart.
 The default is not to do this because if not properly configured it would save these unencrypted which is not a good default to have.
 Customize the variable =mastodon-auth-source-file= if you want to enable this feature.
+
+*** 2 Factor Auth
+After setting up =mastodon-instance-url= set the following in your
+=.emacs= or =customize=:
+
+1. =mastodon-auth-mechanism=
+2. =mastodon-oauth2-client-id=
+3. =mastodon-oauth2-client-secret=
+
+#+BEGIN_SRC emacs-lisp
+  (setq mastodon-auth-mechanism "oauth2")
+  (setq mastodon-oauth2-client-id "")
+  (setq mastodon-oauth2-client-secret "")
+#+END_SRC
+
+The OAuth2 library uses =plstore= to securely store the credentials.
+However, =mastodon-oauth2-client-secret= needs to be stored in a safe
+place - encryption is recommended.
 
 *** Timelines
 
