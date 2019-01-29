@@ -123,7 +123,6 @@ Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
                                     :host mastodon-instance-url
                                     :port 443
                                     :require '(:user :secret)))))
-    (message "We are generating oauth2 token")
     (oauth2-auth-and-store oauth2-auth-url
                            oauth2-token-url
                            oauth2-resource-url
