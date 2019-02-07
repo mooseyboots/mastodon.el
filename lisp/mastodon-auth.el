@@ -85,9 +85,7 @@ Please do not commit it in your own repos."
                (string= "" mastodon-auth-source-file))
            (string= "plain" mastodon-auth-mechanism))
       (mastodon-auth--generate-token-no-storing-credentials)
-    (if (string= "oauth2" mastodon-auth-mechanism)
-        (mastodon-oauth2--generate-token-and-store)
-      (mastodon-auth--generate-token-and-store))))
+    (mastodon-oauth2--generate-token-and-store)))
 
 (defun mastodon-auth--generate-token-no-storing-credentials ()
   "Make POST to generate auth token."
