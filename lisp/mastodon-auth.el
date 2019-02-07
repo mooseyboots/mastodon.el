@@ -83,7 +83,7 @@ Please do not commit it in your own repos."
   "Make POST to generate auth token."
   (if (and (or (null mastodon-auth-source-file)
                (string= "" mastodon-auth-source-file))
-           (string= "oauth2" mastodon-auth-mechanism))
+           (string= "plain" mastodon-auth-mechanism))
       (mastodon-auth--generate-token-no-storing-credentials)
     (if (string= "oauth2" mastodon-auth-mechanism)
         (mastodon-oauth2--generate-token-and-store)
