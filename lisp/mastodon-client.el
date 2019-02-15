@@ -30,6 +30,8 @@
 ;;; Code:
 
 (require 'plstore)
+(require 'json)
+
 (defvar mastodon-instance-url)
 (autoload 'mastodon-http--api "mastodon-http")
 (autoload 'mastodon-http--post "mastodon-http")
