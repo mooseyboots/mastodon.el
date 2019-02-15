@@ -31,6 +31,7 @@
 
 (require 'plstore)
 (require 'auth-source)
+(require 'json)
 
 (autoload 'mastodon-client "mastodon-client")
 (autoload 'mastodon-http--api "mastodon-http")
