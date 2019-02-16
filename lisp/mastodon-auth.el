@@ -53,26 +53,6 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
   :group 'mastodon-auth
   :type 'string)
 
-(defcustom mastodon-oauth2-client-id ""
-  "* Client ID of the application you created.
-
-You MUST set this value.
-You need to create your own application on your mastodon instance.
-Upon creating the application, you will be given the client id."
-  :group 'mastodon-auth
-  :type 'string)
-
-(defcustom mastodon-oauth2-client-secret ""
-  "* Client secret of the application you created.
-
-You MUST set this value.
-You need to create your own application on your mastodon instance.
-Upon creating the application, you will be given the client secret.
-Keep in mind that this is a secret value that is not to be shared with anyone.
-Please do not commit it in your own repos."
-  :group 'mastodon-auth
-  :type 'string)
-
 (defvar mastodon-auth--token-alist nil
   "Alist of User access tokens keyed by instance url.")
 
@@ -135,14 +115,11 @@ Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
   "Generate OAuth2 token.
 
 Reads and/or stores secres in `OAUTH2-TOKEN-FILE'."
-  (if (member 'uninitialized
-              (list mastodon-oauth2-client-id mastodon-oauth2-client-secret))
-      (customize-group "mastodon"))
   (oauth2-auth-and-store (concat mastodon-instance-url "/oauth/authorize")
                          (concat mastodon-instance-url "/oauth/token")
                          "read write follow"
-                         mastodon-oauth2-client-id
-                         mastodon-oauth2-client-secret))
+                         (plist-get (mastodon-client) :client_id)
+                         (plist-get (mastodon-client) :client_secret)))
 
 (defun mastodon-auth--get-token ()
   "Make auth token request and return JSON response."

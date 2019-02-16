@@ -71,28 +71,10 @@ After setting up =mastodon-instance-url= set the following in your
 =.emacs= or =customize=:
 
 1. =mastodon-auth-mechanism=
-2. =mastodon-oauth2-client-id=
-3. =mastodon-oauth2-client-secret=
-
-**** Do the following to obtain OAuth2 credentials:
-
-1. Log in to your mastodon account
-2. Go to "Preferences" under settings
-3. Choose "Development"
-4. Click on "New Application"
-5. Give the app a name of your choice
-6. Leave "Application website" empty
-7. Insert `urn:ietf:wg:oauth:2.0:oob` in "Redirect URI"
-8. In "Scopes" make sure `read`, `write` and `follow` are selected.
-9. Click on "Save"
-
-Now you should have client key(id) and client secret
 
 **** Set up
 #+BEGIN_SRC emacs-lisp
   (setq mastodon-auth-mechanism "oauth2")
-  (setq mastodon-oauth2-client-id "")
-  (setq mastodon-oauth2-client-secret "")
 #+END_SRC
 
 The OAuth2 library uses =plstore= to securely store the credentials.
