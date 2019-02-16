@@ -1,12 +1,12 @@
 (require 'el-mock)
 
 (ert-deftest oauth2-is-called-while-generating-token ()
-  "Should call `mastodon-oauth2--generate-token-and-store' to generate auth token."
+  "Should call `mastodon-auth-oauth2--generate-token-and-store' to generate auth token."
   :expected-result :failed
   (with-mock
    (let ((mastodon-instance-url "https://instance.url")
          (mastodon-auth-mechanism "oauth2"))
-     (mock (mastodon-oauth2--generate-token-and-store) => '())
+     (mock (mastodon-auth-oauth2--generate-token-and-store) => '())
      (mock (read-string "Enter the code your browser displayed: ") => "12345")
      (should (equal (mastodon-auth--generate-token) '())))))
 

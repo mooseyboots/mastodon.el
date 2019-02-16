@@ -67,7 +67,7 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
          (mastodon-auth--generate-token-no-storing-credentials))
         ((string= "plain" mastodon-auth-mechanism)
          (mastodon-auth--generate-token-and-store))
-        (mastodon-oauth2--generate-token-and-store)))
+        (mastodon-auth-oauth2--generate-token-and-store)))
 
 (defun mastodon-auth--generate-token-no-storing-credentials ()
   "Make POST to generate auth token."
@@ -113,7 +113,7 @@ Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
         (funcall (plist-get credentials-plist :save-function))))))
 
 ;; OAuth2
-(defun mastodon-oauth2--generate-token-and-store ()
+(defun mastodon-auth-oauth2--generate-token-and-store ()
   "Generate OAuth2 token.
 
 Reads and/or stores secres in `OAUTH2-TOKEN-FILE'."
@@ -148,7 +148,7 @@ Generate token and set if none known yet."
 
 (defun mastodon-oauth2--access-token ()
   "Return the OAuth2 access token."
-  (mastodon-oauth2--generate-token-and-store))
+  (mastodon-auth-oauth2--generate-token-and-store))
 
 (defun mastodon-auth--get-account-name ()
   "Request user credentials and return an account name."
