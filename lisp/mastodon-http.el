@@ -32,7 +32,7 @@
 (require 'json)
 (defvar mastodon-instance-url)
 (autoload 'mastodon-auth--access-token "mastodon-auth")
-(autoload 'mastodon-oauth2--access-token "mastodon-auth")
+(autoload 'mastodon-auth-oauth2--access-token "mastodon-auth")
 
 (defvar mastodon-http--api-version "v1")
 
@@ -90,7 +90,7 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
 	  headers)))
     (with-temp-buffer
       (if (string= "oauth2" mastodon-auth-mechanism)
-          (oauth2-url-retrieve-synchronously (mastodon-oauth2--access-token)
+          (oauth2-url-retrieve-synchronously (mastodon-auth-oauth2--access-token)
                                              url
                                              url-request-method
                                              url-request-data)
@@ -107,7 +107,7 @@ Pass response buffer to CALLBACK function."
                                            '()
                                          (mastodon-auth--access-token)))))))
     (if (string= "oauth2" mastodon-auth-mechanism)
-        (oauth2-url-retrieve-synchronously (mastodon-oauth2--access-token)
+        (oauth2-url-retrieve-synchronously (mastodon-auth-oauth2--access-token)
                                            url
                                            url-request-method)
       (url-retrieve-synchronously url))))

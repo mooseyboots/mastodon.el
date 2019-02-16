@@ -15,8 +15,8 @@
   (with-mock
    (let ((mastodon-instance-url "https://instance.url")
          (mastodon-auth-mechanism "oauth2"))
-     (mock (mastodon-oauth2--access-token) => '())
-     (should (equal (mastodon-oauth2--access-token) '())))))
+     (mock (mastodon-auth-oauth2--access-token) => '())
+     (should (equal (mastodon-auth-oauth2--access-token) '())))))
 
 (ert-deftest oauth2-is-called-while-making-post-request ()
   "Should call `oauth2-url-retrieve-synchronously' to generate auth token.
@@ -25,7 +25,7 @@ Expected result is failed, because oauth2.el is not going to be able to get toke
   (with-mock
     (let ((mastodon-instance-url "https://instance.url")
           (mastodon-auth-mechanism "oauth2"))
-      (mock (mastodon-oauth2--access-token) => '())
+      (mock (mastodon-auth-oauth2--access-token) => '())
       (mock (oauth2-url-retrieve-synchronously) => '())
       (mastodon-http--post "https://instance.url/oauth/token"
                            '(("client_id" . "id")
@@ -44,6 +44,6 @@ Expected result is failed, because oauth2.el is not going to be able to get toke
   (with-mock
     (let ((mastodon-instance-url "https://instance.url")
           (mastodon-auth-mechanism "oauth2"))
-      (mock (mastodon-oauth2--access-token) => '())
+      (mock (mastodon-auth-oauth2--access-token) => '())
       (mock (oauth2-url-retrieve-synchronously) => '())
       (mastodon-http--get "https://instance.url/oauth/token"))))

@@ -146,7 +146,7 @@ Generate token and set if none known yet."
         (push (cons mastodon-instance-url token) mastodon-auth--token-alist)))
     token))
 
-(defun mastodon-oauth2--access-token ()
+(defun mastodon-auth-oauth2--access-token ()
   "Return the OAuth2 access token."
   (mastodon-auth-oauth2--generate-token-and-store))
 
