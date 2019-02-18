@@ -85,7 +85,7 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
 (defun mastodon-auth--generate-token-and-store ()
   "Make POST to generate auth token.
 
-Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
+Reads and/or stores secrets in `MASTODON-AUTH-SOURCE-FILE'."
   (let* ((auth-sources (list mastodon-auth-source-file))
 	 (auth-source-creation-prompts
           '((user . "Enter email for %h: ")
