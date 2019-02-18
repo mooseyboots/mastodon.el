@@ -78,8 +78,8 @@ After setting up =mastodon-instance-url= set the following in your
 #+END_SRC
 
 The OAuth2 library uses =plstore= to securely store the credentials.
-However, =mastodon-oauth2-client-secret= needs to be stored in a safe
-place - encryption is recommended.
+We recommend you input a strong password when you are asked by the
+package.
 
 *** Timelines
 
