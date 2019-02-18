@@ -79,7 +79,9 @@ After setting up =mastodon-instance-url= set the following in your
 
 The OAuth2 library uses =plstore= to securely store the credentials.
 We recommend you input a strong password when you are asked by the
-package.
+package. You can customise =oauth2-token-file= if you want to store
+the credentials elsewhere. By default, the library stores it in
+`user-emacs-directory/oauth2.plstore`
 
 *** Timelines
 
