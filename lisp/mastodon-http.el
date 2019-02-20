@@ -88,7 +88,8 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
 	    `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token)))))
 	  headers)))
     (with-temp-buffer
-      (if (eq 'oauth2 mastodon-auth-mechanism)
+      (if (and (eq 'oauth2 mastodon-auth-mechanism)
+               (not unauthenticed-p))
           (oauth2-url-retrieve-synchronously (mastodon-auth-oauth2--access-token)
                                              url
                                              url-request-method
