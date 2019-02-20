@@ -84,11 +84,11 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
         (url-request-extra-headers
 	 (append
 	  (unless (or unauthenticed-p
-                       (string= "oauth2" mastodon-auth-mechanism))
+                      (eq 'oauth2 mastodon-auth-mechanism))
 	    `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token)))))
 	  headers)))
     (with-temp-buffer
-      (if (string= "oauth2" mastodon-auth-mechanism)
+      (if (eq 'oauth2 mastodon-auth-mechanism)
           (oauth2-url-retrieve-synchronously (mastodon-auth-oauth2--access-token)
                                              url
                                              url-request-method
@@ -101,9 +101,9 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
 Pass response buffer to CALLBACK function."
   (let ((url-request-method "GET")
         (url-request-extra-headers
-         (unless (string= "oauth2" mastodon-auth-mechanism)
+         (unless (eq 'oauth2 mastodon-auth-mechanism)
            `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token)))))))
-    (if (string= "oauth2" mastodon-auth-mechanism)
+    (if (eq 'oauth2 mastodon-auth-mechanism)
         (oauth2-url-retrieve-synchronously (mastodon-auth-oauth2--access-token)
                                            url
                                            url-request-method)
