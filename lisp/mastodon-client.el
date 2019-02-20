@@ -33,6 +33,7 @@
 (defvar mastodon-instance-url)
 (autoload 'mastodon-http--api "mastodon-http")
 (autoload 'mastodon-http--post "mastodon-http")
+(autoload 'mastodon-auth-mechanism "mastodon-auth")
 
 
 (defcustom mastodon-client--token-file (concat user-emacs-directory "mastodon.plstore")
@@ -45,14 +46,15 @@
 
 (defun mastodon-client--register ()
   "POST client to Mastodon."
-  (mastodon-http--post
-   (mastodon-http--api "apps")
-   '(("client_name" . "mastodon.el")
-     ("redirect_uris" . "urn:ietf:wg:oauth:2.0:oob")
-     ("scopes" . "read write follow")
-     ("website" . "https://github.com/jdenen/mastodon.el"))
-   nil
-   :unauthenticated))
+  (let ((mastodon-auth-mechanism 'plain))
+    (mastodon-http--post
+     (mastodon-http--api "apps")
+     '(("client_name" . "mastodon.el")
+       ("redirect_uris" . "urn:ietf:wg:oauth:2.0:oob")
+       ("scopes" . "read write follow")
+       ("website" . "https://github.com/jdenen/mastodon.el"))
+     nil
+     :unauthenticated)))
 
 (defun mastodon-client--fetch ()
   "Return JSON from `mastodon-client--register' call."
