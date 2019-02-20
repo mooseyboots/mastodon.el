@@ -83,7 +83,7 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
                       "&")))
         (url-request-extra-headers
 	 (append
-	  (unless (and unauthenticed-p
+	  (unless (or unauthenticed-p
                        (string= "oauth2" mastodon-auth-mechanism))
 	    `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token)))))
 	  headers)))
