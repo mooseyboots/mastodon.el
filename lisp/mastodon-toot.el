@@ -514,7 +514,7 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
     (insert (format "%s " reply-to-user))
     (setq mastodon-toot--reply-to-id reply-to-id)))
 
-(defun mastodon-toot--update-status-fields () ;(&rest args)
+(defun mastodon-toot--update-status-fields (&rest args)
   "Update the status fields in the header based on the current state."
   (let ((inhibit-read-only t)
         (header-region (mastodon-tl--find-property-range 'toot-post-header
@@ -566,6 +566,7 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
       (mastodon-toot--display-docs-and-status-fields)
       (mastodon-toot--setup-as-reply reply-to-user reply-to-id))
     (mastodon-toot-mode t)
+    (make-local-variable 'after-change-functions)
     (push #'mastodon-toot--update-status-fields after-change-functions)
     (mastodon-toot--update-status-fields)))
 
