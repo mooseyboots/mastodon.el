@@ -63,9 +63,9 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
   "Make POST to generate auth token."
   (cond ((and (or (null mastodon-auth-source-file)
                   (string= "" mastodon-auth-source-file))
-              (string= "plain" mastodon-auth-mechanism))
+              (string= 'plain mastodon-auth-mechanism))
          (mastodon-auth--generate-token-no-storing-credentials))
-        ((string= "plain" mastodon-auth-mechanism)
+        ((string= 'plain mastodon-auth-mechanism)
          (mastodon-auth--generate-token-and-store))
         (mastodon-auth-oauth2--generate-token-and-store)))
 
