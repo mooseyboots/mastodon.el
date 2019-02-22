@@ -4,6 +4,8 @@
 (package-file "lisp/mastodon.el")
 (files "lisp/*.el")
 
+(depends-on "oauth2" "0.11")
+
 (development
  (depends-on "ert-runner")
  (depends-on "el-mock")
