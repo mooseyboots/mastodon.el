@@ -116,7 +116,7 @@ Reads and/or stores secrets in `MASTODON-AUTH-SOURCE-FILE'."
 (defun mastodon-auth-oauth2--generate-token-and-store ()
   "Generate OAuth2 token.
 
-Reads and/or stores secres in `OAUTH2-TOKEN-FILE'."
+Reads and/or stores secrets in `OAUTH2-TOKEN-FILE'."
   (oauth2-auth-and-store (concat mastodon-instance-url "/oauth/authorize")
                          (concat mastodon-instance-url "/oauth/token")
                          "read write follow"
