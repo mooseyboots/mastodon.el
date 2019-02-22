@@ -74,7 +74,7 @@ After setting up =mastodon-instance-url= set the following in your
 
 **** Set up
 #+BEGIN_SRC emacs-lisp
-  (setq mastodon-auth-mechanism "oauth2")
+  (setq mastodon-auth-mechanism 'oauth2)
 #+END_SRC
 
 The [[https://elpa.gnu.org/packages/oauth2.html][OAuth2]] library uses =plstore= to securely store the credentials.
