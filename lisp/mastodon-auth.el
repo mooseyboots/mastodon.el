@@ -87,7 +87,7 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
 
 Reads and/or stores secrets in `MASTODON-AUTH-SOURCE-FILE'."
   (let* ((auth-sources (list mastodon-auth-source-file))
-	 (auth-source-creation-prompts
+         (auth-source-creation-prompts
           '((user . "Enter email for %h: ")
             (secret . "Password: ")))
          (credentials-plist (nth 0 (auth-source-search
@@ -108,7 +108,7 @@ Reads and/or stores secrets in `MASTODON-AUTH-SOURCE-FILE'."
                               secret)))
            ("scope" . "read write follow"))
          nil
-	 :unauthenticated)
+         :unauthenticated)
       (when (functionp (plist-get credentials-plist :save-function))
         (funcall (plist-get credentials-plist :save-function))))))
 

@@ -76,12 +76,12 @@
 
 Make `mastodon-client--fetch' call to determine client values."
   (let ((plstore (plstore-open (mastodon-client--token-file)))
-	(client (mastodon-client--fetch))
-	;; alexgriffith reported seeing ellipses in the saved output
-	;; which indicate some output truncating. Nothing in `plstore-save'
-	;; seems to ensure this cannot happen so let's do that ourselves:
-	(print-length nil)
-	(print-level nil))
+        (client (mastodon-client--fetch))
+        ;; alexgriffith reported seeing ellipses in the saved output
+        ;; which indicate some output truncating. Nothing in `plstore-save'
+        ;; seems to ensure this cannot happen so let's do that ourselves:
+        (print-length nil)
+        (print-level nil))
     (plstore-put plstore (concat "mastodon-" mastodon-instance-url) client nil)
     (plstore-save plstore)
     (plstore-close plstore)

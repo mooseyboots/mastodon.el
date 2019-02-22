@@ -4,7 +4,7 @@
   "Should make `mastdon-http--post' request to generate auth token."
   (with-mock
    (let ((mastodon-auth-source-file "")
-	 (mastodon-instance-url "https://instance.url")
+         (mastodon-instance-url "https://instance.url")
          (mastodon-auth-mechanism "plain"))
      (mock (mastodon-client) => '(:client_id "id" :client_secret "secret"))
      (mock (read-string "Email: " user-mail-address) => "foo@bar.com")
@@ -24,7 +24,7 @@
   "Should make `mastdon-http--post' request to generate auth token."
   (with-mock
    (let ((mastodon-auth-source-file "~/.authinfo")
-	 (mastodon-instance-url "https://instance.url")
+         (mastodon-instance-url "https://instance.url")
          (mastodon-auth-mechanism "plain"))
      (mock (mastodon-client) => '(:client_id "id" :client_secret "secret"))
      (mock (auth-source-search :create t
@@ -40,7 +40,7 @@
                                   ("password" . "password")
                                   ("scope" . "read write follow"))
                                 nil
-				:unauthenticated))
+                                :unauthenticated))
      (mastodon-auth--generate-token))))
 
 (ert-deftest get-token ()
