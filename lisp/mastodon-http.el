@@ -31,6 +31,7 @@
 
 (require 'json)
 (defvar mastodon-instance-url)
+(defvar mastodon-auth-mechanism)
 (autoload 'mastodon-auth--access-token "mastodon-auth")
 (autoload 'mastodon-auth-oauth2--access-token "mastodon-auth")
 

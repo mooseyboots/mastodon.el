@@ -31,6 +31,7 @@
 
 (require 'plstore)
 (defvar mastodon-instance-url)
+(defvar mastodon-auth-mechanism)
 (autoload 'mastodon-http--api "mastodon-http")
 (autoload 'mastodon-http--post "mastodon-http")
 (autoload 'mastodon-auth-mechanism "mastodon-auth")

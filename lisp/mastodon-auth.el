@@ -38,6 +38,7 @@
 (autoload 'mastodon-http--get-json "mastodon-http")
 (autoload 'mastodon-http--post "mastodon-http")
 (defvar mastodon-instance-url)
+(defvar mastodon-auth-mechanism)
 
 (defgroup mastodon-auth nil
   "Authenticate with Mastodon."
@@ -67,7 +68,7 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
          (mastodon-auth--generate-token-no-storing-credentials))
         ((string= 'plain mastodon-auth-mechanism)
          (mastodon-auth--generate-token-and-store))
-        (mastodon-auth-oauth2--generate-token-and-store)))
+        (t (mastodon-auth-oauth2--generate-token-and-store))))
 
 (defun mastodon-auth--generate-token-no-storing-credentials ()
   "Make POST to generate auth token."
