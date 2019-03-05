@@ -1,8 +1,8 @@
 ;;; mastodon.el --- Client for Mastodon  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2017 Johnson Denen
+;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.8.0
+;; Version: 0.9.0
 ;; Package-Requires: ((emacs "24.4"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
@@ -52,6 +52,7 @@
 (autoload 'mastodon-toot--reply "mastodon-toot")
 (autoload 'mastodon-toot--toggle-boost "mastodon-toot")
 (autoload 'mastodon-toot--toggle-favourite "mastodon-toot")
+(autoload 'mastodon-discover "mastodon-discover")
 
 (defgroup mastodon nil
   "Interface with Mastodon."
@@ -81,35 +82,37 @@ Use. e.g. \"%c\" for your locale's date and time format."
 
 (defvar mastodon-mode-map
   (let ((map (make-sparse-keymap)))
-    ;; Navigation
-    (define-key map (kbd "j") #'mastodon-tl--goto-next-toot)
-    (define-key map (kbd "k") #'mastodon-tl--goto-prev-toot)
-    (define-key map (kbd "h") #'mastodon-tl--next-tab-item)
-    (define-key map (kbd "l") #'mastodon-tl--previous-tab-item)
+    ;; navigation inside a timeline
+    (define-key map (kbd "n") #'mastodon-tl--goto-next-toot)
+    (define-key map (kbd "p") #'mastodon-tl--goto-prev-toot)
+    (define-key map (kbd "M-n") #'mastodon-tl--next-tab-item)
+    (define-key map (kbd "M-p") #'mastodon-tl--previous-tab-item)
     (define-key map [?\t] #'mastodon-tl--next-tab-item)
     (define-key map [backtab] #'mastodon-tl--previous-tab-item)
     (define-key map [?\S-\t] #'mastodon-tl--previous-tab-item)
     (define-key map [?\M-\t] #'mastodon-tl--previous-tab-item)
-    ;; Navigating to other buffers:
-    (define-key map (kbd "N") #'mastodon-notifications--get)
+    ;; navigation between timelines
+    (define-key map (kbd "#") #'mastodon-tl--get-tag-timeline)
     (define-key map (kbd "A") #'mastodon-profile--get-toot-author)
-    (define-key map (kbd "U") #'mastodon-profile--show-user)
     (define-key map (kbd "F") #'mastodon-tl--get-federated-timeline)
     (define-key map (kbd "H") #'mastodon-tl--get-home-timeline)
     (define-key map (kbd "L") #'mastodon-tl--get-local-timeline)
-    (define-key map (kbd "t") #'mastodon-tl--thread)
-    (define-key map (kbd "T") #'mastodon-tl--get-tag-timeline)
+    (define-key map (kbd "N") #'mastodon-notifications--get)
+    (define-key map (kbd "P") #'mastodon-profile--show-user)
+    (define-key map (kbd "T") #'mastodon-tl--thread)
+    ;; navigation out of mastodon
     (define-key map (kbd "q") #'kill-this-buffer)
     (define-key map (kbd "Q") #'kill-buffer-and-window)
-    ;; Actions
+    ;; timeline actions
+    (define-key map (kbd "b") #'mastodon-toot--toggle-boost)
     (define-key map (kbd "c") #'mastodon-tl--toggle-spoiler-text-in-toot)
-    (define-key map (kbd "g") #'undefined) ;; override special mode binding
-    (define-key map (kbd "n") #'mastodon-toot)
+    (define-key map (kbd "f") #'mastodon-toot--toggle-favourite)
     (define-key map (kbd "r") #'mastodon-toot--reply)
     (define-key map (kbd "u") #'mastodon-tl--update)
-    (define-key map (kbd "b") #'mastodon-toot--toggle-boost)
-    (define-key map (kbd "f") #'mastodon-toot--toggle-favourite)
-    ;; Finally, return the map:
+    ;; new toot
+    (define-key map (kbd "t") #'mastodon-toot)
+    ;; override special mode binding
+    (define-key map (kbd "g") #'undefined)
     map)
   "Keymap for `mastodon-mode'.")
 
@@ -163,37 +166,6 @@ If REPLY-TO-ID is non-nil, attach new toot to a conversation."
   "Major mode for Mastodon, the federated microblogging network."
   :group 'mastodon
   (read-only-mode 1))
-
-(with-eval-after-load 'mastodon
-  (when (require 'discover nil :noerror)
-    (discover-add-context-menu
-     :bind "?"
-     :mode 'mastodon-mode
-     :mode-hook 'mastodon-mode-hook
-     :context-menu '(mastodon
-                     (description "Mastodon feed viewer")
-                     (actions
-                      ("Toots"
-                       ("A" "Author" mastodon-profile--get-toot-author)
-                       ("b" "Boost" mastodon-toot--boost)
-                       ("c" "Toggle content" mastodon-tl--toggle-spoiler-text-in-toot)
-                       ("f" "Favourite" mastodon-toot--favourite)
-                       ("j" "Next" mastodon-tl--goto-next-toot)
-                       ("k" "Prev" mastodon-tl--goto-prev-toot)
-                       ("n" "Send" mastodon-toot)
-                       ("r" "Reply" mastodon-toot--reply)
-                       ("t" "Thread" mastodon-tl--thread)
-                       ("u" "Update" mastodon-tl--update)
-                       ("U" "Users" mastodon-profile--show-user))
-                      ("Timelines"
-                       ("F" "Federated" mastodon-tl--get-federated-timeline)
-                       ("H" "Home" mastodon-tl--get-home-timeline)
-                       ("L" "Local" mastodon-tl--get-local-timeline)
-                       ("N" "Notifications" mastodon-notifications--get)
-                       ("T" "Tag" mastodon-tl--get-tag-timeline))
-                      ("Quit"
-                       ("q" "Quit mastodon buffer. Leave window open." kill-this-buffer)
-                       ("Q" "Quit mastodon buffer and kill window." kill-buffer-and-window)))))))
 
 (provide 'mastodon)
 ;;; mastodon.el ends here

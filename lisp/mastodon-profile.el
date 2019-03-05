@@ -1,8 +1,8 @@
 ;;; mastodon-profile.el --- Functions for inspecting Mastodon profiles -*- lexical-binding: t -*-
 
-;; Copyright (C) 2017 Johnson Denen
+;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.7.2
+;; Version: 0.9.0
 ;; Package-Requires: ((emacs "24.4"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
