@@ -52,6 +52,7 @@
 (autoload 'mastodon-toot--reply "mastodon-toot")
 (autoload 'mastodon-toot--toggle-boost "mastodon-toot")
 (autoload 'mastodon-toot--toggle-favourite "mastodon-toot")
+(autoload 'mastodon-discover "mastodon-discover")
 
 (defgroup mastodon nil
   "Interface with Mastodon."
