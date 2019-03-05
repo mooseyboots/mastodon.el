@@ -23,7 +23,7 @@ Or, with =use-package=:
 
 #+BEGIN_SRC emacs-lisp
   (use-package mastodon
-    :load-path "/path/to/mastodon.el/lisp")
+    :ensure t)
 #+END_SRC
 
 *** MELPA
@@ -49,8 +49,24 @@ there's no need to write your own hook anymore. =emojify-mode= is not required.
 
 *** Discover
 
-=mastodon-mode= will provide a context menu for its keybindings if [[https://github.com/mickeynp/discover.el][Discover]] is
+=mastodon-mode= can provide a context menu for its keybindings if [[https://github.com/mickeynp/discover.el][Discover]] is
 installed. It is not required.
+
+if you have Discover, add the following to your Emacs init configuration:
+
+#+BEGIN_SRC emacs-lisp
+  (require 'mastodon-discover)
+  (with-eval-after-load 'mastodon (mastodon-discover))
+#+END_SRC
+
+Or, with =use-package=:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package mastodon
+    :ensure t
+    :config
+    (mastodon-discover))
+#+END_SRC
 
 ** Usage
 *** 2 Factor Auth
@@ -151,7 +167,6 @@ Toot visibility can also be changed on a per-toot basis from the new toot buffer
 | =C-c C-w= | Add content warning    |
 | =C-c C-v= | Change toot visibility |
 |-----------+------------------------|
->>>>>>> Make default visibility customizable; add documentation.
 
 ** Roadmap
 
