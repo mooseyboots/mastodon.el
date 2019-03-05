@@ -31,39 +31,39 @@
 ;; See the README file for how to use this.
 
 ;;; Code:
-(require 'discover)
 
-(defun mastodon-discover--init ()
-  "Plug Mastodon functionality into discover."
+(defun mastodon-discover ()
+  "Plug Mastodon functionality into `discover'."
   (interactive)
-  (discover-add-context-menu
-   :bind "?"
-   :mode 'mastodon-mode
-   :mode-hook 'mastodon-mode-hook
-   :context-menu '(mastodon
-                   (description "Mastodon feed viewer")
-                   (actions
-                    ("Toots"
-                     ("A" "Author" mastodon-profile--get-toot-author)
-                     ("b" "Boost" mastodon-toot--boost)
-                     ("c" "Toggle content" mastodon-tl--toggle-spoiler-text-in-toot)
-                     ("f" "Favourite" mastodon-toot--favourite)
-                     ("j" "Next" mastodon-tl--goto-next-toot)
-                     ("k" "Prev" mastodon-tl--goto-prev-toot)
-                     ("n" "Send" mastodon-toot)
-                     ("r" "Reply" mastodon-toot--reply)
-                     ("t" "Thread" mastodon-tl--thread)
-                     ("u" "Update" mastodon-tl--update)
-                     ("U" "Users" mastodon-profile--show-user))
-                    ("Timelines"
-                     ("F" "Federated" mastodon-tl--get-federated-timeline)
-                     ("H" "Home" mastodon-tl--get-home-timeline)
-                     ("L" "Local" mastodon-tl--get-local-timeline)
-                     ("N" "Notifications" mastodon-notifications--get)
-                     ("T" "Tag" mastodon-tl--get-tag-timeline))
-                    ("Quit"
-                     ("q" "Quit mastodon buffer. Leave window open." kill-this-buffer)
-                     ("Q" "Quit mastodon buffer and kill window." kill-buffer-and-window))))))
+  (when (require 'discover nil :noerror)
+    (discover-add-context-menu
+     :bind "?"
+     :mode 'mastodon-mode
+     :mode-hook 'mastodon-mode-hook
+     :context-menu '(mastodon
+                     (description "Mastodon feed viewer")
+                     (actions
+                      ("Toots"
+                       ("A" "Author" mastodon-profile--get-toot-author)
+                       ("b" "Boost" mastodon-toot--boost)
+                       ("c" "Toggle content" mastodon-tl--toggle-spoiler-text-in-toot)
+                       ("f" "Favourite" mastodon-toot--favourite)
+                       ("j" "Next" mastodon-tl--goto-next-toot)
+                       ("k" "Prev" mastodon-tl--goto-prev-toot)
+                       ("n" "Send" mastodon-toot)
+                       ("r" "Reply" mastodon-toot--reply)
+                       ("t" "Thread" mastodon-tl--thread)
+                       ("u" "Update" mastodon-tl--update)
+                       ("U" "Users" mastodon-profile--show-user))
+                      ("Timelines"
+                       ("F" "Federated" mastodon-tl--get-federated-timeline)
+                       ("H" "Home" mastodon-tl--get-home-timeline)
+                       ("L" "Local" mastodon-tl--get-local-timeline)
+                       ("N" "Notifications" mastodon-notifications--get)
+                       ("T" "Tag" mastodon-tl--get-tag-timeline))
+                      ("Quit"
+                       ("q" "Quit mastodon buffer. Leave window open." kill-this-buffer)
+                       ("Q" "Quit mastodon buffer and kill window." kill-buffer-and-window)))))))
 
 (provide 'mastodon-discover)
 ;;; mastodon-discover.el ends here
