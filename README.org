@@ -49,8 +49,16 @@ there's no need to write your own hook anymore. =emojify-mode= is not required.
 
 *** Discover
 
-=mastodon-mode= will provide a context menu for its keybindings if [[https://github.com/mickeynp/discover.el][Discover]] is
+=mastodon-mode= can provide a context menu for its keybindings if [[https://github.com/mickeynp/discover.el][Discover]] is
 installed. It is not required.
+
+if you have Discover, add the following to your Emacs init configuration:
+
+#+BEGIN_SRC emacs-lisp
+  (require 'mastodon-discover)
+  (with-eval-after-load 'mastodon (mastodon-discover--init))
+#+END_SRC
+
 
 ** Usage
 *** 2 Factor Auth
