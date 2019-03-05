@@ -1,8 +1,8 @@
 ;;; mastodon-tl.el --- HTTP request/response functions for mastodon.el  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2017 Johnson Denen
+;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.8.0
+;; Version: 0.9.0
 ;; Homepage: https://github.com/jdenen/mastodon.el
 ;; Package-Requires: ((emacs "24.4"))
 
