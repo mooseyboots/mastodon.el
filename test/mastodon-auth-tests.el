@@ -4,7 +4,8 @@
   "Should make `mastdon-http--post' request to generate auth token."
   (with-mock
    (let ((mastodon-auth-source-file "")
-	 (mastodon-instance-url "https://instance.url"))
+         (mastodon-instance-url "https://instance.url")
+         (mastodon-auth-mechanism "plain"))
      (mock (mastodon-client) => '(:client_id "id" :client_secret "secret"))
      (mock (read-string "Email: " user-mail-address) => "foo@bar.com")
      (mock (read-passwd "Password: ") => "password")
@@ -23,7 +24,8 @@
   "Should make `mastdon-http--post' request to generate auth token."
   (with-mock
    (let ((mastodon-auth-source-file "~/.authinfo")
-	 (mastodon-instance-url "https://instance.url"))
+         (mastodon-instance-url "https://instance.url")
+         (mastodon-auth-mechanism "plain"))
      (mock (mastodon-client) => '(:client_id "id" :client_secret "secret"))
      (mock (auth-source-search :create t
                                :host "https://instance.url"
@@ -38,7 +40,7 @@
                                   ("password" . "password")
                                   ("scope" . "read write follow"))
                                 nil
-				:unauthenticated))
+                                :unauthenticated))
      (mastodon-auth--generate-token))))
 
 (ert-deftest get-token ()
@@ -53,13 +55,16 @@
 (ert-deftest access-token-found ()
   "Should return value in `mastodon-auth--token-alist' if found."
   (let ((mastodon-instance-url "https://instance.url")
-        (mastodon-auth--token-alist '(("https://instance.url" . "foobar")) ))
+        (mastodon-auth--token-alist '(("https://instance.url" . "foobar")) )
+        (mastodon-auth-mechanism "plain"))
     (should (string= (mastodon-auth--access-token) "foobar"))))
 
 (ert-deftest access-token-2 ()
   "Should set and return `mastodon-auth--token' if nil."
   (let ((mastodon-instance-url "https://instance.url")
-        (mastodon-auth--token nil))
+        (mastodon-auth--token nil)
+        (mastodon-auth--token-alist nil)
+        (mastodon-auth-mechanism "plain"))
     (with-mock
       (mock (mastodon-auth--get-token) => '(:access_token "foobaz"))
       (should (string= (mastodon-auth--access-token) "foobaz"))

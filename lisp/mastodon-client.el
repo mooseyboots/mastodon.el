@@ -33,8 +33,10 @@
 (require 'json)
 
 (defvar mastodon-instance-url)
+(defvar mastodon-auth-mechanism)
 (autoload 'mastodon-http--api "mastodon-http")
 (autoload 'mastodon-http--post "mastodon-http")
+(autoload 'mastodon-auth-mechanism "mastodon-auth")
 
 
 (defcustom mastodon-client--token-file (concat user-emacs-directory "mastodon.plstore")
@@ -47,14 +49,15 @@
 
 (defun mastodon-client--register ()
   "POST client to Mastodon."
-  (mastodon-http--post
-   (mastodon-http--api "apps")
-   '(("client_name" . "mastodon.el")
-     ("redirect_uris" . "urn:ietf:wg:oauth:2.0:oob")
-     ("scopes" . "read write follow")
-     ("website" . "https://github.com/jdenen/mastodon.el"))
-   nil
-   :unauthenticated))
+  (let ((mastodon-auth-mechanism 'plain))
+    (mastodon-http--post
+     (mastodon-http--api "apps")
+     '(("client_name" . "mastodon.el")
+       ("redirect_uris" . "urn:ietf:wg:oauth:2.0:oob")
+       ("scopes" . "read write follow")
+       ("website" . "https://github.com/jdenen/mastodon.el"))
+     nil
+     :unauthenticated)))
 
 (defun mastodon-client--fetch ()
   "Return JSON from `mastodon-client--register' call."
@@ -76,12 +79,12 @@
 
 Make `mastodon-client--fetch' call to determine client values."
   (let ((plstore (plstore-open (mastodon-client--token-file)))
-	(client (mastodon-client--fetch))
-	;; alexgriffith reported seeing ellipses in the saved output
-	;; which indicate some output truncating. Nothing in `plstore-save'
-	;; seems to ensure this cannot happen so let's do that ourselves:
-	(print-length nil)
-	(print-level nil))
+        (client (mastodon-client--fetch))
+        ;; alexgriffith reported seeing ellipses in the saved output
+        ;; which indicate some output truncating. Nothing in `plstore-save'
+        ;; seems to ensure this cannot happen so let's do that ourselves:
+        (print-length nil)
+        (print-level nil))
     (plstore-put plstore (concat "mastodon-" mastodon-instance-url) client nil)
     (plstore-save plstore)
     (plstore-close plstore)

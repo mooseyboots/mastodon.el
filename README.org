@@ -69,10 +69,6 @@ Or, with =use-package=:
 #+END_SRC
 
 ** Usage
-*** 2 Factor Auth
-2FA is not supported yet. It is in the [[https://github.com/jdenen/mastodon.el/milestone/2][plans]] for the =1.0.0= release.
-
-If you have 2FA enabled and try to use mastodon.el, your Emacs client will hang until you `C-g` your way out.
 *** Instance
 
 Set =mastodon-instance-url= in your =.emacs= or =customize=. Defaults to the [[https://mastodon.social][flagship]].
@@ -84,6 +80,24 @@ Set =mastodon-instance-url= in your =.emacs= or =customize=. Defaults to the [[h
 There is an option to have your user credentials (email address and password) saved to disk so you don't have to re-enter them on every restart.
 The default is not to do this because if not properly configured it would save these unencrypted which is not a good default to have.
 Customize the variable =mastodon-auth-source-file= if you want to enable this feature.
+
+*** 2 Factor Auth
+**** Overview
+After setting up =mastodon-instance-url= set the following in your
+=.emacs= or =customize=:
+
+1. =mastodon-auth-mechanism=
+
+**** Set up
+#+BEGIN_SRC emacs-lisp
+  (setq mastodon-auth-mechanism 'oauth2)
+#+END_SRC
+
+The [[https://elpa.gnu.org/packages/oauth2.html][OAuth2]] library uses =plstore= to securely store the credentials.
+We recommend you input a strong password when you are asked by the
+package. You can customise =oauth2-token-file= if you want to store
+the credentials elsewhere. By default, the library stores it in
+`user-emacs-directory/oauth2.plstore`
 
 *** Timelines
 

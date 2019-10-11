@@ -2,7 +2,8 @@
 
 (ert-deftest mastodon-http:get:retrieves-endpoint ()
   "Should make a `url-retrieve' of the given URL."
-  (let ((callback-double (lambda () "double")))
+  (let ((callback-double (lambda () "double"))
+        (mastodon-auth-mechanism "plain"))
     (with-mock
       (mock (url-retrieve-synchronously "https://foo.bar/baz"))
       (mock (mastodon-auth--access-token) => "test-token")

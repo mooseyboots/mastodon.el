@@ -73,6 +73,13 @@ Use. e.g. \"%c\" for your locale's date and time format."
   :group 'mastodon
   :type 'string)
 
+(defcustom mastodon-auth-mechanism 'oauth2
+  "Mechanism to be used to authenticate with Mastodon."
+  :type '(choice
+          (const :tag "plain" plain)
+          (const :tag "oauth2" oauth2))
+  :group 'mastodon)
+
 (defvar mastodon-mode-map
   (let ((map (make-sparse-keymap)))
     ;; navigation inside a timeline

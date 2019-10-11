@@ -31,6 +31,7 @@
 
 (require 'plstore)
 (require 'auth-source)
+(require 'oauth2)
 (require 'json)
 
 (autoload 'mastodon-client "mastodon-client")
@@ -38,6 +39,7 @@
 (autoload 'mastodon-http--get-json "mastodon-http")
 (autoload 'mastodon-http--post "mastodon-http")
 (defvar mastodon-instance-url)
+(defvar mastodon-auth-mechanism)
 
 (defgroup mastodon-auth nil
   "Authenticate with Mastodon."
@@ -61,10 +63,13 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
 
 (defun mastodon-auth--generate-token ()
   "Make POST to generate auth token."
-  (if (or (null mastodon-auth-source-file)
-	  (string= "" mastodon-auth-source-file))
-      (mastodon-auth--generate-token-no-storing-credentials)
-    (mastodon-auth--generate-token-and-store)))
+  (cond ((and (or (null mastodon-auth-source-file)
+                  (string= "" mastodon-auth-source-file))
+              (string= 'plain mastodon-auth-mechanism))
+         (mastodon-auth--generate-token-no-storing-credentials))
+        ((string= 'plain mastodon-auth-mechanism)
+         (mastodon-auth--generate-token-and-store))
+        (t (mastodon-auth-oauth2--generate-token-and-store))))
 
 (defun mastodon-auth--generate-token-no-storing-credentials ()
   "Make POST to generate auth token."
@@ -82,9 +87,9 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
 (defun mastodon-auth--generate-token-and-store ()
   "Make POST to generate auth token.
 
-Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
+Reads and/or stores secrets in `MASTODON-AUTH-SOURCE-FILE'."
   (let* ((auth-sources (list mastodon-auth-source-file))
-	 (auth-source-creation-prompts
+         (auth-source-creation-prompts
           '((user . "Enter email for %h: ")
             (secret . "Password: ")))
          (credentials-plist (nth 0 (auth-source-search
@@ -105,9 +110,20 @@ Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
                               secret)))
            ("scope" . "read write follow"))
          nil
-	 :unauthenticated)
+         :unauthenticated)
       (when (functionp (plist-get credentials-plist :save-function))
         (funcall (plist-get credentials-plist :save-function))))))
+
+;; OAuth2
+(defun mastodon-auth-oauth2--generate-token-and-store ()
+  "Generate OAuth2 token.
+
+Reads and/or stores secrets in `OAUTH2-TOKEN-FILE'."
+  (oauth2-auth-and-store (concat mastodon-instance-url "/oauth/authorize")
+                         (concat mastodon-instance-url "/oauth/token")
+                         "read write follow"
+                         (plist-get (mastodon-client) :client_id)
+                         (plist-get (mastodon-client) :client_secret)))
 
 (defun mastodon-auth--get-token ()
   "Make auth token request and return JSON response."
@@ -131,6 +147,10 @@ Generate token and set if none known yet."
         (setq token (plist-get json :access_token))
         (push (cons mastodon-instance-url token) mastodon-auth--token-alist)))
     token))
+
+(defun mastodon-auth-oauth2--access-token ()
+  "Return the OAuth2 access token."
+  (mastodon-auth-oauth2--generate-token-and-store))
 
 (defun mastodon-auth--get-account-name ()
   "Request user credentials and return an account name."

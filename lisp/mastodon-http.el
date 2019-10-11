@@ -31,7 +31,9 @@
 
 (require 'json)
 (defvar mastodon-instance-url)
+(defvar mastodon-auth-mechanism)
 (autoload 'mastodon-auth--access-token "mastodon-auth")
+(autoload 'mastodon-auth-oauth2--access-token "mastodon-auth")
 
 (defvar mastodon-http--api-version "v1")
 
@@ -81,12 +83,19 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
                       args
                       "&")))
         (url-request-extra-headers
-	 (append
-	  (unless unauthenticed-p
-	    `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token)))))
-	  headers)))
+         (append
+          (unless (or unauthenticed-p
+                      (eq 'oauth2 mastodon-auth-mechanism))
+            `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token)))))
+          headers)))
     (with-temp-buffer
-      (url-retrieve-synchronously url))))
+      (if (and (eq 'oauth2 mastodon-auth-mechanism)
+               (not unauthenticed-p))
+          (oauth2-url-retrieve-synchronously (mastodon-auth-oauth2--access-token)
+                                             url
+                                             url-request-method
+                                             url-request-data)
+        (url-retrieve-synchronously url)))))
 
 (defun mastodon-http--get (url)
   "Make GET request to URL.
@@ -94,9 +103,13 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
 Pass response buffer to CALLBACK function."
   (let ((url-request-method "GET")
         (url-request-extra-headers
-         `(("Authorization" . ,(concat "Bearer "
-                                       (mastodon-auth--access-token))))))
-    (url-retrieve-synchronously url)))
+         (unless (eq 'oauth2 mastodon-auth-mechanism)
+           `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token)))))))
+    (if (eq 'oauth2 mastodon-auth-mechanism)
+        (oauth2-url-retrieve-synchronously (mastodon-auth-oauth2--access-token)
+                                           url
+                                           url-request-method)
+      (url-retrieve-synchronously url))))
 
 (defun mastodon-http--get-json (url)
   "Make GET request to URL. Return JSON response vector."
