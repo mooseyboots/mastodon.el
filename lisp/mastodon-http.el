@@ -35,6 +35,9 @@
 
 (defvar mastodon-http--api-version "v1")
 
+(defconst mastodon-http--timeout 5
+  "HTTP request timeout, in seconds.")
+
 (defun mastodon-http--api (endpoint)
   "Return Mastondon API URL for ENDPOINT."
   (concat mastodon-instance-url "/api/"
@@ -86,7 +89,7 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
 	    `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token)))))
 	  headers)))
     (with-temp-buffer
-      (url-retrieve-synchronously url))))
+      (url-retrieve-synchronously url nil nil mastodon-http--timeout))))
 
 (defun mastodon-http--get (url)
   "Make GET request to URL.
@@ -96,7 +99,7 @@ Pass response buffer to CALLBACK function."
         (url-request-extra-headers
          `(("Authorization" . ,(concat "Bearer "
                                        (mastodon-auth--access-token))))))
-    (url-retrieve-synchronously url)))
+    (url-retrieve-synchronously url nil nil mastodon-http--timeout)))
 
 (defun mastodon-http--get-json (url)
   "Make GET request to URL. Return JSON response vector."
