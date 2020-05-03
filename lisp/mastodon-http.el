@@ -113,18 +113,57 @@ Pass response buffer to CALLBACK function."
       (url-retrieve-synchronously url))))
 
 (defun mastodon-http--get-json (url)
-  "Make GET request to URL. Return JSON response vector."
-  (let ((json-vector
-         (with-current-buffer (mastodon-http--get url)
-           (goto-char (point-min))
-           (re-search-forward "^$" nil 'move)
-           (let ((json-string
-                  (decode-coding-string
-                   (buffer-substring-no-properties (point) (point-max))
-                   'utf-8)))
-             (kill-buffer)
-             (json-read-from-string json-string)))))
-    json-vector))
+  "Make GET request to URL. Return JSON response"
+  (with-current-buffer (mastodon-http--get url)
+    (mastodon-http--process-json)))
+
+(defun mastodon-http--process-json ()
+  (goto-char (point-min))
+  (re-search-forward "^$" nil 'move)
+  (let ((json-string
+         (decode-coding-string
+          (buffer-substring-no-properties (point) (point-max))
+          'utf-8)))
+    (kill-buffer)
+    (json-read-from-string json-string)))
+
+ ;; Asynchronous functions
+
+(defun mastodon-http--get-async (url &optional callback &rest cbargs)
+  "Make GET request to URL.
+
+Pass response buffer to CALLBACK function."
+  (let ((url-request-method "GET")
+        (url-request-extra-headers
+         `(("Authorization" . ,(concat "Bearer "
+                                       (mastodon-auth--access-token))))))
+    (url-retrieve url callback cbargs mastodon-http--timeout)))
+
+(defun mastodon-http--get-json-async (url &optional callback &rest args)
+  "Make GET request to URL. Call CALLBACK with json-vector and ARGS."
+  (mastodon-http--get-async
+   url
+   (lambda (status)
+     (apply callback (mastodon-http--process-json) args))))
+
+(defun mastodon-http--post-async (url args headers &optional callback &rest cbargs)
+  "POST asynchronously to URL with ARGS and HEADERS.
+
+Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
+  (let ((url-request-method "POST")
+        (url-request-data
+         (when args
+           (mapconcat (lambda (arg)
+                        (concat (url-hexify-string (car arg))
+                                "="
+                                (url-hexify-string (cdr arg))))
+                      args
+                      "&")))
+        (url-request-extra-headers
+	     (append `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token))))
+	             headers)))
+    (with-temp-buffer
+      (url-retrieve url callback cbargs mastodon-http--timeout))))
 
 (provide 'mastodon-http)
 ;;; mastodon-http.el ends here

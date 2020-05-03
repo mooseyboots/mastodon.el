@@ -703,6 +703,17 @@ it is `mastodon-tl--byline-boosted'"
                                    (mastodon-tl--as-string id)))))
     (mastodon-http--get-json url)))
 
+(defun mastodon-tl--more-json-async (endpoint id callback &rest cbargs)
+  "Return JSON for timeline ENDPOINT before ID."
+  (let* ((url (mastodon-http--api (concat
+                                   endpoint
+                                   (if (string-match-p "?" endpoint)
+                                       "&"
+                                     "?")
+                                   "max_id="
+                                   (mastodon-tl--as-string id)))))
+    (apply 'mastodon-http--get-json-async url callback cbargs)))
+
 ;; TODO
 ;; Look into the JSON returned here by Local
 (defun mastodon-tl--updated-json (endpoint id)
@@ -945,15 +956,15 @@ webapp"
 (defun mastodon-tl--more ()
   "Append older toots to timeline."
   (interactive)
-  (let* ((point-before (point))
-         (endpoint (mastodon-tl--get-endpoint))
-         (update-function (mastodon-tl--get-update-function))
-         (id (mastodon-tl--oldest-id))
-         (json (mastodon-tl--more-json endpoint id)))
+  (mastodon-tl--more-json-async (mastodon-tl--get-endpoint) (mastodon-tl--oldest-id)
+                                'mastodon-tl--more* (current-buffer) (point)))
+
+(defun mastodon-tl--more* (json buffer point-before)
+  (with-current-buffer buffer
     (when json
       (let ((inhibit-read-only t))
         (goto-char (point-max))
-        (funcall update-function json)
+        (funcall (mastodon-tl--get-update-function) json)
         (goto-char point-before)))))
 
 (defun mastodon-tl--find-property-range (property start-point &optional search-backwards)
@@ -1114,31 +1125,33 @@ from the start if it is nil."
   "Initialize BUFFER-NAME with timeline targeted by ENDPOINT.
 
 UPDATE-FUNCTION is used to recieve more toots."
-  (let* ((url (mastodon-http--api endpoint))
-         (buffer (concat "*mastodon-" buffer-name "*"))
-         (json (mastodon-http--get-json url)))
-    (with-output-to-temp-buffer buffer
-      (switch-to-buffer buffer)
-      (setq
-       ;; Initialize with a minimal interval; we re-scan at least once
-       ;; every 5 minutes to catch any timestamps we may have missed
-       mastodon-tl--timestamp-next-update (time-add (current-time)
-                                                    (seconds-to-time 300)))
-      (funcall update-function json))
-    (mastodon-mode)
-    (with-current-buffer buffer
-      (setq mastodon-tl--buffer-spec
-            `(buffer-name ,buffer-name
-                          endpoint ,endpoint update-function
-                          ,update-function)
-            mastodon-tl--timestamp-update-timer
-            (when mastodon-tl--enable-relative-timestamps
-              (run-at-time mastodon-tl--timestamp-next-update
-                           nil ;; don't repeat
-                           #'mastodon-tl--update-timestamps-callback
-                           (current-buffer)
-                           nil))))
-    buffer))
+  (let ((url (mastodon-http--api endpoint))
+        (buffer (concat "*mastodon-" buffer-name "*")))
+    (mastodon-http--get-json-async
+     url 'mastodon-tl--init* buffer endpoint update-function)))
+
+(defun mastodon-tl--init* (json buffer endpoint update-function)
+  (with-output-to-temp-buffer buffer
+    (switch-to-buffer buffer)
+    (setq
+     ;; Initialize with a minimal interval; we re-scan at least once
+     ;; every 5 minutes to catch any timestamps we may have missed
+     mastodon-tl--timestamp-next-update (time-add (current-time)
+                                                  (seconds-to-time 300)))
+    (funcall update-function json))
+  (mastodon-mode)
+  (with-current-buffer buffer
+    (setq mastodon-tl--buffer-spec
+          `(buffer-name ,buffer
+                        endpoint ,endpoint update-function
+                        ,update-function)
+          mastodon-tl--timestamp-update-timer
+          (when mastodon-tl--enable-relative-timestamps
+            (run-at-time mastodon-tl--timestamp-next-update
+                         nil ;; don't repeat
+                         #'mastodon-tl--update-timestamps-callback
+                         (current-buffer)
+                         nil)))))
 
 (provide 'mastodon-tl)
 ;;; mastodon-tl.el ends here
