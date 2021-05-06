@@ -99,7 +99,7 @@ Pass response buffer to CALLBACK function."
     (url-retrieve-synchronously url)))
 
 (defun mastodon-http--delete (url)
-  "Make GET request to URL.
+  "Make DELETE request to URL.
 
 Pass response buffer to CALLBACK function."
   (let ((url-request-method "DELETE")
