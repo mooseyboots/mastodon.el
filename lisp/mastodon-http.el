@@ -98,6 +98,17 @@ Pass response buffer to CALLBACK function."
                                        (mastodon-auth--access-token))))))
     (url-retrieve-synchronously url)))
 
+(defun mastodon-http--delete (url)
+  "Make GET request to URL.
+
+Pass response buffer to CALLBACK function."
+  (let ((url-request-method "DELETE")
+        (url-request-extra-headers
+         `(("Authorization" . ,(concat "Bearer "
+                                       (mastodon-auth--access-token))))))
+    (with-temp-buffer
+      (url-retrieve-synchronously url))))
+
 (defun mastodon-http--get-json (url)
   "Make GET request to URL. Return JSON response vector."
   (let ((json-vector

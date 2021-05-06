@@ -782,6 +782,17 @@ webapp"
                                     (cdr (assoc 'descendants context))))))
       (message "No Thread!"))))
 
+(defun mastodon-tl--delete-toot ()
+  "Delete user's toot at point synchronously."
+  (interactive)
+  (let* ((id (mastodon-tl--as-string (mastodon-tl--toot-id
+                                      (mastodon-tl--property 'toot-json))))
+         (url (mastodon-http--api (format "statuses/%s" id))))
+    (let ((response (mastodon-http--delete url)))
+      (mastodon-http--triage response
+                             (lambda ()
+                               (message "Toot deleted! There may be a delay before it disappears from your profile."))))))
+
 (defun mastodon-tl--more ()
   "Append older toots to timeline."
   (interactive)
