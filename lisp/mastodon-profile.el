@@ -64,8 +64,8 @@ extra keybindings."
   ;; The mode line indicator.
   :lighter " Profile"
   ;; The key bindings
-  :keymap '(((kbd "F") . mastodon-profile--open-followers)
-            ((kbd "f") . mastodon-profile--open-following))
+  :keymap '(((kbd "O") . mastodon-profile--open-followers)
+            ((kbd "o") . mastodon-profile--open-following))
   :group 'mastodon)
 
 (defun mastodon-profile--toot-json ()
