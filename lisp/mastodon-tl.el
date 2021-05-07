@@ -42,6 +42,9 @@
 (autoload 'mastodon-profile--account-from-id "mastodon.el-profile.el")
 (autoload 'mastodon-profile--make-author-buffer "mastodon-profile.el")
 (autoload 'mastodon-profile--search-account-by-handle "mastodon.el-profile.el")
+;; try an autoload for new follow fun
+(autoload 'mastodon-profile--toot-json "mastodon-profile.el")
+(autoload 'mastodon-profile--account-field "mastodon-profile.el")
 (defvar mastodon-instance-url)
 (defvar mastodon-toot-timestamp-format)
 (defvar shr-use-fonts)  ;; need to declare it since Emacs24 didn't have this
@@ -794,6 +797,20 @@ webapp"
       (mastodon-http--triage response
                              (lambda ()
                                (message "Toot deleted! There may be a delay before it disappears from your profile."))))))
+
+;; follow user at point:
+;; try to make it work only for toot user id first, then try to allow mentions/boosts
+(defun mastodon-tl--follow-user ()
+  "Follow author OR BOOSTER! of toot at point synchronously."
+  (interactive)
+  (let* ((account
+          (cdr (assoc 'account (mastodon-profile--toot-json)))) ; acc data from toot
+         (user-id (mastodon-profile--account-field account 'id)) ; id from acc
+         (url (mastodon-http--api (format "accounts/%s/follow" user-id))))
+    (let ((response (mastodon-http--post url nil nil)))
+      (mastodon-http--triage response
+                             (lambda ()
+                               (message "User ID %s followed!" user-id)))))) ; TODO: use handle
 
 (defun mastodon-tl--more ()
   "Append older toots to timeline."
