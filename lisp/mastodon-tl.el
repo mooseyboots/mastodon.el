@@ -642,6 +642,7 @@ it is `mastodon-tl--byline-boosted'"
     (insert
      (propertize
       (concat body
+              " \n"
               (mastodon-tl--byline toot author-byline action-byline))
       'toot-id      (cdr (assoc 'id toot))
       'base-toot-id (mastodon-tl--toot-id toot)
