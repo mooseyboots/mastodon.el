@@ -126,7 +126,7 @@ Use. e.g. \"%c\" for your locale's date and time format."
   "Face used for user display names.")
 
 (defface mastodon-boosted-face
-  '((t :inherit highlight :weight bold))
+  '((t :inherit success :weight bold))
   "Face to indicate that a toot is boosted.")
 
 (defface mastodon-boost-fave-face

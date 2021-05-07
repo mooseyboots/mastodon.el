@@ -266,7 +266,7 @@ Optionally start from POS."
   (let ((reblog (cdr (assoc 'reblog toot))))
     (when reblog
       (concat
-       " "
+       "\n "
        (propertize "Boosted" 'face 'mastodon-boosted-face)
        " "
        (mastodon-tl--byline-author reblog)))))
@@ -355,11 +355,11 @@ it is `mastodon-tl--byline-boosted'"
         (faved (equal 't (mastodon-tl--field 'favourited toot)))
         (boosted (equal 't (mastodon-tl--field 'reblogged toot))))
     (concat
-     (propertize "\n | " 'face 'default)
+     ;; (propertize "\n | " 'face 'default)
      (propertize
       (concat (when boosted
                 (format "(%s) "
-                        (propertize "B" 'face 'mastodon-boost-fave-face)))
+                        (propertize "B" 'face 'mastodon-boost-face)))
               (when faved
                 (format "(%s) "
                         (propertize "F" 'face 'mastodon-boost-fave-face)))
@@ -592,13 +592,13 @@ message is a link which unhides/hides the main body."
                   'default))
          (message (concat "\n"
                           " ---------------\n"
-                          " " (mastodon-tl--make-link "Content Warning"
+                          " " (mastodon-tl--make-link
+                               (concat "CW: " string) ;"Content Warning"
                                                       'content-warning)
                           "\n"
                           " ---------------\n"))
          (cw (mastodon-tl--set-face message 'mastodon-cw-face)))
     (concat
-     string
      cw
      (propertize (mastodon-tl--content toot)
                  'invisible t
