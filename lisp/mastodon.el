@@ -107,6 +107,7 @@ Use. e.g. \"%c\" for your locale's date and time format."
     ;; override special mode binding
     (define-key map (kbd "g") #'undefined)
     (define-key map (kbd "D") #'mastodon-tl--delete-toot)
+    (define-key map (kbd "W") #'mastodon-tl--follow-user)
     map)
 
   "Keymap for `mastodon-mode'.")
