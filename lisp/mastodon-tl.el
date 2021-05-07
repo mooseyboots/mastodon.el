@@ -374,7 +374,7 @@ it is `mastodon-tl--byline-boosted'"
                'display (if mastodon-tl--enable-relative-timestamps
                             (mastodon-tl--relative-time-description parsed-time)
                           parsed-time))
-              (propertize "\n  ------------" 'face 'default))
+              (propertize "\n  ------------\n" 'face 'default))
       'favourited-p faved
       'boosted-p    boosted
       'byline       t))))
@@ -590,7 +590,7 @@ message is a link which unhides/hides the main body."
                   (mastodon-tl--clean-tabs-and-nl
                    (mastodon-tl--render-text spoiler toot))
                   'default))
-         (message (concat "\n"
+         (message (concat ;"\n"
                           " ---------------\n"
                           " " (mastodon-tl--make-link
                                (concat "CW: " string) ;"Content Warning"
@@ -641,13 +641,14 @@ it is `mastodon-tl--byline-boosted'"
   (let ((start-pos (point)))
     (insert
      (propertize
-      (concat body
+      (concat "\n"
+              body
               " \n"
               (mastodon-tl--byline toot author-byline action-byline))
       'toot-id      (cdr (assoc 'id toot))
       'base-toot-id (mastodon-tl--toot-id toot)
       'toot-json    toot)
-     "\n\n")
+     "\n")
     (when mastodon-tl--display-media-p
       (mastodon-media--inline-images start-pos (point)))))
 
