@@ -798,19 +798,27 @@ webapp"
                              (lambda ()
                                (message "Toot deleted! There may be a delay before it disappears from your profile."))))))
 
-;; follow user at point:
-;; try to make it work only for toot user id first, then try to allow mentions/boosts
-(defun mastodon-tl--follow-user ()
-  "Follow author OR BOOSTER! of toot at point synchronously."
-  (interactive)
-  (let* ((account
-          (cdr (assoc 'account (mastodon-profile--toot-json)))) ; acc data from toot
-         (user-id (mastodon-profile--account-field account 'id)) ; id from acc
+(defun mastodon-tl--follow-user (user-handle)
+  "Query user for user id from current status and follow that user."
+  (interactive
+   (list
+    (let ((user-handles (mastodon-profile--extract-users-handles
+                         (mastodon-profile--toot-json))))
+      (completing-read "User handle: "
+                       user-handles
+                       nil ; predicate
+                       'confirm))))
+  (let* ((account (mastodon-profile--lookup-account-in-status
+                  user-handle (mastodon-profile--toot-json)))
+         (user-id (mastodon-profile--account-field account 'id))
+         (name (mastodon-profile--account-field account 'display_name))
          (url (mastodon-http--api (format "accounts/%s/follow" user-id))))
-    (let ((response (mastodon-http--post url nil nil)))
-      (mastodon-http--triage response
-                             (lambda ()
-                               (message "User ID %s followed!" user-id)))))) ; TODO: use handle
+    (if account
+        (let ((response (mastodon-http--post url nil nil)))
+          (mastodon-http--triage response
+                                 (lambda ()
+                                   (message "User %s (@%s) followed!" name user-handle))))
+      (message "Cannot find a user with handle %S" user-handle))))
 
 (defun mastodon-tl--more ()
   "Append older toots to timeline."
