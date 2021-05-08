@@ -107,7 +107,10 @@ following the current profile."
                                           id endpoint-type)))
          (buffer (concat "*mastodon-" acct "-" endpoint-type  "*"))
          (note (mastodon-profile--account-field account 'note))
-         (json (mastodon-http--get-json url)))
+         (json (mastodon-http--get-json url))
+         (fol_count (mastodon-tl--as-string (mastodon-profile--account-field account 'followers_count)))
+         (folling_count (mastodon-tl--as-string (mastodon-profile--account-field account 'following_count)))
+         (toots_count (mastodon-tl--as-string (mastodon-profile--account-field account 'statuses_count))))
     (with-output-to-temp-buffer buffer
       (switch-to-buffer buffer)
       (mastodon-mode)
@@ -137,6 +140,13 @@ following the current profile."
                      'face 'default)
          "\n ------------\n"
          (mastodon-tl--render-text note nil)
+         (mastodon-tl--set-face
+          (concat " ------------\n"
+                  "TOOTS: " toots_count " | "
+                  "FOLLOWERS: " fol_count " | "
+                  "FOLLOWING: " folling_count "\n"
+                  " ------------\n\n")
+          'success)
          (mastodon-tl--set-face
           (concat " ------------\n"
                   endpoint-name "\n"
