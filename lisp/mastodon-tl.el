@@ -45,6 +45,7 @@
 ;; try an autoload for new follow fun
 (autoload 'mastodon-profile--toot-json "mastodon-profile.el")
 (autoload 'mastodon-profile--account-field "mastodon-profile.el")
+(autoload 'mastodon-profile--extract-users-handles "mastodon-profile.el")
 (defvar mastodon-instance-url)
 (defvar mastodon-toot-timestamp-format)
 (defvar shr-use-fonts)  ;; need to declare it since Emacs24 didn't have this
@@ -799,7 +800,7 @@ webapp"
                                (message "Toot deleted! There may be a delay before it disappears from your profile."))))))
 
 (defun mastodon-tl--follow-user (user-handle)
-  "Query user for user id from current status and follow that user."
+  "Query for user id from current status and follow that user."
   (interactive
    (list
     (let ((user-handles (mastodon-profile--extract-users-handles
@@ -819,6 +820,30 @@ webapp"
                                  (lambda ()
                                    (message "User %s (@%s) followed!" name user-handle))))
       (message "Cannot find a user with handle %S" user-handle))))
+
+(defun mastodon-tl--unfollow-user (user-handle)
+  "Query for user id from current status and unfollow that user."
+  (interactive
+   (list
+    (let ((user-handles (mastodon-profile--extract-users-handles
+                         (mastodon-profile--toot-json))))
+      (completing-read "User handle: "
+                       user-handles
+                       nil ; predicate
+                       'confirm))))
+  (let* ((account (mastodon-profile--lookup-account-in-status
+                  user-handle (mastodon-profile--toot-json)))
+         (user-id (mastodon-profile--account-field account 'id))
+         (name (mastodon-profile--account-field account 'display_name))
+         (url (mastodon-http--api (format "accounts/%s/unfollow" user-id))))
+    (if account
+        (when (y-or-n-p (format "Unfollow user %s? " name))
+          (let ((response (mastodon-http--post url nil nil)))
+            (mastodon-http--triage response
+                                   (lambda ()
+                                     (message "User %s (@%s) unfollowed!" name user-handle))))
+          (message "Cannot find a user with handle %S" user-handle)))))
+
 
 (defun mastodon-tl--more ()
   "Append older toots to timeline."
