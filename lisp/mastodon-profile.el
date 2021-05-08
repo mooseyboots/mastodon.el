@@ -142,7 +142,7 @@ following the current profile."
          (mastodon-tl--render-text note nil)
          (mastodon-tl--set-face
           (concat " ------------\n"
-                  "TOOTS: " toots_count " | "
+                  " TOOTS: " toots_count " | "
                   "FOLLOWERS: " fol_count " | "
                   "FOLLOWING: " folling_count "\n"
                   " ------------\n\n")
