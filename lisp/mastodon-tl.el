@@ -771,14 +771,18 @@ webapp"
     (if reblog (cdr (assoc 'id reblog)) id)))
 
 (defun mastodon-tl--thread ()
-  "Open thread buffer for toot under `point'."
+  "Open thread buffer for toot under `point' asynchronously."
   (interactive)
   (let* ((id (mastodon-tl--as-string (mastodon-tl--toot-id
                                       (mastodon-tl--property 'toot-json))))
-         (url (mastodon-http--api (format "statuses/%s/context" id)))
-         (buffer (format "*mastodon-thread-%s*" id))
          (toot (mastodon-tl--property 'toot-json))
-         (context (mastodon-http--get-json url)))
+         (buffer (format "*mastodon-thread-%s*" id))
+         (url (mastodon-http--api (format "statuses/%s/context" id))))
+    (mastodon-http--get-json-async url
+                                   'mastodon-tl--thread* id toot buffer)))
+
+(defun mastodon-tl--thread* (context id toot buffer)
+  (interactive)
     (when (member (cdr (assoc 'type toot)) '("reblog" "favourite"))
       (setq toot (cdr (assoc 'status toot))))
     (if (> (+ (length (cdr (assoc 'ancestors context)))
@@ -797,7 +801,7 @@ webapp"
                                     (cdr (assoc 'ancestors context))
                                     `(,toot)
                                     (cdr (assoc 'descendants context))))))
-      (message "No Thread!"))))
+      (message "No Thread!")));)
 
 (defun mastodon-tl--delete-toot ()
   "Delete user's toot at point synchronously."
@@ -805,10 +809,11 @@ webapp"
   (let* ((id (mastodon-tl--as-string (mastodon-tl--toot-id
                                       (mastodon-tl--property 'toot-json))))
          (url (mastodon-http--api (format "statuses/%s" id))))
-    (let ((response (mastodon-http--delete url)))
-      (mastodon-http--triage response
-                             (lambda ()
-                               (message "Toot deleted! There may be a delay before it disappears from your profile."))))))
+    (when (y-or-n-p (format "Delete this toot? "))
+      (let ((response (mastodon-http--delete url)))
+        (mastodon-http--triage response
+                               (lambda ()
+                                 (message "Toot deleted! There may be a delay before it disappears from your profile.")))))))
 
 (defun mastodon-tl--follow-user (user-handle)
   "Query for user id from current status and follow that user."
@@ -816,7 +821,7 @@ webapp"
    (list
     (let ((user-handles (mastodon-profile--extract-users-handles
                          (mastodon-profile--toot-json))))
-      (completing-read "User handle: "
+      (completing-read "Handle of user to follow: "
                        user-handles
                        nil ; predicate
                        'confirm))))
@@ -838,7 +843,7 @@ webapp"
    (list
     (let ((user-handles (mastodon-profile--extract-users-handles
                          (mastodon-profile--toot-json))))
-      (completing-read "User handle: "
+      (completing-read "Handle of user to unfollow: "
                        user-handles
                        nil ; predicate
                        'confirm))))
@@ -861,7 +866,7 @@ webapp"
    (list
     (let ((user-handles (mastodon-profile--extract-users-handles
                          (mastodon-profile--toot-json))))
-      (completing-read "User handle: "
+      (completing-read "Handle of user to mute: "
                        user-handles
                        nil ; predicate
                        'confirm))))
@@ -887,7 +892,7 @@ webapp"
            (muted-accts (mapcar (lambda (muted)
                                   (cdr (assoc 'acct muted)))
                                   mutes-json)))
-      (completing-read "Unmute user: "
+      (completing-read "Handle of user to unmute: "
                        muted-accts
                        nil ; predicate
                        t))))
@@ -910,7 +915,7 @@ webapp"
    (list
     (let ((user-handles (mastodon-profile--extract-users-handles
                          (mastodon-profile--toot-json))))
-      (completing-read "User handle: "
+      (completing-read "Handle of user to block: "
                        user-handles
                        nil ; predicate
                        'confirm))))
@@ -936,7 +941,7 @@ webapp"
            (blocked-accts (mapcar (lambda (blocked)
                                   (cdr (assoc 'acct blocked)))
                                   blocks-json)))
-      (completing-read "Unblock user: "
+      (completing-read "Handle of user to unblock: "
                        blocked-accts
                        nil ; predicate
                        t))))

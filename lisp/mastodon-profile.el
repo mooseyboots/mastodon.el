@@ -102,12 +102,17 @@ following the current profile."
 
 (defun mastodon-profile--make-profile-buffer-for (account endpoint-type update-function)
   (let* ((id (mastodon-profile--account-field account 'id))
-         (acct (mastodon-profile--account-field account 'acct))
          (url (mastodon-http--api (format "accounts/%s/%s"
-                                          id endpoint-type)))
+                                          id endpoint-type))))
+    (mastodon-http--get-json-async url
+                                   'mastodon-profile--make-profile-buffer-for*
+                                   account endpoint-type update-function)))
+
+(defun mastodon-profile--make-profile-buffer-for* (json account endpoint-type update-function)
+  (let* ((acct (mastodon-profile--account-field account 'acct))
          (buffer (concat "*mastodon-" acct "-" endpoint-type  "*"))
          (note (mastodon-profile--account-field account 'note))
-         (json (mastodon-http--get-json url))
+         (id (mastodon-profile--account-field account 'id))
          (fol_count (mastodon-tl--as-string (mastodon-profile--account-field account 'followers_count)))
          (folling_count (mastodon-tl--as-string (mastodon-profile--account-field account 'following_count)))
          (toots_count (mastodon-tl--as-string (mastodon-profile--account-field account 'statuses_count))))
@@ -175,7 +180,7 @@ following the current profile."
    (list
     (let ((user-handles (mastodon-profile--extract-users-handles
                          (mastodon-profile--toot-json))))
-      (completing-read "User handle: "
+      (completing-read "View profile of user: "
                        user-handles
                        nil ; predicate
                        'confirm))))
