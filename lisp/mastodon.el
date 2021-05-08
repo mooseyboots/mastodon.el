@@ -109,6 +109,10 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map (kbd "D") #'mastodon-tl--delete-toot)
     (define-key map (kbd "W") #'mastodon-tl--follow-user)
     (define-key map (kbd "C-S-W") #'mastodon-tl--unfollow-user)
+    (define-key map (kbd "B") #'mastodon-tl--block-user)
+    (define-key map (kbd "C-S-B") #'mastodon-tl--unblock-user)
+    (define-key map (kbd "M") #'mastodon-tl--mute-user)
+    (define-key map (kbd "C-S-M") #'mastodon-tl--unmute-user)
     map)
 
   "Keymap for `mastodon-mode'.")
