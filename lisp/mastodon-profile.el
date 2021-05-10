@@ -190,6 +190,11 @@ following the current profile."
         (mastodon-profile--make-author-buffer account)
       (message "Cannot find a user with handle %S" user-handle))))
 
+(defun mastodon-profile--my-profile ()
+  "Show the profile of the currently signed in user."
+  (interactive)
+  (mastodon-profile--show-user (mastodon-auth--get-account-name)))
+
 (defun mastodon-profile--account-field (account field)
   "Return FIELD from the ACCOUNT.
 

@@ -750,7 +750,7 @@ Move forward (down) the timeline unless BACKWARD is non-nil."
     (goto-char (point-max))
     (mastodon-tl--property 'toot-id t)))
 
-(defun mastodon-tl--as-string(numeric)
+(defun mastodon-tl--as-string (numeric)
   "Convert NUMERIC to string."
   (cond ((numberp numeric)
          (number-to-string numeric))
