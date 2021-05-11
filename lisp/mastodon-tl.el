@@ -42,10 +42,11 @@
 (autoload 'mastodon-profile--account-from-id "mastodon.el-profile.el")
 (autoload 'mastodon-profile--make-author-buffer "mastodon-profile.el")
 (autoload 'mastodon-profile--search-account-by-handle "mastodon.el-profile.el")
-;; try an autoload for new follow fun
+;; mousebot adds
 (autoload 'mastodon-profile--toot-json "mastodon-profile.el")
 (autoload 'mastodon-profile--account-field "mastodon-profile.el")
 (autoload 'mastodon-profile--extract-users-handles "mastodon-profile.el")
+
 (defvar mastodon-instance-url)
 (defvar mastodon-toot-timestamp-format)
 (defvar shr-use-fonts)  ;; need to declare it since Emacs24 didn't have this
@@ -656,7 +657,7 @@ it is `mastodon-tl--byline-boosted'"
     (when mastodon-tl--display-media-p
       (mastodon-media--inline-images start-pos (point)))))
 
-(defun mastodon-tl--toot(toot)
+(defun mastodon-tl--toot (toot)
   "Formats TOOT and insertes it into the buffer."
   (mastodon-tl--insert-status
    toot
