@@ -40,6 +40,12 @@
       (setq-local inhibit-read-only t)
       (insert (mastodon-tl--set-face
                (concat "\n ------------\n"
+                       " STATUSES" "\n"
+                       " ------------\n")
+               'success))
+      (mapcar 'mastodon-tl--toot toots-list-json)
+      (insert (mastodon-tl--set-face
+               (concat "\n ------------\n"
                        " USERS" "\n"
                        " ------------\n")
                'success))
@@ -69,12 +75,6 @@
                 ;;         (mastodon-tl--render-text (car (cdr el)) nil)
                 ;;         "\n"))
               tags-list)
-      (insert (mastodon-tl--set-face
-               (concat "\n ------------\n"
-                       " STATUSES" "\n"
-                       " ------------\n")
-               'success))
-      (mapcar 'mastodon-tl--toot toots-list-json)
       (goto-char (point-min))
       )))
 
