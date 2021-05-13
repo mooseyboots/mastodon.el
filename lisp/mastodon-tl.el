@@ -808,6 +808,17 @@ webapp"
                                     (cdr (assoc 'descendants context))))))
       (message "No Thread!")));)
 
+(defun mastodon-tl--copy-toot-url ()
+  "Copy URL of toot at point."
+  (interactive)
+  (let* ((toot (mastodon-tl--property 'toot-json))
+         (boosted (mastodon-tl--field 'reblog toot))
+         (url (if boosted
+                  (cdr (assoc 'url (cdr (assoc 'reblog toot))))
+                (cdr (assoc 'url toot)))))
+    (kill-new url)
+    (message "Toot copied to the clipboard.")))
+
 (defun mastodon-tl--delete-toot ()
   "Delete user's toot at point synchronously."
   (interactive)
