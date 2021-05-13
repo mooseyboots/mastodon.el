@@ -54,6 +54,7 @@
 (autoload 'mastodon-toot--toggle-favourite "mastodon-toot")
 (autoload 'mastodon-discover "mastodon-discover")
 (autoload 'mastodon-search--search-query "mastodon-search")
+(autoload 'mastodon-tl--copy-toot-url "mastodon-tl")
 
 (defgroup mastodon nil
   "Interface with Mastodon."
@@ -117,6 +118,7 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map (kbd "C-S-M") #'mastodon-tl--unmute-user)
     (define-key map (kbd "C-S-P") #'mastodon-profile--my-profile)
     (define-key map (kbd "S") #'mastodon-search--search-query)
+    (define-key map (kbd "C") #'mastodon-tl--copy-toot-url)
     map)
 
   "Keymap for `mastodon-mode'.")

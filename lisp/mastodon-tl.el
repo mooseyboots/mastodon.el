@@ -812,8 +812,7 @@ webapp"
   "Copy URL of toot at point."
   (interactive)
   (let* ((toot (mastodon-tl--property 'toot-json))
-         (boosted (mastodon-tl--field 'reblog toot))
-         (url (if boosted
+         (url (if (mastodon-tl--field 'reblog toot)
                   (cdr (assoc 'url (cdr (assoc 'reblog toot))))
                 (cdr (assoc 'url toot)))))
     (kill-new url)
