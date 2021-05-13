@@ -187,12 +187,15 @@ following the current profile."
   (let ((account (mastodon-profile--lookup-account-in-status
                   user-handle (mastodon-profile--toot-json))))
     (if account
-        (mastodon-profile--make-author-buffer account)
+        (progn
+          (message "Loading profile of user %s..." user-handle)
+          (mastodon-profile--make-author-buffer account))
       (message "Cannot find a user with handle %S" user-handle))))
 
 (defun mastodon-profile--my-profile ()
   "Show the profile of the currently signed in user."
   (interactive)
+  (message "Loading your profile...")
   (mastodon-profile--show-user (mastodon-auth--get-account-name)))
 
 (defun mastodon-profile--account-field (account field)

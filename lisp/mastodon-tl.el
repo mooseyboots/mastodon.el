@@ -179,18 +179,21 @@ This also skips tab items in invisible text, i.e. hidden spoiler text."
 (defun mastodon-tl--get-federated-timeline ()
   "Opens federated timeline."
   (interactive)
+  (message "Loading federated timeline...")
   (mastodon-tl--init
    "federated" "timelines/public" 'mastodon-tl--timeline))
 
 (defun mastodon-tl--get-home-timeline ()
   "Opens home timeline."
   (interactive)
+  (message "Loading home timeline...")
   (mastodon-tl--init
    "home" "timelines/home" 'mastodon-tl--timeline))
 
 (defun mastodon-tl--get-local-timeline ()
   "Opens local timeline."
   (interactive)
+  (message "Loading local timeline...")
   (mastodon-tl--init
    "local" "timelines/public?local=true" 'mastodon-tl--timeline))
 
@@ -198,8 +201,9 @@ This also skips tab items in invisible text, i.e. hidden spoiler text."
   "Prompts for tag and opens its timeline."
   (interactive)
   (let* ((word (or (word-at-point) ""))
-         (input (read-string (format "Tag(%s): " word)))
+         (input (read-string (format "Load timeline for tag(%s): " word)))
          (tag (if (equal input "") word input)))
+    (message "Loading timeline for #%s..." tag)
     (mastodon-tl--show-tag-timeline tag)))
 
 (defun mastodon-tl--show-tag-timeline (tag)
