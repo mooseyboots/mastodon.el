@@ -233,7 +233,11 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\" "
 (defun mastodon-toot--mentions (status)
   "Extract mentions from STATUS and process them into a string."
   (interactive)
-  (let ((mentions (cdr (assoc 'mentions status))))
+  (let* ((boosted (mastodon-tl--field 'reblog status))
+        (mentions
+         (if boosted
+             (cdr (assoc 'mentions (cdr (assoc 'reblog status))))
+           (cdr (assoc 'mentions status)))))
     (mapconcat (lambda(x) (mastodon-toot--process-local
                            (cdr (assoc 'acct x))))
                ;; reverse does not work on vectors in 24.5
@@ -247,9 +251,23 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\" "
          (id (mastodon-tl--as-string (mastodon-tl--field 'id toot)))
          (account (mastodon-tl--field 'account toot))
          (user (cdr (assoc 'acct account)))
-         (mentions (mastodon-toot--mentions toot)))
-    (mastodon-toot (when user (concat (mastodon-toot--process-local user)
-                                      mentions))
+         (mentions (mastodon-toot--mentions toot))
+         (boosted (mastodon-tl--field 'reblog toot))
+         (booster (when boosted
+                    (cdr (assoc 'acct
+                                (cdr (assoc 'account toot)))))))
+    (mastodon-toot (when user
+                     (if booster
+                         (if (and
+                              (not (equal user booster))
+                              (not (string-match booster mentions)))
+                             (concat (mastodon-toot--process-local user)
+                                     ;; "@" booster " "
+                                     (mastodon-toot--process-local booster) mentions)
+                           (concat (mastodon-toot--process-local user)
+                                   mentions))
+                       (concat (mastodon-toot--process-local user)
+                               mentions)))
                    id)))
 
 (defun mastodon-toot--toggle-warning ()
