@@ -232,7 +232,9 @@ Returns a list of lists."
     (mastodon-tl--goto-next-toot)))
 
 (defun mastodon-profile--get-toot-author ()
-  "Opens authors profile of toot under point."
+  "Open profile of author of toot under point.
+
+If toot is a boost, opens the profile of the booster."
   (interactive)
   (mastodon-profile--make-author-buffer
    (cdr (assoc 'account (mastodon-profile--toot-json)))))

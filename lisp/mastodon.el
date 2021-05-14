@@ -146,7 +146,8 @@ Use. e.g. \"%c\" for your locale's date and time format."
 (defun mastodon ()
   "Connect Mastodon client to `mastodon-instance-url' instance."
   (interactive)
-  (mastodon-tl--get-home-timeline))
+  (mastodon-tl--get-home-timeline)
+  (message "Loading Mastodon account %s on %s..." (mastodon-auth--get-account-name) mastodon-instance-url))
 
 ;;;###autoload
 (defun mastodon-toot (&optional user reply-to-id)
