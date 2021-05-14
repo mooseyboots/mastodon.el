@@ -100,6 +100,15 @@ following the current profile."
        #'mastodon-profile--add-author-bylines)
     (error "Not in a mastodon profile")))
 
+(defun mastodon-profile--relationships-get (id)
+  "Fetch info about logged in user's relationship to user with id ID."
+  (interactive)
+  (let* ((their-id id)
+         (url (mastodon-http--api (format
+                                   "accounts/relationships?id[]=%s"
+                                   their-id))))
+    (mastodon-http--get-json url)))
+
 (defun mastodon-profile--make-profile-buffer-for (account endpoint-type update-function)
   (let* ((id (mastodon-profile--account-field account 'id))
          (url (mastodon-http--api (format "accounts/%s/%s"
@@ -113,9 +122,20 @@ following the current profile."
          (buffer (concat "*mastodon-" acct "-" endpoint-type  "*"))
          (note (mastodon-profile--account-field account 'note))
          (id (mastodon-profile--account-field account 'id))
-         (fol_count (mastodon-tl--as-string (mastodon-profile--account-field account 'followers_count)))
-         (folling_count (mastodon-tl--as-string (mastodon-profile--account-field account 'following_count)))
-         (toots_count (mastodon-tl--as-string (mastodon-profile--account-field account 'statuses_count))))
+         (followers-count (mastodon-tl--as-string
+                           (mastodon-profile--account-field
+                            account 'followers_count)))
+         (following-count (mastodon-tl--as-string
+                           (mastodon-profile--account-field
+                            account 'following_count)))
+         (toots-count (mastodon-tl--as-string
+                       (mastodon-profile--account-field
+                        account 'statuses_count)))
+         (followed-by-you (cdr (assoc 'following
+                                  (aref (mastodon-profile--relationships-get id) 0))))
+         (follows-you (cdr (assoc 'followed_by
+                                  (aref (mastodon-profile--relationships-get id) 0))))
+         (followsp (or (equal follows-you 't) (equal followed-by-you 't))))
     (with-output-to-temp-buffer buffer
       (switch-to-buffer buffer)
       (mastodon-mode)
@@ -147,11 +167,20 @@ following the current profile."
          (mastodon-tl--render-text note nil)
          (mastodon-tl--set-face
           (concat " ------------\n"
-                  " TOOTS: " toots_count " | "
-                  "FOLLOWERS: " fol_count " | "
-                  "FOLLOWING: " folling_count "\n"
+                  " TOOTS: " toots-count " | "
+                  "FOLLOWERS: " followers-count " | "
+                  "FOLLOWING: " following-count "\n"
                   " ------------\n\n")
           'success)
+         (if followsp
+             (mastodon-tl--set-face
+              (concat (if (equal follows-you 't)
+                          "FOLLOWS YOU | ")
+                      (if (equal followed-by-you 't)
+                          "FOLLOWED BY YOU | ")
+                      "\n\n")
+              'success)
+           "") ; if no followsp we still need str-or-char-p for insert
          (mastodon-tl--set-face
           (concat " ------------\n"
                   endpoint-name "\n"
@@ -163,7 +192,9 @@ following the current profile."
     (mastodon-tl--goto-next-toot)))
 
 (defun mastodon-profile--get-toot-author ()
-  "Opens authors profile of toot under point."
+  "Open profile of author of toot under point.
+
+If toot is a boost, opens the profile of the booster."
   (interactive)
   (mastodon-profile--make-author-buffer
    (cdr (assoc 'account (mastodon-profile--toot-json)))))

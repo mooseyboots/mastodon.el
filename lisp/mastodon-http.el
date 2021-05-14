@@ -106,9 +106,7 @@ Pass response buffer to CALLBACK function."
       (url-retrieve-synchronously url nil nil mastodon-http--timeout))))
 
 (defun mastodon-http--delete (url)
-  "Make DELETE request to URL.
-
-Pass response buffer to CALLBACK function."
+  "Make DELETE request to URL."
   (let ((url-request-method "DELETE")
         (url-request-extra-headers
          `(("Authorization" . ,(concat "Bearer "
