@@ -100,6 +100,50 @@ following the current profile."
        #'mastodon-profile--add-author-bylines)
     (error "Not in a mastodon profile")))
 
+(defun mastodon-profile--relationships-get (id)
+  "Fetch info about logged in user's relationship to user with id ID."
+  (interactive)
+  (let* ((their-id id)
+         (url (mastodon-http--api (format
+                                   "accounts/relationships?id[]=%s"
+                                   their-id))))
+    (mastodon-http--get-json url)))
+
+(defun mastodon-profile--fields-get (account)
+  "Fetch the fields vector from a profile.
+
+Returns a list of lists."
+  (let ((fields (mastodon-profile--account-field account 'fields)))
+    (when fields
+      (mapcar
+       (lambda (el)
+         (list
+          (cdr (assoc 'name el))
+          (cdr (assoc 'value el))))
+       fields))))
+
+(defun mastodon-profile--fields-insert (fields)
+  "Format and insert field pairs in FIELDS."
+  (let* ((car-fields (mapcar 'car fields))
+         ;; (cdr-fields (mapcar 'cadr fields))
+         ;; (cdr-fields-rendered
+          ;; (list
+           ;; (mapcar (lambda (x)
+                     ;; (mastodon-tl--render-text x nil))
+                   ;; cdr-fields)))
+         (left-width (car (sort (mapcar 'length car-fields) '>))))
+         ;; (right-width (car (sort (mapcar 'length cdr-fields) '>))))
+    (mapconcat (lambda (field)
+                 (mastodon-tl--render-text
+                  (concat
+                   (format "_ %s " (car field))
+                   (make-string (- (+ 1 left-width) (length (car field))) ?_)
+                   (format " :: %s" (cadr field)))
+                   ;; (make-string (- (+ 1 right-width) (length (cdr field))) ?_)
+                   ;; " |")
+                  nil))
+               fields "")))
+
 (defun mastodon-profile--make-profile-buffer-for (account endpoint-type update-function)
   (let* ((id (mastodon-profile--account-field account 'id))
          (acct (mastodon-profile--account-field account 'acct))
@@ -107,7 +151,23 @@ following the current profile."
                                           id endpoint-type)))
          (buffer (concat "*mastodon-" acct "-" endpoint-type  "*"))
          (note (mastodon-profile--account-field account 'note))
-         (json (mastodon-http--get-json url)))
+         (json (mastodon-http--get-json url))
+         (id (mastodon-profile--account-field account 'id))
+         (followers-count (mastodon-tl--as-string
+                           (mastodon-profile--account-field
+                            account 'followers_count)))
+         (following-count (mastodon-tl--as-string
+                           (mastodon-profile--account-field
+                            account 'following_count)))
+         (toots-count (mastodon-tl--as-string
+                       (mastodon-profile--account-field
+                        account 'statuses_count)))
+         (followed-by-you (cdr (assoc 'following
+                                  (aref (mastodon-profile--relationships-get id) 0))))
+         (follows-you (cdr (assoc 'followed_by
+                                  (aref (mastodon-profile--relationships-get id) 0))))
+         (followsp (or (equal follows-you 't) (equal followed-by-you 't)))
+         (fields (mastodon-profile--fields-get account)))
     (with-output-to-temp-buffer buffer
       (switch-to-buffer buffer)
       (mastodon-mode)
@@ -137,6 +197,30 @@ following the current profile."
                      'face 'default)
          "\n ------------\n"
          (mastodon-tl--render-text note nil)
+         (if fields
+             (progn
+               (concat "\n"
+                       (mastodon-tl--set-face
+                        (mastodon-profile--fields-insert fields)
+                        'success)
+                       "\n"))
+           "")
+         (mastodon-tl--set-face
+          (concat " ------------\n"
+                  " TOOTS: " toots-count " | "
+                  "FOLLOWERS: " followers-count " | "
+                  "FOLLOWING: " following-count "\n"
+                  " ------------\n\n")
+          'success)
+         (if followsp
+             (mastodon-tl--set-face
+              (concat (if (equal follows-you 't)
+                          " | FOLLOWS YOU")
+                      (if (equal followed-by-you 't)
+                          " | FOLLOWED BY YOU")
+                      "\n\n")
+              'success)
+           "") ; if no followsp we still need str-or-char-p for insert
          (mastodon-tl--set-face
           (concat " ------------\n"
                   endpoint-name "\n"
