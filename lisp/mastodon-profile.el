@@ -109,6 +109,41 @@ following the current profile."
                                    their-id))))
     (mastodon-http--get-json url)))
 
+(defun mastodon-profile--fields-get (account)
+  "Fetch the fields vector from a profile.
+
+Returns a list of lists."
+  (let ((fields (mastodon-profile--account-field account 'fields)))
+    (when fields
+      (mapcar
+       (lambda (el)
+         (list
+          (cdr (assoc 'name el))
+          (cdr (assoc 'value el))))
+       fields))))
+
+(defun mastodon-profile--fields-insert (fields)
+  "Format and insert field pairs in FIELDS."
+  (let* ((car-fields (mapcar 'car fields))
+         ;; (cdr-fields (mapcar 'cadr fields))
+         ;; (cdr-fields-rendered
+          ;; (list
+           ;; (mapcar (lambda (x)
+                     ;; (mastodon-tl--render-text x nil))
+                   ;; cdr-fields)))
+         (left-width (car (sort (mapcar 'length car-fields) '>))))
+         ;; (right-width (car (sort (mapcar 'length cdr-fields) '>))))
+    (mapconcat (lambda (field)
+                 (mastodon-tl--render-text
+                  (concat
+                   (format "_ %s " (car field))
+                   (make-string (- (+ 1 left-width) (length (car field))) ?_)
+                   (format " :: %s" (cadr field)))
+                   ;; (make-string (- (+ 1 right-width) (length (cdr field))) ?_)
+                   ;; " |")
+                  nil))
+               fields "")))
+
 (defun mastodon-profile--make-profile-buffer-for (account endpoint-type update-function)
   (let* ((id (mastodon-profile--account-field account 'id))
          (url (mastodon-http--api (format "accounts/%s/%s"
@@ -135,7 +170,8 @@ following the current profile."
                                   (aref (mastodon-profile--relationships-get id) 0))))
          (follows-you (cdr (assoc 'followed_by
                                   (aref (mastodon-profile--relationships-get id) 0))))
-         (followsp (or (equal follows-you 't) (equal followed-by-you 't))))
+         (followsp (or (equal follows-you 't) (equal followed-by-you 't)))
+         (fields (mastodon-profile--fields-get account)))
     (with-output-to-temp-buffer buffer
       (switch-to-buffer buffer)
       (mastodon-mode)
@@ -165,6 +201,14 @@ following the current profile."
                      'face 'default)
          "\n ------------\n"
          (mastodon-tl--render-text note nil)
+         (if fields
+             (progn
+               (concat "\n"
+                       (mastodon-tl--set-face
+                        (mastodon-profile--fields-insert fields)
+                        'success)
+                       "\n"))
+           "")
          (mastodon-tl--set-face
           (concat " ------------\n"
                   " TOOTS: " toots-count " | "
@@ -175,9 +219,9 @@ following the current profile."
          (if followsp
              (mastodon-tl--set-face
               (concat (if (equal follows-you 't)
-                          "FOLLOWS YOU | ")
+                          " | FOLLOWS YOU")
                       (if (equal followed-by-you 't)
-                          "FOLLOWED BY YOU | ")
+                          " | FOLLOWED BY YOU")
                       "\n\n")
               'success)
            "") ; if no followsp we still need str-or-char-p for insert
