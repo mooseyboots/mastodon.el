@@ -115,11 +115,12 @@ Pass response buffer to CALLBACK function."
       (url-retrieve-synchronously url))))
 
 (defun mastodon-http--get-json (url)
-  "Make GET request to URL. Return JSON response"
+  "Make GET request to URL. Return JSON response."
   (with-current-buffer (mastodon-http--get url)
     (mastodon-http--process-json)))
 
 (defun mastodon-http--process-json ()
+  "Process JSON response."
   (goto-char (point-min))
   (re-search-forward "^$" nil 'move)
   (let ((json-string
@@ -134,7 +135,7 @@ Pass response buffer to CALLBACK function."
 (defun mastodon-http--get-async (url &optional callback &rest cbargs)
   "Make GET request to URL.
 
-Pass response buffer to CALLBACK function."
+Pass response buffer to CALLBACK function with args CBARGS."
   (let ((url-request-method "GET")
         (url-request-extra-headers
          `(("Authorization" . ,(concat "Bearer "

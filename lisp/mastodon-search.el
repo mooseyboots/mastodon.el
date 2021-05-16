@@ -1,18 +1,42 @@
 ;;; mastodon-search.el --- serach functions for mastodon.el  -*- lexical-binding: t -*-
 
-;; search functions:
+;; Copyright (C) 2017-2019 Johnson Denen
+;; Author: Johnson Denen <johnson.denen@gmail.com>
+;; Version: 0.9.0
+;; Homepage: https://github.com/jdenen/mastodon.el
+;; Package-Requires: ((emacs "24.4"))
 
-;; autoloads?
+;; This file is not part of GNU Emacs.
 
+;; This file is part of mastodon.el.
+
+;; mastodon.el is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; mastodon.el is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with mastodon.el.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; A basic search function for mastodon.el
+
+;;; Code:
+
+;; autoloads
 ;; mastodon-tl--as-string
 ;; mastodon-tl--set-face
 ;; mastodon-tl--render-text
 ;; mastodon-tl--toot
-;; mastodon-http--get-json
+(autoload 'mastodon-http--get-json "mastodon-http")
 
 ;; mastodon-instance-url
-
-;; code
 
 (defun mastodon-search--search-query (query)
   "Prompt for a search QUERY and return accounts, statuses, and hashtags."
@@ -43,13 +67,13 @@
                        " STATUSES" "\n"
                        " ------------\n")
                'success))
-      (mapcar 'mastodon-tl--toot toots-list-json)
+      (mapc 'mastodon-tl--toot toots-list-json)
       (insert (mastodon-tl--set-face
                (concat "\n ------------\n"
                        " USERS" "\n"
                        " ------------\n")
                'success))
-      (mapcar (lambda (el)
+      (mapc (lambda (el)
                 (dolist (item el)
                   (insert (mastodon-tl--render-text item nil) ""))
                 (insert "----\n\n"))
@@ -65,7 +89,7 @@
                        " HASHTAGS" "\n"
                        " ------------\n")
                'success))
-      (mapcar (lambda (el)
+      (mapc (lambda (el)
                 (dolist (item el)
                   (insert (mastodon-tl--render-text item nil) ""))
                 (insert "----\n\n"))
@@ -113,6 +137,7 @@ This allows us to access the full account etc. details and to render them proper
 ;; http functions for search:
     
 (defun mastodon-http--process-json-search ()
+  "Process JSON returned by a search query to the server."
   (goto-char (point-min))
   (re-search-forward "^$" nil 'move)
   (let ((json-string
@@ -123,13 +148,13 @@ This allows us to access the full account etc. details and to render them proper
     (json-read-from-string json-string)))
 
 (defun mastodon-http--get-search-json (url query)
-  "Make GET request to URL. Return JSON response"
+  "Make GET request to URL, searching for QUERY and return JSON response."
   (let ((buffer (mastodon-http--get-search url query)))
     (with-current-buffer buffer
       (mastodon-http--process-json-search))))
 
 (defun mastodon-http--get-search (base-url query)
-  "Make GET request to URL.
+  "Make GET request to BASE-URL, searching for QUERY.
 
 Pass response buffer to CALLBACK function."
   (let ((url-request-method "GET")
@@ -142,4 +167,4 @@ Pass response buffer to CALLBACK function."
       (url-retrieve-synchronously url nil nil mastodon-http--timeout))))
 
 (provide 'mastodon-search)
-;; mastodon-search.el ends here
+;;; mastodon-search.el ends here

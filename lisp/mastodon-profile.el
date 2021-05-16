@@ -109,7 +109,7 @@ following the current profile."
     (mastodon-http--get-json url)))
 
 (defun mastodon-profile--fields-get (account)
-  "Fetch the fields vector (a.k.a profile metadata) from a profile.
+  "Fetch the fields vector (aka profile metadata) from profile of ACCOUNT.
 
 Returns a list of lists."
   (let ((fields (mastodon-profile--account-field account 'fields)))
@@ -249,7 +249,7 @@ If toot is a boost, opens the profile of the booster."
       (mastodon-media--get-media-link-rendering url))))
 
 (defun mastodon-profile--show-user (user-handle)
-  "Query user for user id from current status and show that user's profile."
+  "Query user for USER-HANDLE from current status and show that user's profile."
   (interactive
    (list
     (let ((user-handles (mastodon-profile--extract-users-handles

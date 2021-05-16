@@ -224,7 +224,7 @@ Mastodon requires the full user@domain, even in the case of local accts.
 eg. \"user\" -> \"user@local.social \" (when local.social is the domain of the
 mastodon-instance-url).
 eg. \"yourusername\" -> \"\"
-eg. \"feduser@fed.social\" -> \"feduser@fed.social\" "
+eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
   (cond ((string-match-p "@" acct) (concat "@" acct " ")) ; federated acct
         ((string= (mastodon-auth--user-acct) acct) "") ; your acct
         (t (concat "@" acct "@" ; local acct

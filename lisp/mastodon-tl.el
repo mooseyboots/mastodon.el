@@ -677,7 +677,7 @@ it is `mastodon-tl--byline-boosted'"
 
 If any toots are pinned, display them first."
   (let* ((pinned-list))
-    (mapcar (lambda (toot)
+    (mapc (lambda (toot)
               (when (equal (cdr (assoc 'pinned toot)) 't)
                 (push toot pinned-list)))
             toots)
@@ -845,7 +845,7 @@ webapp"
                                  (message "Toot deleted! There may be a delay before it disappears from your profile.")))))))
 
 (defun mastodon-tl--follow-user (user-handle)
-  "Query for user id from current status and follow that user."
+  "Query for USER-HANDLE from current status and follow that user."
   (interactive
    (list
     (let ((user-handles (mastodon-profile--extract-users-handles
@@ -867,7 +867,7 @@ webapp"
       (message "Cannot find a user with handle %S" user-handle))))
 
 (defun mastodon-tl--unfollow-user (user-handle)
-  "Query for user id from current status and unfollow that user."
+  "Query for USER-HANDLE from current status and unfollow that user."
   (interactive
    (list
     (let ((user-handles (mastodon-profile--extract-users-handles
@@ -890,7 +890,7 @@ webapp"
       (message "Cannot find a user with handle %S" user-handle))))
 
 (defun mastodon-tl--mute-user (user-handle)
-  "Query for user id from current status and mute that user."
+  "Query for USER-HANDLE from current status and mute that user."
   (interactive
    (list
     (let ((user-handles (mastodon-profile--extract-users-handles
@@ -962,7 +962,7 @@ webapp"
       (message "Cannot find a user with handle %S" user-handle))))
 
 (defun mastodon-tl--unblock-user (user-handle)
-  "Query for user from list of blocked users and unblock that user."
+  "Query for USER-HANDLE from list of blocked users and unblock that user."
   (interactive
    (list
     (let* ((blocks-url (mastodon-http--api (format "blocks")))
@@ -1043,8 +1043,7 @@ before (non-nil) or after (nil)"
 Returns nil if no such range exists.
 
 If SEARCH-BACKWARDS is non-nil it find a region before
-START-POINT otherwise after START-POINT.
-"
+START-POINT otherwise after START-POINT."
   (if (get-text-property start-point property)
       ;; We are within a range, we need to start the search from
       ;; before/after this range:
