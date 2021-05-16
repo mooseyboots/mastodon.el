@@ -397,7 +397,7 @@ links in the text. If TOOT is nil no parsing occurs."
     (insert string)
     (let ((shr-use-fonts mastodon-tl--enable-proportional-fonts)
           (shr-width (when mastodon-tl--enable-proportional-fonts
-                       (window-width))))
+                       (- (window-width) 1))))
       (shr-render-region (point-min) (point-max)))
     ;; Make all links a tab stop recognized by our own logic, make things point
     ;; to our own logic (e.g. hashtags), and update keymaps where needed:
