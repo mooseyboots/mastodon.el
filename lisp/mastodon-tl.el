@@ -46,6 +46,7 @@
 (autoload 'mastodon-profile--toot-json "mastodon-profile.el")
 (autoload 'mastodon-profile--account-field "mastodon-profile.el")
 (autoload 'mastodon-profile--extract-users-handles "mastodon-profile.el")
+(autoload 'mastodon-profile--my-profile "mastodon-profile.el")
 
 (defvar mastodon-instance-url)
 (defvar mastodon-toot-timestamp-format)

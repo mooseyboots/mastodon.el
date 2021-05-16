@@ -53,8 +53,17 @@
 (autoload 'mastodon-toot--toggle-boost "mastodon-toot")
 (autoload 'mastodon-toot--toggle-favourite "mastodon-toot")
 (autoload 'mastodon-discover "mastodon-discover")
+(autoload 'mastodon-tl--block-user "mastodon-tl")
+(autoload 'mastodon-tl--unblock-user "mastodon-tl")
+(autoload 'mastodon-tl--mute-user "mastodon-tl")
+(autoload 'mastodon-tl--unmute-user "mastodon-tl")
+(autoload 'mastodon-tl--delete-toot "mastodon-tl")
+(autoload 'mastodon-tl--follow-user "mastodon-tl")
+(autoload 'mastodon-tl--unfollow-user "mastodon-tl")
+(autoload 'mastodon-profile--my-profile "mastodon-profile")
 (autoload 'mastodon-search--search-query "mastodon-search")
 (autoload 'mastodon-tl--copy-toot-url "mastodon-tl")
+(autoload 'mastodon-auth--get-account-name "mastodon-auth")
 
 (defgroup mastodon nil
   "Interface with Mastodon."
