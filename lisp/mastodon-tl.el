@@ -673,9 +673,23 @@ it is `mastodon-tl--byline-boosted'"
    'mastodon-tl--byline-boosted))
 
 (defun mastodon-tl--timeline (toots)
-  "Display each toot in TOOTS."
-  (mapc 'mastodon-tl--toot toots)
-  (goto-char (point-min)))
+  "Display each toot in TOOTS.
+
+If any toots are pinned, display them first."
+  (let* ((pinned-list))
+    (mapcar (lambda (toot)
+              (when (equal (cdr (assoc 'pinned toot)) 't)
+                (push toot pinned-list)))
+            toots)
+    (when pinned-list
+      (progn
+        (insert (mastodon-tl--set-face
+                 "   :pinned: " 'success))
+        (mapc 'mastodon-tl--toot pinned-list)
+        (insert (mastodon-tl--set-face
+                 "   :end-pinned: \n" 'success))))
+    (mapc 'mastodon-tl--toot toots)
+    (goto-char (point-min))))
 
 (defun mastodon-tl--get-update-function (&optional buffer)
   "Get the UPDATE-FUNCTION stored in `mastodon-tl--buffer-spec'"

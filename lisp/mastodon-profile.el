@@ -101,8 +101,7 @@ following the current profile."
     (error "Not in a mastodon profile")))
 
 (defun mastodon-profile--relationships-get (id)
-  "Fetch info about logged in user's relationship to user with id ID."
-  (interactive)
+  "Fetch info about logged-in user's relationship to user with id ID."
   (let* ((their-id id)
          (url (mastodon-http--api (format
                                    "accounts/relationships?id[]=%s"
@@ -110,7 +109,7 @@ following the current profile."
     (mastodon-http--get-json url)))
 
 (defun mastodon-profile--fields-get (account)
-  "Fetch the fields vector from a profile.
+  "Fetch the fields vector (a.k.a profile metadata) from a profile.
 
 Returns a list of lists."
   (let ((fields (mastodon-profile--account-field account 'fields)))
@@ -123,7 +122,7 @@ Returns a list of lists."
        fields))))
 
 (defun mastodon-profile--fields-insert (fields)
-  "Format and insert field pairs in FIELDS."
+  "Format and insert field pairs (a.k.a profile metadata) in FIELDS."
   (let* ((car-fields (mapcar 'car fields))
          ;; (cdr-fields (mapcar 'cadr fields))
          ;; (cdr-fields-rendered
