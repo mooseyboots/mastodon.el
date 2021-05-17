@@ -76,7 +76,7 @@ extra keybindings."
 (defun mastodon-profile--make-author-buffer (account)
   "Take a ACCOUNT and inserts a user account into a new buffer."
   (mastodon-profile--make-profile-buffer-for
-   account "statuses" #'mastodon-tl--timeline))
+   account "statuses" #'mastodon-tl--timeline-pinned))
 
 (defun mastodon-profile--open-following ()
   "Open a profile buffer for the current profile showing the accounts
@@ -254,7 +254,7 @@ If toot is a boost, opens the profile of the booster."
    (list
     (let ((user-handles (mastodon-profile--extract-users-handles
                          (mastodon-profile--toot-json))))
-      (completing-read "View profile of user: "
+      (completing-read "View profile of user [choose or enter any handle]: "
                        user-handles
                        nil ; predicate
                        'confirm))))

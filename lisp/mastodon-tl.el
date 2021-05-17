@@ -674,10 +674,15 @@ it is `mastodon-tl--byline-boosted'"
    'mastodon-tl--byline-boosted))
 
 (defun mastodon-tl--timeline (toots)
+  "Display each toot in TOOTS."
+  (mapc 'mastodon-tl--toot toots)
+  (goto-char (point-min)))
+
+(defun mastodon-tl--timeline-pinned (toots)
   "Display each toot in TOOTS.
 
 If any toots are pinned, display them first."
-  (let* ((pinned-list))
+  (let ((pinned-list))
     (mapc (lambda (toot)
               (when (equal (cdr (assoc 'pinned toot)) 't)
                 (push toot pinned-list)))
