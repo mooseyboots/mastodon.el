@@ -1,7 +1,7 @@
-;;; mastodon-search.el --- serach functions for mastodon.el  -*- lexical-binding: t -*-
+;;; mastodon-search.el --- search functions for mastodon.el  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2017-2019 Johnson Denen
-;; Author: Johnson Denen <johnson.denen@gmail.com>
+;; Author: Johnson Denen <johnson.denen@gmail.com>, martyhiatt <mousebot@riseup.net>
 ;; Version: 0.9.0
 ;; Homepage: https://github.com/jdenen/mastodon.el
 ;; Package-Requires: ((emacs "24.4"))
@@ -28,15 +28,18 @@
 ;; A basic search function for mastodon.el
 
 ;;; Code:
+(require 'json)
 
-;; autoloads
-;; mastodon-tl--as-string
-;; mastodon-tl--set-face
-;; mastodon-tl--render-text
-;; mastodon-tl--toot
 (autoload 'mastodon-http--get-json "mastodon-http")
+(autoload 'mastodon-tl--as-string "mastodon-tl")
+(autoload 'mastodon-mode "mastodon")
+(autoload 'mastodon-tl--set-face "mastodon-tl")
+(autoload 'mastodon-tl--render-text "mastodon-tl")
+(autoload 'mastodon-tl--as-string "mastodon-tl")
+(autoload 'mastodon-auth--access-token "mastodon-auth")
 
-;; mastodon-instance-url
+(defvar mastodon-instance-url)
+(defconst mastodon-http--timeout)
 
 (defun mastodon-search--search-query (query)
   "Prompt for a search QUERY and return accounts, statuses, and hashtags."
@@ -51,8 +54,8 @@
                            accts)) ; returns a list of three-item lists
          (tags-list (mapcar #'mastodon-search--get-hashtag-info
                             tags))
-         (status-list (mapcar #'mastodon-search--get-status-info
-                              statuses))
+         ;; (status-list (mapcar #'mastodon-search--get-status-info
+                              ;; statuses))
          (status-ids-list (mapcar 'mastodon-search--get-id-from-status
                                   statuses))
          (toots-list-json (mapcar #'mastodon-search--fetch-full-status-from-id
@@ -135,7 +138,6 @@ This allows us to access the full account etc. details and to render them proper
     json))
 
 ;; http functions for search:
-    
 (defun mastodon-http--process-json-search ()
   "Process JSON returned by a search query to the server."
   (goto-char (point-min))

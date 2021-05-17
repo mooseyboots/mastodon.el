@@ -143,7 +143,8 @@
   (mastodon-tl--init
    "*mastodon-notifications*"
    "notifications"
-   'mastodon-notifications--timeline))
+   'mastodon-notifications--timeline)
+  (message "Loading your nofications..."))
 
 (provide 'mastodon-notifications)
 ;;; mastodon-notifications.el ends here
