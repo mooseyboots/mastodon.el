@@ -39,7 +39,7 @@
 (autoload 'mastodon-auth--access-token "mastodon-auth")
 
 (defvar mastodon-instance-url)
-(defconst mastodon-http--timeout)
+(defconst mastodon-http--timeout 5)
 
 (defun mastodon-search--search-query (query)
   "Prompt for a search QUERY and return accounts, statuses, and hashtags."
@@ -64,46 +64,50 @@
       (switch-to-buffer buffer)
       (erase-buffer)
       (mastodon-mode)
-      (setq-local inhibit-read-only t)
+      (let ((inhibit-read-only t))
+        ;; user results:
+        (insert (mastodon-tl--set-face
+                 (concat "\n ------------\n"
+                         " USERS\n"
+                         " ------------\n\n")
+                 'success))
+        (mapc (lambda (el)
+              (insert (propertize (car el) 'face 'mastodon-display-name-face)
+                      " : \n : "
+                      (propertize (concat "@" (car (cdr el)))
+                                  'face 'mastodon-handle-face
+                                  'mouse-face 'highlight
+		                  'mastodon-tab-stop 'user-handle
+		                  'keymap mastodon-tl--link-keymap
+                                  'mastodon-handle (concat "@" (car (cdr el)))
+		                  'help-echo (concat "Browse user profile of @" (car (cdr el))))
+                      " : \n"
+                      "\n"))
+            user-ids)
+      ;; hashtag results:
       (insert (mastodon-tl--set-face
                (concat "\n ------------\n"
-                       " STATUSES" "\n"
+                       " HASHTAGS\n"
+                       " ------------\n\n")
+               'success))
+      (mapc (lambda (el)
+              (insert " : #"
+                      (propertize (car el)
+                                  'mouse-face 'highlight
+                                  'mastodon-tag (car el)
+                                  'mastodon-tab-stop 'hashtag
+                                  'help-echo (concat "Browse tag #" (car el))
+                                  'keymap mastodon-tl--link-keymap)
+                      " : \n\n"))
+            tags-list)
+      ;; status results:
+      (insert (mastodon-tl--set-face
+               (concat "\n ------------\n"
+                       " STATUSES\n"
                        " ------------\n")
                'success))
       (mapc 'mastodon-tl--toot toots-list-json)
-      (insert (mastodon-tl--set-face
-               (concat "\n ------------\n"
-                       " USERS" "\n"
-                       " ------------\n")
-               'success))
-      (mapc (lambda (el)
-                (dolist (item el)
-                  (insert (mastodon-tl--render-text item nil) ""))
-                (insert "----\n\n"))
-              ;;   (insert (mastodon-tl--render-text (car el) nil)
-              ;;           " : "
-              ;;           (mastodon-tl--render-text (car (cdr el)) nil)
-              ;;           " : "
-              ;;           (mastodon-tl--render-text (car (cdr (cdr el))) nil)
-              ;;           "\n"))
-              user-ids)
-      (insert (mastodon-tl--set-face
-               (concat "\n ------------\n"
-                       " HASHTAGS" "\n"
-                       " ------------\n")
-               'success))
-      (mapc (lambda (el)
-                (dolist (item el)
-                  (insert (mastodon-tl--render-text item nil) ""))
-                (insert "----\n\n"))
-                ;; (seq-do 'insert el))
-                ;; (insert (mastodon-tl--render-text (car el) nil)
-                ;;         " : "
-                ;;         (mastodon-tl--render-text (car (cdr el)) nil)
-                ;;         "\n"))
-              tags-list)
-      (goto-char (point-min))
-      )))
+      (goto-char (point-min))))))
 
 (defun mastodon-search--get-user-info (account)
   "Get user handle, display name and account URL from ACCOUNT."
