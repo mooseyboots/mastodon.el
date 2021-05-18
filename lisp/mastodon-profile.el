@@ -36,6 +36,8 @@
 
 (autoload 'mastodon-http--api "mastodon-http.el")
 (autoload 'mastodon-http--get-json "mastodon-http.el")
+(autoload 'mastodon-auth--get-account-name "mastodon-auth.el")
+(autoload 'mastodon-http--get-json-async "mastodon-http.el")
 (autoload 'mastodon-media--get-media-link-rendering "mastodon-media.el")
 (autoload 'mastodon-media--inline-images "mastodon-media.el")
 (autoload 'mastodon-mode "mastodon.el")
@@ -45,6 +47,8 @@
 (autoload 'mastodon-tl--render-text "mastodon-tl.el")
 (autoload 'mastodon-tl--set-face "mastodon-tl.el")
 (autoload 'mastodon-tl--timeline "mastodon-tl.el")
+(autoload 'mastodon-tl--as-string "mastodon-tl.el")
+(autoload 'mastodon-tl--timeline-pinned "mastodon-tl.el")
 (autoload 'mastodon-tl--toot-id "mastodon-tl")
 
 (defvar mastodon-instance-url)
