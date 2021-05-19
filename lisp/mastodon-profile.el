@@ -48,7 +48,6 @@
 (autoload 'mastodon-tl--set-face "mastodon-tl.el")
 (autoload 'mastodon-tl--timeline "mastodon-tl.el")
 (autoload 'mastodon-tl--as-string "mastodon-tl.el")
-(autoload 'mastodon-tl--timeline-pinned "mastodon-tl.el")
 (autoload 'mastodon-tl--toot-id "mastodon-tl")
 
 (defvar mastodon-instance-url)
@@ -80,7 +79,7 @@ extra keybindings."
 (defun mastodon-profile--make-author-buffer (account)
   "Take a ACCOUNT and inserts a user account into a new buffer."
   (mastodon-profile--make-profile-buffer-for
-   account "statuses" #'mastodon-tl--timeline-pinned))
+   account "statuses" #'mastodon-tl--timeline))
 
 (defun mastodon-profile--open-following ()
   "Open a profile buffer for the current profile showing the accounts
@@ -147,19 +146,27 @@ Returns a list of lists."
                   nil))
                fields "")))
 
+(defun mastodon-profile--get-statuses-pinned (account)
+  "Fetch the pinned toots for ACCOUNT."
+  (let* ((id (mastodon-profile--account-field account 'id))
+         (url (mastodon-http--api (format "accounts/%s/statuses?pinned=true" id))))
+    (mastodon-http--get-json url)))
+
+(defun mastodon-profile--insert-statuses-pinned (pinned-statuses)
+  "Insert each of the PINNED_STATUSES for a given account."
+  (mapc (lambda (pinned-status)
+          (insert (mastodon-tl--set-face
+                   "   :pinned: " 'success))
+          (mastodon-tl--toot pinned-status))
+        pinned-statuses))
+
 (defun mastodon-profile--make-profile-buffer-for (account endpoint-type update-function)
   (let* ((id (mastodon-profile--account-field account 'id))
-         (url (mastodon-http--api (format "accounts/%s/%s"
-                                          id endpoint-type))))
-    (mastodon-http--get-json-async url
-                                   'mastodon-profile--make-profile-buffer-for*
-                                   account endpoint-type update-function)))
-
-(defun mastodon-profile--make-profile-buffer-for* (json account endpoint-type update-function)
-  (let* ((acct (mastodon-profile--account-field account 'acct))
+         (url (mastodon-http--api (format "accounts/%s/%s" id endpoint-type)))
+         (acct (mastodon-profile--account-field account 'acct))
          (buffer (concat "*mastodon-" acct "-" endpoint-type  "*"))
          (note (mastodon-profile--account-field account 'note))
-         (id (mastodon-profile--account-field account 'id))
+         (json (mastodon-http--get-json url))
          (followers-count (mastodon-tl--as-string
                            (mastodon-profile--account-field
                             account 'followers_count)))
@@ -174,7 +181,8 @@ Returns a list of lists."
          (follows-you (cdr (assoc 'followed_by
                                   (aref (mastodon-profile--relationships-get id) 0))))
          (followsp (or (equal follows-you 't) (equal followed-by-you 't)))
-         (fields (mastodon-profile--fields-get account)))
+         (fields (mastodon-profile--fields-get account))
+         (pinned (mastodon-profile--get-statuses-pinned account)))
     (with-output-to-temp-buffer buffer
       (switch-to-buffer buffer)
       (mastodon-mode)
@@ -212,6 +220,7 @@ Returns a list of lists."
                         'success)
                        "\n"))
            "")
+         ;; insert counts
          (mastodon-tl--set-face
           (concat " ------------\n"
                   " TOOTS: " toots-count " | "
@@ -219,6 +228,7 @@ Returns a list of lists."
                   "FOLLOWING: " following-count "\n"
                   " ------------\n\n")
           'success)
+         ;; insert relationship (follows)
          (if followsp
              (mastodon-tl--set-face
               (concat (if (equal follows-you 't)
@@ -228,6 +238,7 @@ Returns a list of lists."
                       "\n\n")
               'success)
            "") ; if no followsp we still need str-or-char-p for insert
+         ;; insert endpoint
          (mastodon-tl--set-face
           (concat " ------------\n"
                   endpoint-name "\n"
@@ -235,6 +246,9 @@ Returns a list of lists."
           'success))
         (setq mastodon-tl--update-point (point))
         (mastodon-media--inline-images (point-min) (point))
+         ;; insert pinned toots first
+        (if pinned
+              (mastodon-profile--insert-statuses-pinned pinned))
         (funcall update-function json)))
     (mastodon-tl--goto-next-toot)))
 

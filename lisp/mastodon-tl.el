@@ -678,25 +678,6 @@ it is `mastodon-tl--byline-boosted'"
   (mapc 'mastodon-tl--toot toots)
   (goto-char (point-min)))
 
-(defun mastodon-tl--timeline-pinned (toots)
-  "Display each toot in TOOTS.
-
-If any toots are pinned, display them first."
-  (let ((pinned-list))
-    (mapc (lambda (toot)
-              (when (equal (cdr (assoc 'pinned toot)) 't)
-                (push toot pinned-list)))
-            toots)
-    (when pinned-list
-      (progn
-        (insert (mastodon-tl--set-face
-                 "   :pinned: " 'success))
-        (mapc 'mastodon-tl--toot pinned-list)
-        (insert (mastodon-tl--set-face
-                 "   :end-pinned: \n" 'success))))
-    (mapc 'mastodon-tl--toot toots)
-    (goto-char (point-min))))
-
 (defun mastodon-tl--get-update-function (&optional buffer)
   "Get the UPDATE-FUNCTION stored in `mastodon-tl--buffer-spec'"
   (mastodon-tl--get-buffer-property 'update-function buffer))
