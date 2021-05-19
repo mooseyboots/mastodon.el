@@ -51,8 +51,8 @@
 (defvar mastodon-notifications--response-alist
   '(("Mentioned" . "you")
     ("Followed" . "you")
-    ("Favourited" . "your status")
-    ("Boosted" . "your status"))
+    ("Favourited" . "your status from")
+    ("Boosted" . "your status from"))
   "Alist of subjects for notification types.")
 
 (defun mastodon-notifications--byline-concat (message)
