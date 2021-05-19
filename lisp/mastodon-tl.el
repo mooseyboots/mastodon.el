@@ -369,7 +369,7 @@ it is `mastodon-tl--byline-boosted'"
      (propertize
       (concat (when boosted
                 (format "(%s) "
-                        (propertize "B" 'face 'mastodon-boost-face)))
+                        (propertize "B" 'face 'mastodon-boost-fave-face)))
               (when faved
                 (format "(%s) "
                         (propertize "F" 'face 'mastodon-boost-fave-face)))
