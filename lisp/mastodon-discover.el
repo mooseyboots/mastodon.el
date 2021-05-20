@@ -50,7 +50,9 @@
                        ("f" "Favourite" mastodon-toot--favourite)
                        ("n" "Next" mastodon-tl--goto-next-toot)
                        ("p" "Prev" mastodon-tl--goto-prev-toot)
-                       ("t" "Toot" mastodon-toot)
+                       ("TAB" "Next link item" mastodon-tl--next-tab-item)
+                       ("S-TAB" "Prev link item" mastodon-tl--previous-tab-item)
+                       ("t" "New toot" mastodon-toot)
                        ("r" "Reply" mastodon-toot--reply)
                        ("u" "Update" mastodon-tl--update)
                        ("P" "Users" mastodon-profile--show-user)
@@ -61,6 +63,15 @@
                        ("H" "Home" mastodon-tl--get-home-timeline)
                        ("L" "Local" mastodon-tl--get-local-timeline)
                        ("N" "Notifications" mastodon-notifications--get))
+                      ("Images"
+                       ("RET/i" "Load full image in browser" 'shr-browse-image)
+                       ("r" "rotate" 'image-rotate)
+                       ("+" "zoom in" 'image-increase-size)
+                       ("-" "zoom out" 'image-decrease-size)
+                       ("u" "copy URL" 'shr-maybe-probe-and-copy-url))
+                      ("Profile view"
+                       ("o" "Show following" mastodon-profile--open-following)
+                       ("O" "Show followers" mastodon-profile--open-followers))
                       ("Quit"
                        ("q" "Quit mastodon buffer. Leave window open." kill-this-buffer)
                        ("Q" "Quit mastodon buffer and kill window." kill-buffer-and-window)))))))

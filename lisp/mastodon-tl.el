@@ -124,6 +124,9 @@ types of mastodon links and not just shr.el-generated ones.")
     ;; version that knows about more types of links.
     (define-key map [remap shr-next-link] 'mastodon-tl--next-tab-item)
     (define-key map [remap shr-previous-link] 'mastodon-tl--previous-tab-item)
+    ;; browse-url loads the preview only, we want browse-image
+    ;; on RET to browse full sized image URL
+    (define-key map [remap shr-browse-url] 'shr-browse-image)
     (keymap-canonicalize map))
   "The keymap to be set for shr.el generated image links.
 
@@ -541,6 +544,7 @@ LINK-TYPE is the type of link to produce."
      'help-echo help-text)))
 
 (defun mastodon-tl--do-link-action-at-point (position)
+  ;; called by RET
   (interactive "d")
   (let ((link-type (get-text-property position 'mastodon-tab-stop)))
     (cond ((eq link-type 'content-warning)
@@ -565,6 +569,7 @@ LINK-TYPE is the type of link to produce."
            (error "unknown link type %s" link-type)))))
 
 (defun mastodon-tl--do-link-action (event)
+  ;; called by mouse click
   (interactive "e")
   (mastodon-tl--do-link-action-at-point (posn-point (event-end event))))
 
@@ -610,17 +615,18 @@ message is a link which unhides/hides the main body."
          (media-string (mapconcat
                         (lambda (media-attachement)
                           (let ((preview-url
-                                 (cdr (assoc 'preview_url media-attachement))))
+                                 (cdr (assoc 'preview_url media-attachement)))
+                                (remote-url
+                                 (cdr (assoc 'remote_url media-attachement))))
                             (if mastodon-tl--display-media-p
                                 (mastodon-media--get-media-link-rendering
-                                 preview-url)
+                                 preview-url remote-url) ; 2nd arg for shr-browse-url
                               (concat "Media::" preview-url "\n"))))
                         media-attachements "")))
     (if (not (and mastodon-tl--display-media-p
                   (equal media-string "")))
         (concat "\n" media-string)
       "")))
-
 
 (defun mastodon-tl--content (toot)
   "Retrieve text content from TOOT."

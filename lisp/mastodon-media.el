@@ -262,14 +262,20 @@ replacing them with the referenced image."
                                  t image-options))
      " ")))
 
-(defun mastodon-media--get-media-link-rendering (media-url)
+(defun mastodon-media--get-media-link-rendering (media-url &optional full-remote-url)
   "Returns the string to be written that renders the image at MEDIA-URL."
   (concat
    (propertize "[img]"
                'media-url media-url
                'media-state 'needs-loading
                'media-type 'media-link
-               'display (create-image mastodon-media--generic-broken-image-data nil t))
+               'display (create-image mastodon-media--generic-broken-image-data nil t)
+               'mouse-face 'highlight
+               'mastodon-tab-stop 'image ; for do-link-action-at-point
+               'image-url full-remote-url ; for shr-browse-image
+               'keymap mastodon-tl--shr-image-map-replacement
+               'help-echo (concat "RET/i: load full image (prefix: copy URL), +/-: zoom, r: rotate, o: save preview")
+               )
    " "))
 
 (provide 'mastodon-media)
