@@ -50,6 +50,8 @@
                        ("c" "Toggle hidden text" mastodon-tl--toggle-spoiler-text-in-toot)
                        ("n" "Next" mastodon-tl--goto-next-toot)
                        ("p" "Prev" mastodon-tl--goto-prev-toot)
+                       ("TAB" "Next link item" mastodon-tl--next-tab-item)
+                       ("S-TAB" "Prev link item" mastodon-tl--previous-tab-item)
                        ("t" "New toot" mastodon-toot)
                        ("r" "Reply" mastodon-toot--reply)
                        ("C" "Copy toot URL" mastodon-tl--copy-toot-url)
@@ -72,6 +74,12 @@
                        ("C-S-M" "Unmute" mastodon-tl--unmute-user)
                        ("B" "Block" mastodon-tl--block-user)
                        ("C-S-B" "Unblock" mastodon-tl--unblock-user))
+                      ("Images"
+                       ("RET/i" "Load full image in browser" 'shr-browse-image)
+                       ("r" "rotate" 'image-rotate)
+                       ("+" "zoom in" 'image-increase-size)
+                       ("-" "zoom out" 'image-decrease-size)
+                       ("u" "copy URL" 'shr-maybe-probe-and-copy-url))
                       ("Profile view"
                        ("o" "Show following" mastodon-profile--open-following)
                        ("O" "Show followers" mastodon-profile--open-followers))
