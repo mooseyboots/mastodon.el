@@ -211,7 +211,8 @@ Returns a list of lists."
          (propertize acct
                      'face 'default)
          "\n ------------\n"
-         (mastodon-tl--render-text note nil)
+         (mastodon-tl--render-text note account)
+                                        ; account here to enable tab-stops in profile note
          (if fields
              (progn
                (concat "\n"
