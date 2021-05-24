@@ -73,6 +73,18 @@ Must be one of \"public\", \"unlisted\", \"private\", or \"direct\"."
 Valid values are \"direct\", \"private\", \"unlisted\", and \"public\".")
 (make-variable-buffer-local 'mastodon-toot--visibility)
 
+(defvar mastodon-toot--media-attachments nil
+  "A flag indicating if the toot being composed has media attachments.")
+(make-variable-buffer-local 'mastodon-toot--media-attachments)
+
+(defvar mastodon-toot--media-attachment-ids nil
+  "A list of any media attachment ids of the toot being composed.")
+(make-variable-buffer-local 'mastodon-toot--media-attachment-ids)
+
+(defvar mastodon-toot--media-attachment-filenames nil
+  "A list of any media attachment filenames of the toot being composed.")
+(make-variable-buffer-local 'mastodon-toot--media-attachment-filenames)
+
 (defvar mastodon-toot--reply-to-id nil
   "Buffer-local variable to hold the id of the toot being replied to.")
 (make-variable-buffer-local 'mastodon-toot--reply-to-id)
@@ -82,8 +94,9 @@ Valid values are \"direct\", \"private\", \"unlisted\", and \"public\".")
     (define-key map (kbd "C-c C-c") #'mastodon-toot--send)
     (define-key map (kbd "C-c C-k") #'mastodon-toot--cancel)
     (define-key map (kbd "C-c C-w") #'mastodon-toot--toggle-warning)
-    ;;(define-key map (kbd "C-c C-n") #'mastodon-toot--toggle-nsfw)
+    (define-key map (kbd "C-c C-n") #'mastodon-toot--toggle-nsfw)
     (define-key map (kbd "C-c C-v") #'mastodon-toot--change-visibility)
+    (define-key map (kbd "C-c C-a") #'mastodon-toot--add-media-attachment)
     map)
   "Keymap for `mastodon-toot'.")
 
@@ -194,28 +207,52 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (setq mastodon-toot--visibility visibility)
   (message "Visibility set to %s" visibility))
 
+(defun mastodon-toot--add-media-attachment ()
+  "Prompt the user for a file and POST it to the media endpoint on the server.
+
+Set `mastodon-toot--media-attachment-ids' to the item's id so it can be attached to the toot."
+  (interactive)
+  (let* ((filename (read-file-name "Choose file to attach to this toot: "))
+         (caption (read-string "Enter a caption: "))
+         (url (concat mastodon-instance-url "/api/v1/media")))
+    (message "Uploading %s..." (file-name-nondirectory filename))
+    (mastodon-http--post-media-attachment url filename caption)
+    (setq mastodon-toot--media-attachments t)))
+
 (defun mastodon-toot--send ()
-  "Kill new-toot buffer/window and POST contents to the Mastodon instance."
+  "Kill new-toot buffer/window and POST contents to the Mastodon instance.
+
+If media items have been uploaded with `mastodon-toot--add-media-attachment', attach them to the toot."
   (interactive)
   (let* ((toot (mastodon-toot--remove-docs))
-         (empty-toot-p (string= "" (mastodon-tl--clean-tabs-and-nl toot)))
+         (empty-toot-p (and (not mastodon-toot--media-attachments)
+                            (string= "" (mastodon-tl--clean-tabs-and-nl toot))))
          (endpoint (mastodon-http--api "statuses"))
          (spoiler (when (and (not empty-toot-p)
                              mastodon-toot--content-warning)
                     (read-string "Warning: ")))
-         (args `(("status" . ,toot)
-                 ("in_reply_to_id" . ,mastodon-toot--reply-to-id)
-                 ("visibility" . ,mastodon-toot--visibility)
-                 ("sensitive" . ,(when mastodon-toot--content-nsfw
-                                   (symbol-name t)))
-                 ("visibility" . ,mastodon-toot--visibility)
-                 ("spoiler_text" . ,spoiler))))
-    (if empty-toot-p
-        (message "Empty toot. Cowardly refusing to post this.")
-      (mastodon-toot--kill)
-      (let ((response (mastodon-http--post endpoint args nil)))
-        (mastodon-http--triage response
-                               (lambda () (message "Toot toot!")))))))
+         (args-no-media `(("status" . ,toot)
+                          ("in_reply_to_id" . ,mastodon-toot--reply-to-id)
+                          ("visibility" . ,mastodon-toot--visibility)
+                          ("sensitive" . ,(when mastodon-toot--content-nsfw
+                                            (symbol-name t)))
+                          ("spoiler_text" . ,spoiler)))
+         (args-media
+          (when mastodon-toot--media-attachments
+              (mapcar
+               (lambda (id)
+                 (cons "media_ids[]" id))
+               mastodon-toot--media-attachment-ids)))
+         (args (append args-no-media args-media)))
+    (if (and mastodon-toot--media-attachments
+             (equal mastodon-toot--media-attachment-ids nil))
+        (message "Looks like your uploads are not yet ready...")
+      (if empty-toot-p
+          (message "Empty toot. Cowardly refusing to post this.")
+        (mastodon-toot--kill)
+        (let ((response (mastodon-http--post endpoint args nil)))
+          (mastodon-http--triage response
+                                 (lambda () (message "Toot toot!"))))))))
 
 (defun mastodon-toot--process-local (acct)
   "Adds domain to local ACCT and replaces the curent user name with \"\".
@@ -359,11 +396,14 @@ warning flags etc."
        (propertize "Visibility"
                    'toot-post-visibility t)
        " ⋅ "
+       (propertize "Attachment"
+                   'toot-attachment t)
+       " ⋅ "
        (propertize "CW"
                    'toot-post-cw-flag t)
-       ;; " "
-       ;; (propertize "NSFW"
-       ;;             'toot-post-nsfw-flag t)
+       " "
+       (propertize "NSFW"
+                   'toot-post-nsfw-flag t)
        "\n"
        divider
        (propertize "\n"
@@ -388,22 +428,30 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
                                                         (point-min)))
         (visibility-region (mastodon-tl--find-property-range
                             'toot-post-visibility (point-min)))
-        ;; (nsfw-region (mastodon-tl--find-property-range 'toot-post-nsfw-flag
-        ;;                                                (point-min)))
+        (nsfw-region (mastodon-tl--find-property-range 'toot-post-nsfw-flag
+                                                       (point-min)))
         (cw-region (mastodon-tl--find-property-range 'toot-post-cw-flag
                                                      (point-min)))
+        (attachment-region (mastodon-tl--find-property-range
+                            'toot-attachment (point-min)))
         )
     (add-text-properties (car count-region) (cdr count-region)
                          (list 'display
-                               (format "%s characters in message"
+                               (format "%s characters"
                                        (- (point-max) (cdr header-region)))))
     (add-text-properties (car visibility-region) (cdr visibility-region)
                          (list 'display
                                (format "Visibility: %s"
                                        mastodon-toot--visibility)))
-    ;; (add-text-properties (car nsfw-region) (cdr nsfw-region)
-    ;;                      (list 'invisible (not mastodon-toot--content-nsfw)
-    ;;                            'face 'mastodon-cw-face))
+    (add-text-properties (car attachment-region) (cdr attachment-region)
+                         (list 'display
+                               (format "Attached: %s"
+                                       (mapconcat 'identity
+                                        mastodon-toot--media-attachment-filenames
+                                        ", "))))
+    (add-text-properties (car nsfw-region) (cdr nsfw-region)
+                         (list 'invisible (not mastodon-toot--content-nsfw)
+                               'face 'mastodon-cw-face))
     (add-text-properties (car cw-region) (cdr cw-region)
                          (list 'invisible (not mastodon-toot--content-warning)
                                'face 'mastodon-cw-face))))

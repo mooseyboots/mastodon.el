@@ -30,6 +30,7 @@
 ;;; Code:
 
 (require 'json)
+(require 'request) ; for attachments upload
 (defvar mastodon-instance-url)
 (autoload 'mastodon-auth--access-token "mastodon-auth")
 
@@ -154,6 +155,7 @@ Pass response buffer to CALLBACK function with args CBARGS."
 
 Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
   (let ((url-request-method "POST")
+        (request-timeout 5)
         (url-request-data
          (when args
            (mapconcat (lambda (arg)
@@ -167,6 +169,46 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
 	             headers)))
     (with-temp-buffer
       (url-retrieve url callback cbargs mastodon-http--timeout))))
+
+;; TODO: test for curl first?
+(defun mastodon-http--post-media-attachment (url filename caption)
+  "Make a POST request to upload file FILENAME with CAPTION to the server's media URL.
+
+The upload is asynchronous. On succeeding, `mastodon-toot--media-attachment-ids' is set to the id(s) of the item uploaded, `mastodon-toot--media-attachments' is set to t, and `mastodon-toot--update-status-fields' is run."
+  (let* ((file (file-name-nondirectory filename))
+         (request-backend 'curl)
+         (response
+          (request
+            url
+            :type "POST"
+            :params `(("description" . ,caption))
+            :files `(("file" . (,file :file ,filename
+                                      :mime-type "multipart/form-data")))
+            :parser 'json-read
+            :headers `(("Authorization" . ,(concat "Bearer "
+                                                   (mastodon-auth--access-token))))
+            :sync nil
+            :success (cl-function
+                      (lambda (&key data &allow-other-keys)
+                        (when data
+                          (progn
+                            (push (cdr (assoc 'id data))
+                                  mastodon-toot--media-attachment-ids) ; add ID to list
+                            (push file mastodon-toot--media-attachment-filenames)
+                            (message "%s file %s with id %S and caption '%s' uploaded!"
+                                     (capitalize (cdr (assoc 'type data)))
+                                     file
+                                     (cdr (assoc 'id data))
+                                     (cdr (assoc 'description data)))
+                            (mastodon-toot--update-status-fields)))))
+            :error (cl-function
+                    (lambda (&key error-thrown &allow-other-keys)
+                      (message "Got error: %s" error-thrown)))
+            )))
+    (pcase (request-response-status-code response)
+      (200
+       (request-response-data response)
+       ))))
 
 (provide 'mastodon-http)
 ;;; mastodon-http.el ends here
