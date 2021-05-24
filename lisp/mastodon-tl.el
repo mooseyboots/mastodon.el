@@ -347,7 +347,7 @@ TIMESTAMP is assumed to be in the past."
           (time-add timestamp (seconds-to-time (cdr relative-result))))))
 
 (defun mastodon-tl--relative-time-description (timestamp &optional current-time)
-  "Returns a string with a human readable description of TIMESTMAP relative to the current time.
+  "Returns a string with a human readable description of TIMESTAMP relative to the current time.
 
 Use the optional CURRENT-TIME as the current time (only used for
 reliable testing).
@@ -646,7 +646,7 @@ message is a link which unhides/hides the main body."
      (mastodon-tl--media toot))))
 
 (defun mastodon-tl--insert-status (toot body author-byline action-byline)
-  "Display the content and byline of a timeline element.
+  "Display the content and byline of timeline element TOOT.
 
 BODY will form the section of the toot above the byline.
 AUTHOR-BYLINE is an optional function for adding the author portion of
@@ -794,7 +794,7 @@ webapp"
                                    'mastodon-tl--thread* id toot buffer)))
 
 (defun mastodon-tl--thread* (context id toot buffer)
-  (interactive)
+  ;; (interactive)
     (when (member (cdr (assoc 'type toot)) '("reblog" "favourite"))
       (setq toot (cdr (assoc 'status toot))))
     (if (> (+ (length (cdr (assoc 'ancestors context)))
@@ -823,7 +823,7 @@ webapp"
                   (cdr (assoc 'url (cdr (assoc 'reblog toot))))
                 (cdr (assoc 'url toot)))))
     (kill-new url)
-    (message "Toot copied to the clipboard.")))
+    (message "Toot URL copied to the clipboard.")))
 
 (defun mastodon-tl--delete-toot ()
   "Delete user's toot at point synchronously."
@@ -995,7 +995,7 @@ webapp"
         (goto-char point-before)))))
 
 (defun mastodon-tl--find-property-range (property start-point &optional search-backwards)
-  " Returns `nil` if no such range is found.
+  "Returns `nil` if no such range is found.
 
 If PROPERTY is set at START-POINT returns a range around
 START-POINT otherwise before/after START-POINT.
