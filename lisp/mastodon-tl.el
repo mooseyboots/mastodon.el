@@ -794,7 +794,6 @@ webapp"
                                    'mastodon-tl--thread* id toot buffer)))
 
 (defun mastodon-tl--thread* (context id toot buffer)
-  ;; (interactive)
     (when (member (cdr (assoc 'type toot)) '("reblog" "favourite"))
       (setq toot (cdr (assoc 'status toot))))
     (if (> (+ (length (cdr (assoc 'ancestors context)))
@@ -825,17 +824,61 @@ webapp"
     (kill-new url)
     (message "Toot URL copied to the clipboard.")))
 
+;; TODO redraw buffer on success?
 (defun mastodon-tl--delete-toot ()
   "Delete user's toot at point synchronously."
   (interactive)
-  (let* ((id (mastodon-tl--as-string (mastodon-tl--toot-id
-                                      (mastodon-tl--property 'toot-json))))
+  (let* ((toot (mastodon-tl--property 'toot-json))
+         (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
          (url (mastodon-http--api (format "statuses/%s" id))))
-    (when (y-or-n-p (format "Delete this toot? "))
-      (let ((response (mastodon-http--delete url)))
-        (mastodon-http--triage response
-                               (lambda ()
-                                 (message "Toot deleted! There may be a delay before it disappears from your profile.")))))))
+    (if (or (cdr (assoc 'reblog toot))
+            (not (equal (cdr (assoc 'acct
+                                    (cdr (assoc 'account toot))))
+                        (mastodon-auth--user-acct))))
+        (message "You can only delete your own toots.")
+      (if (y-or-n-p (format "Delete this toot? "))
+          (let ((response (mastodon-http--delete url)))
+            (mastodon-http--triage response
+                                   (lambda ()
+                                     (message "Toot deleted!"))))))))
+
+;; TODO: rewrite pin/unpin as toggle functions
+(defun mastodon-tl--pin-toot ()
+  "Pin user's toot at point synchronously."
+  (interactive)
+  (let* ((toot (mastodon-tl--property 'toot-json))
+         (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
+         (url (mastodon-http--api (format "statuses/%s/pin" id)))
+         (pinnable-p (and
+                      (not (cdr (assoc 'reblog toot)))
+                      (equal (cdr (assoc 'acct
+                                         (cdr (assoc 'account toot))))
+                             (mastodon-auth--user-acct))))
+         (pinned-p (equal (cdr (assoc 'pinned toot)) t)))
+    (if (not pinnable-p)
+        (message "You can only pin your own toots.")
+      (if pinned-p
+          (message "Looks like toot is already pinned.")
+        (if (y-or-n-p (format "Pin this toot to your profile? "))
+            (let ((response (mastodon-http--post url nil nil)))
+              (mastodon-http--triage response
+                                     (lambda ()
+                                       (message "Toot pinned!")))))))))
+
+(defun mastodon-tl--unpin-toot ()
+  "Unpin user's toot at point synchronously."
+  (interactive)
+  (let* ((toot (mastodon-tl--property 'toot-json))
+         (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
+         (url (mastodon-http--api (format "statuses/%s/unpin" id)))
+         (pinned-p (equal (cdr (assoc 'pinned toot)) t)))
+    (if (not pinned-p)
+        (message "No pinned toot to unpin here.")
+      (if (y-or-n-p (format "Unpin this toot? "))
+          (let ((response (mastodon-http--post url nil nil)))
+            (mastodon-http--triage response
+                                   (lambda ()
+                                     (message "Toot unpinned!"))))))))
 
 (defun mastodon-tl--follow-user (user-handle)
   "Query for USER-HANDLE from current status and follow that user."

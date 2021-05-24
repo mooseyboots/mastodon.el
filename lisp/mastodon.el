@@ -128,6 +128,8 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map (kbd "C-S-P") #'mastodon-profile--my-profile)
     (define-key map (kbd "S") #'mastodon-search--search-query)
     (define-key map (kbd "C") #'mastodon-tl--copy-toot-url)
+    (define-key map (kbd "i") #'mastodon-tl--pin-toot)
+    (define-key map (kbd "I") #'mastodon-tl--unpin-toot)
     map)
 
   "Keymap for `mastodon-mode'.")
