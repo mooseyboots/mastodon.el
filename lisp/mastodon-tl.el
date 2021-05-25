@@ -47,6 +47,7 @@
 (autoload 'mastodon-profile--account-field "mastodon-profile.el")
 (autoload 'mastodon-profile--extract-users-handles "mastodon-profile.el")
 (autoload 'mastodon-profile--my-profile "mastodon-profile.el")
+(autoload 'mastodon-toot--delete-toot "mastodon-toot")
 
 (defvar mastodon-instance-url)
 (defvar mastodon-toot-timestamp-format)
@@ -640,8 +641,11 @@ message is a link which unhides/hides the main body."
 
 (defun mastodon-tl--content (toot)
   "Retrieve text content from TOOT."
-  (let ((content (mastodon-tl--field 'content toot)))
+  (let ((content (mastodon-tl--field 'content toot))
+        (poll-p (cdr (assoc 'poll toot))))
     (concat
+     (when poll-p
+       (mastodon-tl--get-poll toot))
      (mastodon-tl--render-text content toot)
      (mastodon-tl--media toot))))
 
@@ -667,6 +671,18 @@ it is `mastodon-tl--byline-boosted'"
      "\n")
     (when mastodon-tl--display-media-p
       (mastodon-media--inline-images start-pos (point)))))
+
+(defun mastodon-tl--get-poll (toot)
+  "If post TOOT is a poll, return a formatted string of poll."
+  (let* ((poll (mastodon-tl--field 'poll toot))
+         (options (mastodon-tl--field 'options poll)))
+    (concat "Poll: \n\n"
+            (mapconcat (lambda (option)
+                         (format "Option: %s, %s votes.\n"
+                                 (cdr (assoc 'title option))
+                                 (cdr (assoc 'votes_count option))))
+                       options
+                       "\n") "\n")))
 
 (defun mastodon-tl--toot (toot)
   "Formats TOOT and insertes it into the buffer."
