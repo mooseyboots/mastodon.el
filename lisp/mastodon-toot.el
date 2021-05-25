@@ -35,6 +35,7 @@
 (autoload 'mastodon-http--api "mastodon-http")
 (autoload 'mastodon-http--post "mastodon-http")
 (autoload 'mastodon-http--triage "mastodon-http")
+(autoload 'mastodon-http--delete "mastodon-http")
 (autoload 'mastodon-tl--as-string "mastodon-tl")
 (autoload 'mastodon-tl--clean-tabs-and-nl "mastodon-tl")
 (autoload 'mastodon-tl--field "mastodon-tl")
@@ -181,6 +182,56 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
                                     "F" byline-region remove))
                                  (message (format "%s #%s" action id))))
       (message "Nothing to favorite here?!?"))))
+
+(defun mastodon-toot--pin-toot-toggle ()
+  "Pin or unpin user's toot at point."
+  (interactive)
+  (let* ((toot (mastodon-tl--property 'toot-json))
+         (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
+         (url (mastodon-http--api (format "statuses/%s/pin" id)))
+         (pinnable-p (and
+                      (not (cdr (assoc 'reblog toot)))
+                      (equal (cdr (assoc 'acct
+                                         (cdr (assoc 'account toot))))
+                             (mastodon-auth--user-acct))))
+         (pinned-p (equal (cdr (assoc 'pinned toot)) t))
+         (action (if pinned-p "unpin" "pin"))
+         (msg (if pinned-p "unpinned" "pinned"))
+         (msg-y-or-n (if pinned-p "Unpin" "Pin")))
+    (if (not pinnable-p)
+        (message "You can only pin your own toots.")
+      (if (y-or-n-p (format "%s this toot? " msg-y-or-n))
+          (mastodon-toot--action action
+                                 (lambda ()
+                                   (message "Toot %s!" msg)))))))
+
+(defun mastodon-toot--copy-toot-url ()
+  "Copy URL of toot at point."
+  (interactive)
+  (let* ((toot (mastodon-tl--property 'toot-json))
+         (url (if (mastodon-tl--field 'reblog toot)
+                  (cdr (assoc 'url (cdr (assoc 'reblog toot))))
+                (cdr (assoc 'url toot)))))
+    (kill-new url)
+    (message "Toot URL copied to the clipboard.")))
+
+;; TODO redraw buffer on success?
+(defun mastodon-toot--delete-toot ()
+  "Delete user's toot at point synchronously."
+  (interactive)
+  (let* ((toot (mastodon-tl--property 'toot-json))
+         (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
+         (url (mastodon-http--api (format "statuses/%s" id))))
+    (if (or (cdr (assoc 'reblog toot))
+            (not (equal (cdr (assoc 'acct
+                                    (cdr (assoc 'account toot))))
+                        (mastodon-auth--user-acct))))
+        (message "You can only delete your own toots.")
+      (if (y-or-n-p (format "Delete this toot? "))
+          (let ((response (mastodon-http--delete url)))
+            (mastodon-http--triage response
+                                   (lambda ()
+                                     (message "Toot deleted!"))))))))
 
 (defun mastodon-toot--kill ()
   "Kill `mastodon-toot-mode' buffer and window."

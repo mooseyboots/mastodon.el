@@ -54,8 +54,9 @@
                        ("S-TAB" "Prev link item" mastodon-tl--previous-tab-item)
                        ("t" "New toot" mastodon-toot)
                        ("r" "Reply" mastodon-toot--reply)
-                       ("C" "Copy toot URL" mastodon-tl--copy-toot-url)
-                       ("d" "Delete (your) toot" mastodon-tl--delete-toot)
+                       ("C" "Copy toot URL" mastodon-toot--copy-toot-url)
+                       ("d" "Delete (your) toot" mastodon-toot--delete-toot)
+                       ("i" "Pin/Unpin (your) toot" mastodon-toot--pin-toot-toggle)
                        ("P" "View user profile" mastodon-profile--show-user)
                        ("T" "View thread" mastodon-tl--thread))
                       ("Timelines"

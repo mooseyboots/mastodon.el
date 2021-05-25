@@ -57,12 +57,13 @@
 (autoload 'mastodon-tl--unblock-user "mastodon-tl")
 (autoload 'mastodon-tl--mute-user "mastodon-tl")
 (autoload 'mastodon-tl--unmute-user "mastodon-tl")
-(autoload 'mastodon-tl--delete-toot "mastodon-tl")
 (autoload 'mastodon-tl--follow-user "mastodon-tl")
 (autoload 'mastodon-tl--unfollow-user "mastodon-tl")
 (autoload 'mastodon-profile--my-profile "mastodon-profile")
 (autoload 'mastodon-search--search-query "mastodon-search")
-(autoload 'mastodon-tl--copy-toot-url "mastodon-tl")
+(autoload 'mastodon-toot--delete-toot "mastodon-toot")
+(autoload 'mastodon-toot--copy-toot-url "mastodon-toot")
+(autoload 'mastodon-toot--pin-toot-toggle "mastodon-toot")
 (autoload 'mastodon-auth--get-account-name "mastodon-auth")
 
 (defgroup mastodon nil
@@ -118,7 +119,6 @@ Use. e.g. \"%c\" for your locale's date and time format."
     ;; override special mode binding
     (define-key map (kbd "g") #'undefined)
     ;; mousebot additions
-    (define-key map (kbd "d") #'mastodon-tl--delete-toot)
     (define-key map (kbd "W") #'mastodon-tl--follow-user)
     (define-key map (kbd "C-S-W") #'mastodon-tl--unfollow-user)
     (define-key map (kbd "B") #'mastodon-tl--block-user)
@@ -127,9 +127,9 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map (kbd "C-S-M") #'mastodon-tl--unmute-user)
     (define-key map (kbd "C-S-P") #'mastodon-profile--my-profile)
     (define-key map (kbd "S") #'mastodon-search--search-query)
-    (define-key map (kbd "C") #'mastodon-tl--copy-toot-url)
-    (define-key map (kbd "i") #'mastodon-tl--pin-toot)
-    (define-key map (kbd "I") #'mastodon-tl--unpin-toot)
+    (define-key map (kbd "d") #'mastodon-toot--delete-toot)
+    (define-key map (kbd "C") #'mastodon-toot--copy-toot-url)
+    (define-key map (kbd "i") #'mastodon-toot--pin-toot-toggle)
     map)
 
   "Keymap for `mastodon-mode'.")
