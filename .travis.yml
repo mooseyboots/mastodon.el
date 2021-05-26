@@ -1,18 +1,26 @@
-language: emacs-lisp
-sudo: false
+language: emacs-elisp
+root: false
 before_install:
   - curl -fsSkL https://gist.github.com/rejeep/ebcd57c3af83b049833b/raw > x.sh && source ./x.sh
   - evm install $EVM_EMACS --use --skip
   - cask install
+  
 env:
-  # - EVM_EMACS=emacs-24.5-travis
-  - EVM_EMACS=emacs-25.1-travis
+  global:
+    - CURL="curl -fsSkL --retry 9 --retry-delay 9"
+  matrix:
+    - EMACS_VERSION=25.3
+    - EMACS_VERSION=26.1
+    - EMACS_VERSION=27.1
+    - EMACS_VERSION=master
+    
 script:
   - emacs --version
   - cask build
   - cask clean-elc
   - cask exec ert-runner -l test/ert-helper.el test/*-tests.el
   - cask emacs --batch -Q -l package-lint.el -f package-lint-batch-and-exit lisp/*.el
+  
 notifications:
     webhooks:
         urls:
