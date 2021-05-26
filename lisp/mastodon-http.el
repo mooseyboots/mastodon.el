@@ -212,7 +212,7 @@ The upload is asynchronous. On succeeding, `mastodon-toot--media-attachment-ids'
        (error "Unauthorized: The access token is invalid."))
       (422
        (error "Unprocessable entity: file or file type is unsupported or invalid."))
-      (_ (error "Shit went south.")))
+      (_ (error "Shit went south.")))))
 
 (provide 'mastodon-http)
 ;;; mastodon-http.el ends here
