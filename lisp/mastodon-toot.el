@@ -44,6 +44,8 @@
 (autoload 'mastodon-tl--property "mastodon-tl")
 (autoload 'mastodon-tl--find-property-range "mastodon-tl")
 (autoload 'mastodon-toot "mastodon")
+(autoload 'mastodon-http--post-media-attachment "mastodon-http")
+(autoload 'mastodon-tl--toot-id "mastodon-tl")
 
 (defgroup mastodon-toot nil
   "Tooting in Mastodon."
@@ -187,8 +189,6 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   "Pin or unpin user's toot at point."
   (interactive)
   (let* ((toot (mastodon-tl--property 'toot-json))
-         (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
-         (url (mastodon-http--api (format "statuses/%s/pin" id)))
          (pinnable-p (and
                       (not (cdr (assoc 'reblog toot)))
                       (equal (cdr (assoc 'acct
@@ -249,7 +249,7 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
     (buffer-substring (cdr header-region) (point-max))))
 
 (defun mastodon-toot--set-visibility (visibility)
-  "Sets the visiblity of the next toot"
+  "Sets the visiblity of the next toot to VISIBILITY."
   (interactive
    (list (completing-read "Visiblity: " '("public"
                                           "unlisted"

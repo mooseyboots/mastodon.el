@@ -31,6 +31,7 @@
 
 (require 'json)
 (require 'request) ; for attachments upload
+
 (defvar mastodon-instance-url)
 (autoload 'mastodon-auth--access-token "mastodon-auth")
 
@@ -209,10 +210,10 @@ The upload is asynchronous. On succeeding, `mastodon-toot--media-attachment-ids'
       (200
        (request-response-data response))
       (401
-       (error "Unauthorized: The access token is invalid."))
+       (error "Unauthorized: The access token is invalid"))
       (422
-       (error "Unprocessable entity: file or file type is unsupported or invalid."))
-      (_ (error "Shit went south.")))))
+       (error "Unprocessable entity: file or file type is unsupported or invalid"))
+      (_ (error "Shit went south")))))
 
 (provide 'mastodon-http)
 ;;; mastodon-http.el ends here

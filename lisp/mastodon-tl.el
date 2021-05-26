@@ -48,6 +48,10 @@
 (autoload 'mastodon-profile--extract-users-handles "mastodon-profile.el")
 (autoload 'mastodon-profile--my-profile "mastodon-profile.el")
 (autoload 'mastodon-toot--delete-toot "mastodon-toot")
+(autoload 'mastodon-http--post "mastodon-http")
+(autoload 'mastodon-http--triage "mastodon-http")
+(autoload 'mastodon-http--get-json-async "mastodon-http")
+(autoload 'mastodon-profile--lookup-account-in-status "mastodon-profile")
 
 (defvar mastodon-instance-url)
 (defvar mastodon-toot-timestamp-format)

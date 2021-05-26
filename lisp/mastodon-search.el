@@ -39,6 +39,8 @@
 (autoload 'mastodon-auth--access-token "mastodon-auth")
 
 (defvar mastodon-instance-url)
+(defvar mastodon-tl--link-keymap)
+
 (defconst mastodon-http--timeout 5)
 
 (defun mastodon-search--search-query (query)
