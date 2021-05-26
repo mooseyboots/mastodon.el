@@ -367,7 +367,6 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
 
 (defun mastodon-toot--toggle-nsfw ()
   "Toggle `mastodon-toot--content-nsfw'."
-  ;; This only makes sense once we have attachments.
   (interactive)
   (setq mastodon-toot--content-nsfw
         (not mastodon-toot--content-nsfw))
@@ -417,7 +416,7 @@ e.g. mastodon-toot--send -> Send."
     (format "\t%s - %s" key command)))
 
 (defun mastodon-toot--format-kbinds (kbinds)
-  "Format a list keybindings, KBINDS, for display in documentation."
+  "Format a list of keybindings, KBINDS, for display in documentation."
   (mapconcat 'identity (cons "" (mapcar #'mastodon-toot--format-kbind kbinds))
                "\n"))
 

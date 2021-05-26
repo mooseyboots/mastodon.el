@@ -207,8 +207,12 @@ The upload is asynchronous. On succeeding, `mastodon-toot--media-attachment-ids'
             )))
     (pcase (request-response-status-code response)
       (200
-       (request-response-data response)
-       ))))
+       (request-response-data response))
+      (401
+       (error "Unauthorized: The access token is invalid."))
+      (422
+       (error "Unprocessable entity: file or file type is unsupported or invalid."))
+      (_ (error "Shit went south.")))
 
 (provide 'mastodon-http)
 ;;; mastodon-http.el ends here
