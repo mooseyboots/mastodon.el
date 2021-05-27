@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
 ;; Version: 0.9.0
-;; Package-Requires: ((emacs "24.4"))
+;; Package-Requires: ((emacs "24.4") (request "0.2.0"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -33,7 +33,12 @@
 (require 'request) ; for attachments upload
 
 (defvar mastodon-instance-url)
+(defvar mastodon-toot--media-attachment-ids)
+(defvar mastodon-toot--media-attachment-filenames)
+
 (autoload 'mastodon-auth--access-token "mastodon-auth")
+(autoload 'mastodon-toot--update-status-fields "mastodon-toot")
+
 
 (defvar mastodon-http--api-version "v1")
 
@@ -132,6 +137,37 @@ Pass response buffer to CALLBACK function."
     (kill-buffer)
     (json-read-from-string json-string)))
 
+;; http functions for search:
+(defun mastodon-http--process-json-search ()
+  "Process JSON returned by a search query to the server."
+  (goto-char (point-min))
+  (re-search-forward "^$" nil 'move)
+  (let ((json-string
+         (decode-coding-string
+          (buffer-substring-no-properties (point) (point-max))
+          'utf-8)))
+    (kill-buffer)
+    (json-read-from-string json-string)))
+
+(defun mastodon-http--get-search-json (url query)
+  "Make GET request to URL, searching for QUERY and return JSON response."
+  (let ((buffer (mastodon-http--get-search url query)))
+    (with-current-buffer buffer
+      (mastodon-http--process-json-search))))
+
+(defun mastodon-http--get-search (base-url query)
+  "Make GET request to BASE-URL, searching for QUERY.
+
+Pass response buffer to CALLBACK function."
+  (let ((url-request-method "GET")
+        (url (concat base-url "?q=" (url-hexify-string query)))
+        (url-request-extra-headers
+         `(("Authorization" . ,(concat "Bearer "
+                                       (mastodon-auth--access-token))))))
+    (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
+        (url-retrieve-synchronously url)
+      (url-retrieve-synchronously url nil nil mastodon-http--timeout))))
+
  ;; Asynchronous functions
 
 (defun mastodon-http--get-async (url &optional callback &rest cbargs)
@@ -173,7 +209,7 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
 
 ;; TODO: test for curl first?
 (defun mastodon-http--post-media-attachment (url filename caption)
-  "Make a POST request to upload file FILENAME with CAPTION to the server's media URL.
+  "Make POST request to upload FILENAME with CAPTION to the server's media URL.
 
 The upload is asynchronous. On succeeding, `mastodon-toot--media-attachment-ids' is set to the id(s) of the item uploaded, `mastodon-toot--media-attachments' is set to t, and `mastodon-toot--update-status-fields' is run."
   (let* ((file (file-name-nondirectory filename))
@@ -204,8 +240,7 @@ The upload is asynchronous. On succeeding, `mastodon-toot--media-attachment-ids'
                             (mastodon-toot--update-status-fields)))))
             :error (cl-function
                     (lambda (&key error-thrown &allow-other-keys)
-                      (message "Got error: %s" error-thrown)))
-            )))
+                      (message "Got error: %s" error-thrown))))))
     (pcase (request-response-status-code response)
       (200
        (request-response-data response))

@@ -1,4 +1,4 @@
-;;; mastodon-search.el --- search functions for mastodon.el  -*- lexical-binding: t -*-
+;;; mastodon-search.el --- Search functions for mastodon.el  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>, martyhiatt <mousebot@riseup.net>
@@ -37,6 +37,7 @@
 (autoload 'mastodon-tl--render-text "mastodon-tl")
 (autoload 'mastodon-tl--as-string "mastodon-tl")
 (autoload 'mastodon-auth--access-token "mastodon-auth")
+(autoload 'mastodon-http--get-search-json "mastodon-http")
 
 (defvar mastodon-instance-url)
 (defvar mastodon-tl--link-keymap)
@@ -142,37 +143,6 @@ This allows us to access the full account etc. details and to render them proper
   (let* ((url (concat mastodon-instance-url "/api/v1/statuses/" (mastodon-tl--as-string id)))
         (json (mastodon-http--get-json url)))
     json))
-
-;; http functions for search:
-(defun mastodon-http--process-json-search ()
-  "Process JSON returned by a search query to the server."
-  (goto-char (point-min))
-  (re-search-forward "^$" nil 'move)
-  (let ((json-string
-         (decode-coding-string
-          (buffer-substring-no-properties (point) (point-max))
-          'utf-8)))
-    (kill-buffer)
-    (json-read-from-string json-string)))
-
-(defun mastodon-http--get-search-json (url query)
-  "Make GET request to URL, searching for QUERY and return JSON response."
-  (let ((buffer (mastodon-http--get-search url query)))
-    (with-current-buffer buffer
-      (mastodon-http--process-json-search))))
-
-(defun mastodon-http--get-search (base-url query)
-  "Make GET request to BASE-URL, searching for QUERY.
-
-Pass response buffer to CALLBACK function."
-  (let ((url-request-method "GET")
-        (url (concat base-url "?q=" (url-hexify-string query)))
-        (url-request-extra-headers
-         `(("Authorization" . ,(concat "Bearer "
-                                       (mastodon-auth--access-token))))))
-    (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
-        (url-retrieve-synchronously url)
-      (url-retrieve-synchronously url nil nil mastodon-http--timeout))))
 
 (provide 'mastodon-search)
 ;;; mastodon-search.el ends here

@@ -4,6 +4,8 @@
 (package-file "lisp/mastodon.el")
 (files "lisp/*.el")
 
+(depends-on "seq")
+
 (development
  (depends-on "ert-runner")
  (depends-on "el-mock")
