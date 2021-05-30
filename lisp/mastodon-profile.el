@@ -249,8 +249,8 @@ Returns a list of lists."
         (setq mastodon-tl--update-point (point))
         (mastodon-media--inline-images (point-min) (point))
          ;; insert pinned toots first
-        (if pinned
-              (mastodon-profile--insert-statuses-pinned pinned))
+        (if (and pinned (equal endpoint-type "statuses"))
+            (mastodon-profile--insert-statuses-pinned pinned))
         (funcall update-function json)))
     (mastodon-tl--goto-next-toot)))
 
