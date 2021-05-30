@@ -101,7 +101,7 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
         (url-retrieve-synchronously url nil nil mastodon-http--timeout)))))
 
 (defun mastodon-http--get (url)
-  "Make GET request to URL.
+  "Make synchronous GET request to URL.
 
 Pass response buffer to CALLBACK function."
   (let ((url-request-method "GET")
@@ -112,17 +112,8 @@ Pass response buffer to CALLBACK function."
         (url-retrieve-synchronously url)
       (url-retrieve-synchronously url nil nil mastodon-http--timeout))))
 
-(defun mastodon-http--delete (url)
-  "Make DELETE request to URL."
-  (let ((url-request-method "DELETE")
-        (url-request-extra-headers
-         `(("Authorization" . ,(concat "Bearer "
-                                       (mastodon-auth--access-token))))))
-    (with-temp-buffer
-      (url-retrieve-synchronously url))))
-
 (defun mastodon-http--get-json (url)
-  "Make GET request to URL. Return JSON response."
+  "Make synchronous GET request to URL. Return JSON response."
   (with-current-buffer (mastodon-http--get url)
     (mastodon-http--process-json)))
 
@@ -136,6 +127,15 @@ Pass response buffer to CALLBACK function."
           'utf-8)))
     (kill-buffer)
     (json-read-from-string json-string)))
+
+(defun mastodon-http--delete (url)
+  "Make DELETE request to URL."
+  (let ((url-request-method "DELETE")
+        (url-request-extra-headers
+         `(("Authorization" . ,(concat "Bearer "
+                                       (mastodon-auth--access-token))))))
+    (with-temp-buffer
+      (url-retrieve-synchronously url))))
 
 ;; http functions for search:
 (defun mastodon-http--process-json-search ()
