@@ -1,15 +1,37 @@
-* mastodon.el
+* mastodon.el fork
 
-[[https://melpa.org/#/mastodon][file:https://melpa.org/packages/mastodon-badge.svg]]
+This is a fork of of the great but seemingly dormant https://github.com/jdenen/mastodon.el.
 
-[[https://travis-ci.org/jdenen/mastodon.el][https://travis-ci.org/jdenen/mastodon.el.svg?branch=master]]
-[[http://waffle.io/jdenen/mastodon.el][https://badge.waffle.io/jdenen/mastodon.el.png?label=in%20progress&title=In%20Progress]]
+It adds the following features:
 
-Emacs client for [[https://github.com/tootsuite/mastodon][Mastodon]]
+|                   | display profile metadata fields                                |
+| =i=                 | (un)pin toots, display pinned toots on profiles,               |
+|                   | display relationship (follows you/followed by you) on profiles |
+|                   | links and tags in profiles are tab stops like in posts         |
+| =S=                 | search (posts, users, tags) (improved!)                        |
+| =C-c C-a= (=C-c C-n=) | media uploads (including sensitive/nsfw flag)                  |
+| =RET=               | images are links to the full-sized image, can be zoomed        |
+|                   | mention booster in replies by default                          |
+| =W=, =M=, =B=           | (un)follow, (un)mute, (un)block users                          |
+| =R=, =a=, =r=           | view/accept/reject follow requests                             |
+| =v=                 | view your favorited toots                                      |
+| =S-M-P=             | jump to your profile                                           |
+| =C=                 | copy toot url                                                  |
+| =d=                 | delete your toot                                               |
 
-[[http://spacemacs.org][https://cdn.rawgit.com/syl20bnr/spacemacs/442d025779da2f62fc86c2082703697714db6514/assets/spacemacs-badge.svg]]
+It also makes some small cosmetic changes to make timelines easier to read, and makes some functions asynchronous, based on https://github.com/ieure/mastodon.el.
 
-** Installation
+This updated version is not on MELPA, to use it you need to clone and require it as per the installation instructions below.
+
+I did this for my own use and to learn more Elisp. If the code is terrible, feel free to improve or replace it.
+
+** bugs
+
+As it stands the client still has some bugs. In particular, when composing a toot, you may have to hit =C-g= before sending your toot. You may also see a related error when you try to add a media attachment. You should be able to run the command again and it should work. See the issues on the original repo.
+
+** Original README
+
+*** Installation
 
 Clone this repository and add the lisp directory to your load path.
 Then, require it and go.
@@ -26,7 +48,7 @@ Or, with =use-package=:
     :ensure t)
 #+END_SRC
 
-*** MELPA
+**** MELPA
 
 Add =MELPA= to your archives:
 
@@ -42,12 +64,12 @@ Update and install:
 
 =M-x package-install RET mastodon RET=
 
-*** Emoji
+**** Emoji
 
 =mastodon-mode= will enable [[https://github.com/iqbalansari/emacs-emojify][Emojify]] if it is loaded in your Emacs environment, so
 there's no need to write your own hook anymore. =emojify-mode= is not required.
 
-*** Discover
+**** Discover
 
 =mastodon-mode= can provide a context menu for its keybindings if [[https://github.com/mickeynp/discover.el][Discover]] is
 installed. It is not required.
@@ -68,12 +90,12 @@ Or, with =use-package=:
     (mastodon-discover))
 #+END_SRC
 
-** Usage
-*** 2 Factor Auth
+*** Usage
+**** 2 Factor Auth
 2FA is not supported yet. It is in the [[https://github.com/jdenen/mastodon.el/milestone/2][plans]] for the =1.0.0= release.
 
 If you have 2FA enabled and try to use mastodon.el, your Emacs client will hang until you `C-g` your way out.
-*** Instance
+**** Instance
 
 Set =mastodon-instance-url= in your =.emacs= or =customize=. Defaults to the [[https://mastodon.social][flagship]].
 
@@ -85,13 +107,13 @@ There is an option to have your user credentials (email address and password) sa
 The default is not to do this because if not properly configured it would save these unencrypted which is not a good default to have.
 Customize the variable =mastodon-auth-source-file= if you want to enable this feature.
 
-*** Timelines
+**** Timelines
 
 =M-x mastodon=
 
 Opens a =*mastodon-home*= buffer in the major mode so you can see toots. You will be prompted for email and password. The app registration process will take place if your =mastodon-token-file= does not contain =:client_id= and =:client_secret=.
 
-**** Keybindings
+***** Keybindings
 
 |-----------------+---------------------------------------------------------|
 | Key             | Action                                                  |
@@ -124,7 +146,7 @@ Opens a =*mastodon-home*= buffer in the major mode so you can see toots. You wil
 | =Q=             | Quit mastodon buffer and kill window                    |
 |-----------------+---------------------------------------------------------|
 
-**** Legend
+***** Legend
 
 |--------+-------------------------|
 | Marker | Meaning                 |
@@ -133,7 +155,7 @@ Opens a =*mastodon-home*= buffer in the major mode so you can see toots. You wil
 | =(F)=  | I favourited this toot. |
 |--------+-------------------------|
 
-*** Toot toot
+**** Toot toot
 
 =M-x mastodon-toot=
 
@@ -148,12 +170,12 @@ Authentication stores your access token in the =mastodon-auth--token=
 variable. It is not stored on your filesystem, so you will have to
 re-authenticate when you close/reopen Emacs.
 
-**** Customization
+***** Customization
 The default toot visibility can be changed by setting or customizing the =mastodon-toot--default-visibility= variable. Valid values are ="public"=, ="unlisted"=, ="private"=, or =direct=.
 
 Toot visibility can also be changed on a per-toot basis from the new toot buffer.
 
-**** Keybindings
+***** Keybindings
 
 |-----------+------------------------|
 | Key       | Action                 |
@@ -164,28 +186,28 @@ Toot visibility can also be changed on a per-toot basis from the new toot buffer
 | =C-c C-v= | Change toot visibility |
 |-----------+------------------------|
 
-** Roadmap
+*** Roadmap
 
 [[https://github.com/jdenen/mastodon.el/milestone/1][Here]] are the features I plan to implement before putting mastodon.el on MELPA.
 
 [[https://github.com/jdenen/mastodon.el/milestone/2][Here]] are the plans I have for the =1.0.0= release.
 
-** Contributing
+*** Contributing
 
 PRs, issues, and feature requests are very welcome!
 
-*** Features
+**** Features
 
 1. Create an [[https://github.com/jdenen/mastodon.el/issues][issue]] detailing the feature you'd like to add.
 2. Fork the repository and create a branch off of =develop=.
 3. Create a pull request referencing the issue created in step 1.
 
-*** Fixes
+**** Fixes
 
 1. In an [[https://github.com/jdenen/mastodon.el/issues][issue]], let me know that you're working to fix it.
 2. Fork the repository and create a branch off of =develop=.
 3. Create a pull request referencing the issue from step 1.
 
-** Connect
+*** Connect
 
 If you want to get in touch with me, give me a [[https://mastodon.social/@johnson][toot]] or leave an [[https://github.com/jdenen/mastodon.el/issues][issue]].
