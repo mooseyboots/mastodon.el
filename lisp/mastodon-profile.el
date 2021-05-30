@@ -69,8 +69,12 @@ extra keybindings."
   :lighter " Profile"
   ;; The key bindings
   :keymap '(((kbd "O") . mastodon-profile--open-followers)
-            ((kbd "o") . mastodon-profile--open-following))
-  :group 'mastodon)
+            ((kbd "o") . mastodon-profile--open-following)
+            ((kbd "v") . mastodon-profile--view-favourites)
+            ((kbd "R") . mastodon-profile--view-follow-requests)
+            ((kbd "a") . mastodon-profile--follow-request-accept)
+            ((kbd "r") . mastodon-profile--follow-request-reject))
+:group 'mastodon)
 
 (defun mastodon-profile--toot-json ()
   "Get the next toot-json."
@@ -103,6 +107,62 @@ following the current profile."
        "followers"
        #'mastodon-profile--add-author-bylines)
     (error "Not in a mastodon profile")))
+
+(defun mastodon-profile--view-favourites ()
+  "Open a new buffer displaying the user's favourites."
+  (interactive)
+  (mastodon-tl--init "favourites"
+                     "favourites"
+                     'mastodon-tl--timeline))
+
+(defun mastodon-profile--view-follow-requests ()
+  "Open a new buffer displaying the user's follow requests."
+  (interactive)
+  (mastodon-profile-mode)
+  (mastodon-tl--init "follow-requests"
+                     "follow_requests"
+                     'mastodon-profile--add-author-bylines))
+
+(defun mastodon-profile--follow-request-accept ()
+  "Accept the follow request of user at point."
+  (interactive)
+  (let* ((acct-json (mastodon-profile--toot-json))
+         (id (cdr (assoc 'id acct-json)))
+         (handle (cdr (assoc 'acct acct-json)))
+         (name (cdr (assoc 'username acct-json))))
+    (if id
+        (let ((response
+               (mastodon-http--post
+                (concat
+                 (mastodon-http--api "follow_requests")
+                 (format "/%s/authorize" id))
+                nil nil)))
+          (mastodon-http--triage response
+                                 (lambda ()
+                                   (message "Follow request of %s (@%s) accepted!"
+                                            name handle))))
+      (message "No account result at point?"))))
+
+(defun mastodon-profile--follow-request-reject ()
+  "Reject the follow request of user at point."
+  (interactive)
+  (let* ((acct-json (mastodon-profile--toot-json))
+         (id (cdr (assoc 'id acct-json)))
+         (handle (cdr (assoc 'acct acct-json)))
+         (name (cdr (assoc 'username acct-json))))
+    (if id
+        (let ((response
+               (mastodon-http--post
+                (concat
+                 (mastodon-http--api "follow_requests")
+                 (format "/%s/reject" id))
+                nil nil)))
+          (mastodon-http--triage response
+                                 (lambda ()
+                                   (message "Follow request of %s (@%s) rejected!"
+                                            name handle))))
+       (message "No account result at point?"))))
+
 
 (defun mastodon-profile--relationships-get (id)
   "Fetch info about logged-in user's relationship to user with id ID."

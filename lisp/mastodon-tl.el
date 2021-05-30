@@ -1163,6 +1163,8 @@ UPDATE-FUNCTION is used to recieve more toots."
                                                   (seconds-to-time 300)))
     (funcall update-function json))
   (mastodon-mode)
+  (when (equal endpoint "follow_requests")
+    (mastodon-profile-mode))
   (with-current-buffer buffer
     (setq mastodon-tl--buffer-spec
           `(buffer-name ,buffer

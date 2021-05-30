@@ -83,7 +83,11 @@
                        ("u" "copy URL" 'shr-maybe-probe-and-copy-url))
                       ("Profile view"
                        ("o" "Show following" mastodon-profile--open-following)
-                       ("O" "Show followers" mastodon-profile--open-followers))
+                       ("O" "Show followers" mastodon-profile--open-followers)
+                       ("v" "View favourites" mastodon-profile--view-favourites)
+                       ("R" "View follow requests" mastodon-profile--view-follow-requests)
+                       ("a" "Accept follow request" mastodon-profile--follow-request-accept)
+                       ("r" "Reject follow request" mastodon-profile--follow-request-reject))
                       ("Quit"
                        ("q" "Quit mastodon and bury buffer." kill-this-buffer)
                        ("Q" "Quit mastodon buffer and kill window." kill-buffer-and-window)))))))
