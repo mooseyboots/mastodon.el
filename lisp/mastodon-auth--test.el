@@ -3,9 +3,9 @@
 ;; Copyright (C) 2020  Ian Eure
 
 ;; Author: Ian Eure <ian@retrospec.tv>
-;; Version: 0.9.0
+;; Version: 0.9.1
 ;; Homepage: https://github.com/jdenen/mastodon.el
-;; Package-Requires: ((emacs "24.4"))
+;; Package-Requires: ((emacs "25.1"))
 
 ;; This file is not part of GNU Emacs.
 

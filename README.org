@@ -25,6 +25,9 @@ This updated version is not on MELPA, to use it you need to clone and require it
 
 I did this for my own use and to learn more Elisp. If the code is terrible, feel free to improve or replace it.
 
+** dependency:
+This version depends on the library =request= (for uploading attachments). You can install it from melpa.
+
 ** bugs
 
 As it stands the client still has some bugs. In particular, when composing a toot, you may have to hit =C-g= before sending your toot. You may also see a related error when you try to add a media attachment. You should be able to run the command again and it should work. See the issues on the original repo.
