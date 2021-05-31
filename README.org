@@ -4,33 +4,57 @@ This is a fork of of the great but seemingly dormant https://github.com/jdenen/m
 
 It adds the following features:
 
-|                   | display profile metadata fields                                |
-| =i=                 | (un)pin toots, display pinned toots on profiles,               |
-|                   | display relationship (follows you/followed by you) on profiles |
-|                   | links and tags in profiles are tab stops like in posts         |
-| =S=                 | search (posts, users, tags) (improved!)                        |
-| =C-c C-a= (=C-c C-n=) | media uploads (including sensitive/nsfw flag)                  |
-| =RET=               | images are links to the full-sized image, can be zoomed        |
-|                   | mention booster in replies by default                          |
-| =W=, =M=, =B=           | (un)follow, (un)mute, (un)block users                          |
-| =R=, =a=, =r=           | view/accept/reject follow requests                             |
-| =v=                 | view your favorited toots                                      |
-| =S-M-P=             | jump to your profile                                           |
-| =C=                 | copy toot url                                                  |
-| =d=                 | delete your toot                                               |
+| Profiles:         |                                                                                    |
+|                   | display profile metadata fields                                                    |
+|                   | display relationship (follows you/followed by you) on profiles                     |
+|                   | display toots/follows/followers counts on profiles                                 |
+|                   | links and tags in profiles are tab stops like in posts                             |
+| =R=, =a=, =r=           | view/accept/reject follow requests                                    |
+| =v=                 | view your favorited toots                                              |
+| =i=                 | (un)pin toots, display pinned toots on profiles                                    |
+| =S-C-P=             | jump to your profile                                                               |
+| Timelines:        |                                                                                    |
+| =W=, =M=, =B=           | (un)follow, (un)mute, (un)block users                                              |
+|                   | images are links to the full image, can be zoomed/rotated/saved (see their keymap) |
+| =C=                 | copy url of toot at point                                                          |
+| =d=                 | delete your toot at point                                                          |
+|                   | display polls (very basic for now)                                                 |
+| Toots:            |                                                                                    |
+| =C-c C-a= (=C-c C-n=) | media uploads (and sensitive/nsfw flag)                                            |
+|                   | mention booster in replies by default                                              |
+| Search:           |                                                                                    |
+| =S=                 | search (posts, users, tags) (improved! but still pretty basic!)                    |
 
 It also makes some small cosmetic changes to make timelines easier to read, and makes some functions asynchronous, based on https://github.com/ieure/mastodon.el.
 
 This updated version is not on MELPA, to use it you need to clone and require it as per the installation instructions below.
 
-I did this for my own use and to learn more Elisp. If the code is terrible, feel free to improve or replace it.
+The minimum Emacs version is now 25.1. But if you are running an older version it shouldn't be very hard to get it working.
 
-** dependency:
-This version depends on the library =request= (for uploading attachments). You can install it from melpa.
+I did this for my own use and to learn more Elisp. If the code is terrible, feel free to improve or replace it. It surely still contains errors, I'm only weeding them out as I find them.
 
-** bugs
+** NB: dependency:
 
-As it stands the client still has some bugs. In particular, when composing a toot, you may have to hit =C-g= before sending your toot. You may also see a related error when you try to add a media attachment. You should be able to run the command again and it should work. See the issues on the original repo.
+This version depends on the library =request= (for uploading attachments). You can install it from MELPA, or https://github.com/tkf/emacs-request.
+
+** NB: bugs
+
+As it stands the client still has some bugs. In particular, when composing a toot, hit =C-g= before sending your toot. If you don't, your draft may disappear. You may also see a related error when you try to add a media attachment. You should be able to run the command again and it should work. See the issues on the original repo.
+
+Some people have also had niggling troubles with initial auth and set-up, but I couldn't reproduce.
+
+** roadmap-ish
+
+I might add a few more features if the ones I added turn out to work ok. Possible additions/amendments:
+
+- voting on polls
+- better display of polls
+- mention all thread participants in replies
+- handle newlines in toots better, for poetry, etc.
+- improve async.
+- perhaps integrate live timeline updates from https://github.com/alexjgriffith/mastodon-future.el, and add live updates for notifcations and home timeline.
+
+It looks like 2-factor auth was never completed in the original repo. It's not a priority for me, auth ain't my thing. If you want to hack on it, its on the develop branch in the original repo.
 
 ** Original README
 

@@ -39,14 +39,14 @@
 (autoload 'mastodon-media--get-media-link-rendering "mastodon-media")
 (autoload 'mastodon-media--inline-images "mastodon-media")
 (autoload 'mastodon-mode "mastodon")
-(autoload 'mastodon-profile--account-from-id "mastodon.el-profile.el")
-(autoload 'mastodon-profile--make-author-buffer "mastodon-profile.el")
-(autoload 'mastodon-profile--search-account-by-handle "mastodon.el-profile.el")
+(autoload 'mastodon-profile--account-from-id "mastodon-profile")
+(autoload 'mastodon-profile--make-author-buffer "mastodon-profile")
+(autoload 'mastodon-profile--search-account-by-handle "mastodon-profile")
 ;; mousebot adds
-(autoload 'mastodon-profile--toot-json "mastodon-profile.el")
-(autoload 'mastodon-profile--account-field "mastodon-profile.el")
-(autoload 'mastodon-profile--extract-users-handles "mastodon-profile.el")
-(autoload 'mastodon-profile--my-profile "mastodon-profile.el")
+(autoload 'mastodon-profile--toot-json "mastodon-profile")
+(autoload 'mastodon-profile--account-field "mastodon-profile")
+(autoload 'mastodon-profile--extract-users-handles "mastodon-profile")
+(autoload 'mastodon-profile--my-profile "mastodon-profile")
 (autoload 'mastodon-toot--delete-toot "mastodon-toot")
 (autoload 'mastodon-http--post "mastodon-http")
 (autoload 'mastodon-http--triage "mastodon-http")
@@ -55,7 +55,7 @@
 
 (defvar mastodon-instance-url)
 (defvar mastodon-toot-timestamp-format)
-(defvar shr-use-fonts)  ;; need to declare it since Emacs24 didn't have this
+(defvar shr-use-fonts)  ;; declare it since Emacs24 didn't have this
 
 (defgroup mastodon-tl nil
   "Timelines in Mastodon."

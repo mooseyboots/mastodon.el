@@ -32,6 +32,7 @@
 (require 'plstore)
 (require 'auth-source)
 (require 'json)
+(eval-when-compile (require 'subr-x)) ; for if-let
 
 (autoload 'mastodon-client "mastodon-client")
 (autoload 'mastodon-http--api "mastodon-http")

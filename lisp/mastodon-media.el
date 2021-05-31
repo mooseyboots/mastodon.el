@@ -34,6 +34,8 @@
 ;;; Code:
 (defvar url-show-status)
 
+(defvar mastodon-tl--shr-image-map-replacement)
+
 (defgroup mastodon-media nil
   "Inline Mastadon media."
   :prefix "mastodon-media-"
@@ -125,7 +127,7 @@ CAQgEIBAAAIBFiNOFMaY6V1tnFhkDQIQCEAgAIEABAKAQAACAQgEIBCAQAACAQgEIBCAQABIXO4e
 c1y+zhoEIBCAQAAQCEAgAIEABAIQCEAgAIEABAIQCEAgAAgEIBCAQAACAQgEIBCAQAACAQgEAIEA
 BAIQCEAgAIEABAIsJVH58WqHw8FIgjUIQCAACAQgEIBAAAIBCAQgEIBAAAIBCAQgEAAEAhAIQCBA
 fKRJkmVZjAQwh78A6vCRWJE8K+8AAAAASUVORK5CYII=")
-  "The PNG data for a generic 200x200 'broken image' view")
+  "The PNG data for a generic 200x200 'broken image' view.")
 
 (defun mastodon-media--process-image-response
     (status-plist marker image-options region-length)
@@ -134,8 +136,7 @@ fKRJkmVZjAQwh78A6vCRWJE8K+8AAAAASUVORK5CYII=")
 STATUS-PLIST is the usual plist of status events as per `url-retrieve'.
 IMAGE-OPTIONS are the precomputed options to apply to the image.
 MARKER is the marker to where the response should be visible.
-REGION-LENGTH is the length of the region that should be replaced with the image.
-"
+REGION-LENGTH is the length of the region that should be replaced with the image."
   (when (marker-buffer marker) ; only if the buffer hasn't been kill in the meantime
     (let ((url-buffer (current-buffer))
           (is-error-response-p (eq :error (car status-plist))))

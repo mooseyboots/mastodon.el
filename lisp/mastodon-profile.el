@@ -36,6 +36,8 @@
 
 (autoload 'mastodon-http--api "mastodon-http.el")
 (autoload 'mastodon-http--get-json "mastodon-http.el")
+(autoload 'mastodon-http--post "mastodon-http.el")
+(autoload 'mastodon-http--triage "mastodon-http.el")
 (autoload 'mastodon-auth--get-account-name "mastodon-auth.el")
 (autoload 'mastodon-http--get-json-async "mastodon-http.el")
 (autoload 'mastodon-media--get-media-link-rendering "mastodon-media.el")
@@ -50,6 +52,7 @@
 (autoload 'mastodon-tl--as-string "mastodon-tl.el")
 (autoload 'mastodon-tl--toot-id "mastodon-tl")
 (autoload 'mastodon-tl--toot "mastodon-tl")
+(autoload 'mastodon-tl--init "mastodon-tl.el")
 
 (defvar mastodon-instance-url)
 (defvar mastodon-tl--buffer-spec)
@@ -70,11 +73,9 @@ extra keybindings."
   ;; The key bindings
   :keymap '(((kbd "O") . mastodon-profile--open-followers)
             ((kbd "o") . mastodon-profile--open-following)
-            ((kbd "v") . mastodon-profile--view-favourites)
-            ((kbd "R") . mastodon-profile--view-follow-requests)
             ((kbd "a") . mastodon-profile--follow-request-accept)
             ((kbd "r") . mastodon-profile--follow-request-reject))
-:group 'mastodon)
+  :group 'mastodon)
 
 (defun mastodon-profile--toot-json ()
   "Get the next toot-json."
@@ -214,7 +215,7 @@ Returns a list of lists."
     (mastodon-http--get-json url)))
 
 (defun mastodon-profile--insert-statuses-pinned (pinned-statuses)
-  "Insert each of the PINNED_STATUSES for a given account."
+  "Insert each of the PINNED-STATUSES for a given account."
   (mapc (lambda (pinned-status)
           (insert (mastodon-tl--set-face
                    "   :pinned: " 'success))
@@ -222,6 +223,7 @@ Returns a list of lists."
         pinned-statuses))
 
 (defun mastodon-profile--make-profile-buffer-for (account endpoint-type update-function)
+  "Display profile of ACCOUNT, using ENDPOINT-TYPE and UPDATE-FUNCTION."
   (let* ((id (mastodon-profile--account-field account 'id))
          (url (mastodon-http--api (format "accounts/%s/%s" id endpoint-type)))
          (acct (mastodon-profile--account-field account 'acct))
