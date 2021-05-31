@@ -483,8 +483,7 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
         (cw-region (mastodon-tl--find-property-range 'toot-post-cw-flag
                                                      (point-min)))
         (attachment-region (mastodon-tl--find-property-range
-                            'toot-attachment (point-min)))
-        )
+                            'toot-attachment (point-min))))
     (add-text-properties (car count-region) (cdr count-region)
                          (list 'display
                                (format "%s characters"

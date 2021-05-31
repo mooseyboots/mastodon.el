@@ -274,8 +274,7 @@ replacing them with the referenced image."
                'mastodon-tab-stop 'image ; for do-link-action-at-point
                'image-url full-remote-url ; for shr-browse-image
                'keymap mastodon-tl--shr-image-map-replacement
-               'help-echo (concat "RET/i: load full image (prefix: copy URL), +/-: zoom, r: rotate, o: save preview")
-               )
+               'help-echo (concat "RET/i: load full image (prefix: copy URL), +/-: zoom, r: rotate, o: save preview"))
    " "))
 
 (provide 'mastodon-media)
