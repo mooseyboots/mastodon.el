@@ -54,6 +54,7 @@
 (autoload 'mastodon-toot--toggle-boost "mastodon-toot")
 (autoload 'mastodon-toot--toggle-favourite "mastodon-toot")
 (autoload 'mastodon-discover "mastodon-discover")
+
 (autoload 'mastodon-tl--block-user "mastodon-tl")
 (autoload 'mastodon-tl--unblock-user "mastodon-tl")
 (autoload 'mastodon-tl--mute-user "mastodon-tl")
@@ -61,11 +62,16 @@
 (autoload 'mastodon-tl--follow-user "mastodon-tl")
 (autoload 'mastodon-tl--unfollow-user "mastodon-tl")
 (autoload 'mastodon-profile--my-profile "mastodon-profile")
+(autoload 'mastodon-profile--view-favourites "mastodon-profile")
+(autoload 'mastodon-profile--view-follow-requests "mastodon-profile")
 (autoload 'mastodon-search--search-query "mastodon-search")
 (autoload 'mastodon-toot--delete-toot "mastodon-toot")
 (autoload 'mastodon-toot--copy-toot-url "mastodon-toot")
 (autoload 'mastodon-toot--pin-toot-toggle "mastodon-toot")
 (autoload 'mastodon-auth--get-account-name "mastodon-auth")
+(autoload 'mastodon-async--stream-federated "mastodon-async")
+(autoload 'mastodon-async--stream-local "mastodon-async")
+(autoload 'mastodon-async--stream-home "mastodon-async")
 
 (defgroup mastodon nil
   "Interface with Mastodon."

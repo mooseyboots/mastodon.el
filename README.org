@@ -47,6 +47,7 @@ Some people have also had niggling troubles with initial auth and set-up, but I 
 
 I might add a few more features if the ones I added turn out to work ok. Possible additions/amendments:
 
+- update profile note.
 - voting on polls
 - better display of polls
 - mention all thread participants in replies
