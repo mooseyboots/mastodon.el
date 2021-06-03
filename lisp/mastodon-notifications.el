@@ -140,11 +140,11 @@
 (defun mastodon-notifications--get ()
   "Display NOTIFICATIONS in buffer."
   (interactive)
+  (message "Loading your nofications...")
   (mastodon-tl--init
-   "*mastodon-notifications*"
    "notifications"
-   'mastodon-notifications--timeline)
-  (message "Loading your nofications..."))
+   "notifications"
+   'mastodon-notifications--timeline))
 
 (provide 'mastodon-notifications)
 ;;; mastodon-notifications.el ends here

@@ -9,8 +9,8 @@ It adds the following features:
 |                   | display relationship (follows you/followed by you) on profiles                     |
 |                   | display toots/follows/followers counts on profiles                                 |
 |                   | links and tags in profiles are tab stops like in posts                             |
-| =R=, =a=, =r=           | view/accept/reject follow requests                                    |
-| =v=                 | view your favorited toots                                              |
+| =R=, =a=, =r=           | view/accept/reject follow requests                                                 |
+| =v=                 | view your favorited toots                                                          |
 | =i=                 | (un)pin toots, display pinned toots on profiles                                    |
 | =S-C-P=             | jump to your profile                                                               |
 | Timelines:        |                                                                                    |
@@ -33,7 +33,13 @@ The minimum Emacs version is now 25.1. But if you are running an older version i
 
 I did this for my own use and to learn more Elisp. If the code is terrible, feel free to improve or replace it. It surely still contains errors, I'm only weeding them out as I find them.
 
-** NB: dependency:
+** live-updating timelines
+
+(code adapted from https://github.com/alexjgriffith/mastodon-future.el).
+
+Works for federated, local, and home timelines and for notifications. It's pretty necro, so use at your own risk. Not a super high priority for me, but some people dig it. The command prefix is =mastodon-async--stream=
+
+** NB: dependency
 
 This version depends on the library =request= (for uploading attachments). You can install it from MELPA, or https://github.com/tkf/emacs-request.
 
@@ -53,7 +59,6 @@ I might add a few more features if the ones I added turn out to work ok. Possibl
 - mention all thread participants in replies
 - handle newlines in toots better, for poetry, etc.
 - improve async.
-- perhaps integrate live timeline updates from https://github.com/alexjgriffith/mastodon-future.el, and add live updates for notifcations and home timeline.
 
 It looks like 2-factor auth was never completed in the original repo. It's not a priority for me, auth ain't my thing. If you want to hack on it, its on the develop branch in the original repo.
 

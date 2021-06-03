@@ -31,6 +31,8 @@
 
 (require 'json)
 
+(autoload 'mastodon-notifications--timeline "mastodon-notifications")
+
 (defgroup mastodon-async nil
   "An async module for mastodon streams."
   :prefix "mastodon-async-"
@@ -86,19 +88,19 @@
 ;; The output can be passed to notifications
 ;; need an alternate process-queue-string function
 (defun mastodon-async--stream-notifications ()
-  "Open a stream of Home."
+  "Open a stream of user notifications."
   (interactive)
   (mastodon-async--mastodon
    "user"
    "home"
    "notifications"
-   'mastodon-async--process-queue-string))
+   'mastodon-async--process-queue-string-notifications))
 
 ;; this will stream both home AND notifications.
 ;; need to workout how to filter "user" stream
 ;; and split it
 (defun mastodon-async--stream-home ()
-  "Open a stream of Home."
+  "Open a stream of the home timeline."
   (interactive)
   (mastodon-async--mastodon
    "user"
@@ -132,7 +134,7 @@
 Then Start an async mastodon stream at ENDPOINT filtering toots
 using FILTER.
 Argument TIMELINE a specific target, such as federated or home.
-Argument NAME the center portion of the buffer name for *mastodon-async-buffer and *mastodon-async-queueu."
+Argument NAME the center portion of the buffer name for *mastodon-async-buffer and *mastodon-async-queue."
   (let ((buffer (mastodon-async--start-process
                  endpoint filter name)))
     (with-current-buffer buffer
@@ -141,7 +143,7 @@ Argument NAME the center portion of the buffer name for *mastodon-async-buffer a
       (goto-char 1))))
 
 (defun mastodon-async--get (url callback)
-  "An async get targeted at URL with a CALLBACK."
+  "An async GET request to URL with CALLBACK."
   (let ((url-request-method "GET")
         (url-request-extra-headers
          `(("Authorization" .
@@ -174,16 +176,16 @@ is not known when `mastodon-async--setup-buffer' is called."
   "Adds local variables to HTTP-BUFFER.
 
 NAME is used to generate the display buffer and the queue."
-  (let ((queue-name(concat " *mastodon-async-queue-" name "-"
+  (let ((queue-name (concat " *mastodon-async-queue-" name "-"
                            mastodon-instance-url "*"))
-        (buffer-name(concat "*mastodon-async-display-" name "-"
+        (buffer-name (concat "*mastodon-async-display-" name "-"
                             mastodon-instance-url "*")))
     (mastodon-async--set-local-variables http-buffer http-buffer
                                          buffer-name queue-name)))
 
 (defun mastodon-async--setup-queue (http-buffer name)
   "Sets up the buffer for the async queue."
-  (let ((queue-name(concat " *mastodon-async-queue-" name "-"
+  (let ((queue-name (concat " *mastodon-async-queue-" name "-"
                            mastodon-instance-url "*"))
         (buffer-name(concat "*mastodon-async-display-" name "-"
                             mastodon-instance-url "*")))
@@ -194,15 +196,18 @@ NAME is used to generate the display buffer and the queue."
 (defun mastodon-async--setup-buffer (http-buffer name endpoint)
   "Sets up the buffer timeline like `mastodon-tl--init'.
 
-HTTP-BUFFER the name of the http-buffer, if unknow set to 
-NAME is the given name of the stream, like local for public?local
-ENPOINT is the specific endpoint for a stream and timeline"  
+HTTP-BUFFER the name of the http-buffer, if unknown, set to...
+NAME is the name of the stream for the buffer name.
+ENPOINT is the endpoint for the stream and timeline."
   (let ((queue-name (concat " *mastodon-async-queue-" name "-"
                             mastodon-instance-url "*"))
         (buffer-name (concat "*mastodon-async-display-" name "-"
                              mastodon-instance-url "*"))
-       ;; if user stream, we need "timelines/home" not "timelines/user"
-        (endpoint (if (equal endpoint "user") "home" endpoint)))
+      ;; if user stream, we need "timelines/home" not "timelines/user"
+      ;; if notifs, we need "notifications" not "timelines/notifications"
+        (endpoint (if (equal name "notifications") "notifications"
+                    (if (equal name "home") "timelines/home"
+                      (format "timelines/%s" endpoint)))))
     (mastodon-async--set-local-variables buffer-name http-buffer
                                          buffer-name queue-name)
     ;; Similar to timeline init. 
@@ -210,16 +215,22 @@ ENPOINT is the specific endpoint for a stream and timeline"
       (setq inhibit-read-only t) ; for home timeline?
       (make-local-variable 'mastodon-tl--enable-relative-timestamps)
       (make-local-variable 'mastodon-tl--display-media-p)
-      (message (mastodon-http--api (format "timelines/%s" endpoint)))
-      (mastodon-tl--timeline (mastodon-http--get-json
-                              (mastodon-http--api
-                               (format "timelines/%s" endpoint))))
+      (message (mastodon-http--api endpoint))
+      (if (equal name "notifications")
+          (mastodon-notifications--timeline
+           (mastodon-http--get-json
+            (mastodon-http--api "notifications")))
+        (mastodon-tl--timeline (mastodon-http--get-json
+                                (mastodon-http--api endpoint))))
       (mastodon-mode)
       (setq mastodon-tl--buffer-spec
-            `(buffer-name ,buffer-name
-                          endpoint ,(format "timelines/%s" endpoint)
-                          update-function
-                          ,'mastodon-tl--timeline))
+            `(buffer-name
+              ,buffer-name
+              endpoint ,endpoint
+              update-function
+              ,(if (equal name "notifications")
+                   'mastodon-notifications--timeline
+                 'mastodon-tl--timeline)))
       (setq-local mastodon-tl--enable-relative-timestamps nil)
       (setq-local mastodon-tl--display-media-p t)
       (current-buffer))))
@@ -254,7 +265,7 @@ Filter the toots using FILTER."
              (funcall filter queue-string))))))))
 
 (defun mastodon-async--process-queue-string (string)
-  "Parse the output STRING of the queue buffer."
+  "Parse the output STRING of the queue buffer, returning only update events."
   (let* ((split-strings (split-string string "\n" t))
          (event-type (replace-regexp-in-string
                      "^event: " ""
@@ -264,6 +275,20 @@ Filter the toots using FILTER."
     (when (equal "update" event-type)
       ;; in some casses the data is not fully formed
       ;; for now return nil if malformed using `ignore-errors' 
+      (ignore-errors (json-read-from-string data)))))
+
+(defun mastodon-async--process-queue-string-notifications (string)
+  "Parse the output STRING of the queue buffer, returning only notification events."
+  ;; NB notification events in screams include follow requests
+  (let* ((split-strings (split-string string "\n" t))
+         (event-type (replace-regexp-in-string
+                     "^event: " ""
+                     (car split-strings)))
+         (data (replace-regexp-in-string
+                "^data: " "" (cadr split-strings))))
+    (when (equal "notification" event-type)
+      ;; in some casses the data is not fully formed
+      ;; for now return nil if malformed using `ignore-errors'
       (ignore-errors (json-read-from-string data)))))
 
 (defun mastodon-async--process-queue-local-string (string)
@@ -280,8 +305,8 @@ Filter the toots using FILTER."
        (cdr (assoc 'acct (cdr (assoc 'account json)))))))
 
 (defun mastodon-async--output-toot (toot)
-  "Process TOOT and prepend it to the async user facing buffer."
-  (if (not(bufferp (get-buffer mastodon-async--buffer)))
+  "Process TOOT and prepend it to the async user-facing buffer."
+  (if (not (bufferp (get-buffer mastodon-async--buffer)))
       (mastodon-async--stop-http)
     (when toot
       (with-current-buffer mastodon-async--buffer
@@ -290,8 +315,12 @@ Filter the toots using FILTER."
                (previous (point))
                (mastodon-tl--enable-relative-timestamps t)
                (mastodon-tl--display-media-p t))
-	  (goto-char (point-min))          
-	  (mastodon-tl--timeline (list toot))
+	  (goto-char (point-min))
+          (if (equal (buffer-name)
+                     (concat "*mastodon-async-display-notifications-"
+                             mastodon-instance-url "*"))
+              (mastodon-notifications--timeline (list toot))
+	    (mastodon-tl--timeline (list toot)))
           (if (equal previous 1)
 	      (goto-char 1)
             (goto-char (+ previous (- (point-max) old-max)))))))))
@@ -305,7 +334,7 @@ Full messages are seperated by two newlines"
     (goto-char (max-char))
     (insert (decode-coding-string string 'utf-8))
     (goto-char 0)
-    (let((next(re-search-forward "\n\n" nil t)))
+    (let ((next (re-search-forward "\n\n" nil t)))
       (when next
         (let ((return-string (buffer-substring 1 next))
               (inhibit-read-only t))
