@@ -82,11 +82,9 @@
     (delete-process (get-buffer-process mastodon-async--http-buffer))
     (kill-buffer mastodon-async--http-buffer)
     (setq mastodon-async--http-buffer "")
-    (kill-buffer mastodon-async--queue)))
+    (when (not (equal "" mastodon-async--queue)) ; error handle on kill async buffer
+      (kill-buffer mastodon-async--queue))))
 
-;; Need to handle the notification event
-;; The output can be passed to notifications
-;; need an alternate process-queue-string function
 (defun mastodon-async--stream-notifications ()
   "Open a stream of user notifications."
   (interactive)
@@ -96,9 +94,6 @@
    "notifications"
    'mastodon-async--process-queue-string-notifications))
 
-;; this will stream both home AND notifications.
-;; need to workout how to filter "user" stream
-;; and split it
 (defun mastodon-async--stream-home ()
   "Open a stream of the home timeline."
   (interactive)
@@ -266,20 +261,21 @@ Filter the toots using FILTER."
 
 (defun mastodon-async--process-queue-string (string)
   "Parse the output STRING of the queue buffer, returning only update events."
-  (let* ((split-strings (split-string string "\n" t))
-         (event-type (replace-regexp-in-string
-                     "^event: " ""
-                     (car split-strings)))
-         (data (replace-regexp-in-string
-                "^data: " "" (cadr split-strings))))
-    (when (equal "update" event-type)
-      ;; in some casses the data is not fully formed
-      ;; for now return nil if malformed using `ignore-errors' 
-      (ignore-errors (json-read-from-string data)))))
+  (let ((split-strings (split-string string "\n" t)))
+    (when split-strings ; do nothing if we get nothing; just postpones the error
+      (let ((event-type (replace-regexp-in-string
+                         "^event: " ""
+                         (car split-strings)))
+            (data (replace-regexp-in-string
+                   "^data: " "" (cadr split-strings))))
+        (when (equal "update" event-type)
+          ;; in some casses the data is not fully formed
+          ;; for now return nil if malformed using `ignore-errors'
+          (ignore-errors (json-read-from-string data)))))))
 
 (defun mastodon-async--process-queue-string-notifications (string)
   "Parse the output STRING of the queue buffer, returning only notification events."
-  ;; NB notification events in screams include follow requests
+  ;; NB notification events in streams include follow requests
   (let* ((split-strings (split-string string "\n" t))
          (event-type (replace-regexp-in-string
                      "^event: " ""
