@@ -137,7 +137,7 @@ Pass response buffer to CALLBACK function."
     (with-temp-buffer
       (url-retrieve-synchronously url))))
 
-;; http functions for search:
+;; search functions:
 (defun mastodon-http--process-json-search ()
   "Process JSON returned by a search query to the server."
   (goto-char (point-min))
@@ -161,6 +161,29 @@ Pass response buffer to CALLBACK function."
 Pass response buffer to CALLBACK function."
   (let ((url-request-method "GET")
         (url (concat base-url "?q=" (url-hexify-string query)))
+        (url-request-extra-headers
+         `(("Authorization" . ,(concat "Bearer "
+                                       (mastodon-auth--access-token))))))
+    (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
+        (url-retrieve-synchronously url)
+      (url-retrieve-synchronously url nil nil mastodon-http--timeout))))
+
+;; profile update functions
+
+(defun mastodon-http--patch-json (url)
+  "Make synchronous PATCH request to URL. Return JSON response."
+  (with-current-buffer (mastodon-http--patch url)
+    (mastodon-http--process-json)))
+
+;; hard coded just for bio note for now:
+(defun mastodon-http--patch (base-url &optional note)
+  "Make synchronous PATCH request to URL.
+
+Pass response buffer to CALLBACK function."
+  (let ((url-request-method "PATCH")
+        (url (if note
+                 (concat base-url "?note=" (url-hexify-string note))
+               base-url))
         (url-request-extra-headers
          `(("Authorization" . ,(concat "Bearer "
                                        (mastodon-auth--access-token))))))

@@ -73,6 +73,7 @@
 (autoload 'mastodon-async--stream-local "mastodon-async")
 (autoload 'mastodon-async--stream-home "mastodon-async")
 (autoload 'mastodon-async--stream-notifications "mastodon-async")
+(autoload 'mastodon-profile--update-user-profile-note "mastodon-profile")
 
 (defgroup mastodon nil
   "Interface with Mastodon."
@@ -143,7 +144,8 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map (kbd "C-c h") #'mastodon-async--stream-home)
     (define-key map (kbd "C-c f") #'mastodon-async--stream-federated)
     (define-key map (kbd "C-c l") #'mastodon-async--stream-local)
-    (define-key map (kbd "C-c n") #'mastodon-async--stream-notifications)    
+    (define-key map (kbd "C-c n") #'mastodon-async--stream-notifications)
+    (define-key map (kbd "U") #'mastodon-profile--update-user-profile-note)
     map)
 
   "Keymap for `mastodon-mode'.")

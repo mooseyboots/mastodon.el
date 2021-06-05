@@ -53,14 +53,27 @@
 (autoload 'mastodon-tl--toot-id "mastodon-tl")
 (autoload 'mastodon-tl--toot "mastodon-tl")
 (autoload 'mastodon-tl--init "mastodon-tl.el")
+(autoload 'mastodon-http--patch "mastodon-http")
+(autoload 'mastodon-http--patch-json "mastodon-http")
 
 (defvar mastodon-instance-url)
 (defvar mastodon-tl--buffer-spec)
 (defvar mastodon-tl--update-point)
 
+
 (defvar mastodon-profile--account nil
   "The data for the account being described in the current profile buffer.")
 (make-variable-buffer-local 'mastodon-profile--account)
+
+;; this way you can update it with C-M-x:
+(defvar mastodon-profile-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "O") #'mastodon-profile--open-followers)
+    (define-key map (kbd "o") #'mastodon-profile--open-following)
+    (define-key map (kbd "a") #'mastodon-profile--follow-request-accept)
+    (define-key map (kbd "r") #'mastodon-profile--follow-request-reject)
+    map)
+  "Keymap for `mastodon-profile-mode'.")
 
 (define-minor-mode mastodon-profile-mode
   "Toggle mastodon profile minor mode.
@@ -70,12 +83,26 @@ extra keybindings."
   :init-value nil
   ;; The mode line indicator.
   :lighter " Profile"
-  ;; The key bindings
-  :keymap '(((kbd "O") . mastodon-profile--open-followers)
-            ((kbd "o") . mastodon-profile--open-following)
-            ((kbd "a") . mastodon-profile--follow-request-accept)
-            ((kbd "r") . mastodon-profile--follow-request-reject))
-  :group 'mastodon)
+  :keymap mastodon-profile-mode-map
+  ;; :keymap '(((kbd "O") . mastodon-profile--open-followers)
+  ;;           ((kbd "o") . mastodon-profile--open-following)
+  ;;           ((kbd "a") . mastodon-profile--follow-request-accept)
+  ;;           ((kbd "r") . mastodon-profile--follow-request-reject)
+  :group 'mastodon
+  :global nil)
+
+(defvar mastodon-profile-update-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c C-c") #'mastodon-profile--user-profile-send-updated)
+    (define-key map (kbd "C-c C-k") #'kill-buffer-and-window)
+    map)
+  "Keymap for `mastodon-profile-update-mode'.")
+
+(define-minor-mode mastodon-profile-update-mode
+  "Minor mode to update Mastodon user profile."
+  :group 'mastodon-profile
+  :keymap mastodon-profile-update-mode-map
+  :global nil)
 
 (defun mastodon-profile--toot-json ()
   "Get the next toot-json."
@@ -112,6 +139,7 @@ following the current profile."
 (defun mastodon-profile--view-favourites ()
   "Open a new buffer displaying the user's favourites."
   (interactive)
+  (message "Loading your favourited toots...")
   (mastodon-tl--init "favourites"
                      "favourites"
                      'mastodon-tl--timeline))
@@ -164,6 +192,33 @@ following the current profile."
                                             name handle))))
        (message "No account result at point?"))))
 
+(defun mastodon-profile--update-user-profile-note ()
+  "Fetch user's profile note and display for editing."
+  (interactive)
+  (let* ((url (concat mastodon-instance-url
+                      "/api/v1/accounts/update_credentials"))
+         ;; (buffer (mastodon-http--patch url))
+         (json (mastodon-http--patch-json url))
+         (source (cdr (assoc 'source json)))
+         (note (cdr (assoc 'note source)))
+         (buffer (get-buffer-create "*mastodon-update-profile*"))
+         (inhibit-read-only t))
+    (switch-to-buffer-other-window buffer)
+    (mastodon-profile-update-mode t)
+    (insert note)
+    (goto-char (point-min))
+    (message "Edit your profile note. C-c C-c to send, C-c C-k to cancel.")))
+
+(defun mastodon-profile--user-profile-send-updated ()
+  "Send PATCH request with the updated profile note."
+  (interactive)
+  (let* ((note (buffer-substring-no-properties (point-min) (point-max)))
+         (url (concat mastodon-instance-url
+                      "/api/v1/accounts/update_credentials")))
+    (kill-buffer-and-window)
+    (let ((response (mastodon-http--patch url note)))
+      (mastodon-http--triage response
+                             (lambda () (message "Profile note updated!"))))))
 
 (defun mastodon-profile--relationships-get (id)
   "Fetch info about logged-in user's relationship to user with id ID."
@@ -205,7 +260,7 @@ Returns a list of lists."
                    (format " :: %s" (cadr field)))
                    ;; (make-string (- (+ 1 right-width) (length (cdr field))) ?_)
                    ;; " |")
-                  nil))
+                  field)) ; nil)) ; hack to make links tabstops
                fields "")))
 
 (defun mastodon-profile--get-statuses-pinned (account)
