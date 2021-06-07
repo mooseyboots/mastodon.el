@@ -119,17 +119,17 @@
   ;; apparently it the local flag does not work
   (mastodon-async--mastodon
    "public"
-   "local" ;"public?local=true"
+   "public?local=true"
    "local"
    'mastodon-async--process-queue-local-string))
 
 (defun mastodon-async--mastodon (endpoint timeline name filter)
   "Make sure that the previous async process has been closed.
 
-Then Start an async mastodon stream at ENDPOINT filtering toots
+Then start an async stream at ENDPOINT filtering toots
 using FILTER.
-Argument TIMELINE a specific target, such as federated or home.
-Argument NAME the center portion of the buffer name for *mastodon-async-buffer and *mastodon-async-queue."
+TIMELINE is a specific target, such as federated or home.
+NAME is the center portion of the buffer name for *mastodon-async-buffer and *mastodon-async-queue."
   (let ((buffer (mastodon-async--start-process
                  endpoint filter name)))
     (with-current-buffer buffer
