@@ -30,6 +30,8 @@
 ;; it is a labor of love.
 
 ;;; Code:
+(require 'cl-lib) ; for some call in mastodon
+
 (declare-function discover-add-context-menu "discover")
 (declare-function emojify-mode "emojify")
 (declare-function request "request")
@@ -180,8 +182,19 @@ Use. e.g. \"%c\" for your locale's date and time format."
 (defun mastodon ()
   "Connect Mastodon client to `mastodon-instance-url' instance."
   (interactive)
-  (mastodon-tl--get-home-timeline)
-  (message "Loading Mastodon account %s on %s..." (mastodon-auth--get-account-name) mastodon-instance-url))
+  (let* ((tls (list "home"
+                    "local"
+                    "federated"
+                    (concat (mastodon-auth--get-account-name) "-statuses") ; profile
+                    "favourites"
+                    "search"))
+         (buffer (cl-some (lambda (el)
+                           (get-buffer (concat "*mastodon-" el "*")))
+                         tls))) ; return first buff that exists
+    (if buffer
+        (switch-to-buffer buffer)
+      (mastodon-tl--get-home-timeline)
+      (message "Loading Mastodon account %s on %s..." (mastodon-auth--get-account-name) mastodon-instance-url))))
 
 ;;;###autoload
 (defun mastodon-toot (&optional user reply-to-id)
