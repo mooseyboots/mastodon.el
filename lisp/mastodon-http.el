@@ -208,7 +208,8 @@ Pass response buffer to CALLBACK function with args CBARGS."
   (mastodon-http--get-async
    url
    (lambda (status)
-     (apply callback (mastodon-http--process-json) args))))
+     (when status ;; only when we actually get sth?
+       (apply callback (mastodon-http--process-json) args)))))
 
 (defun mastodon-http--post-async (url args headers &optional callback &rest cbargs)
   "POST asynchronously to URL with ARGS and HEADERS.
