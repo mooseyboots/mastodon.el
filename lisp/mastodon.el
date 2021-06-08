@@ -76,6 +76,7 @@
 (autoload 'mastodon-async--stream-home "mastodon-async")
 (autoload 'mastodon-async--stream-notifications "mastodon-async")
 (autoload 'mastodon-profile--update-user-profile-note "mastodon-profile")
+(autoload 'mastodon-auth--user-acct "mastodon-auth")
 
 (defgroup mastodon nil
   "Interface with Mastodon."
@@ -185,7 +186,7 @@ Use. e.g. \"%c\" for your locale's date and time format."
   (let* ((tls (list "home"
                     "local"
                     "federated"
-                    (concat (mastodon-auth--get-account-name) "-statuses") ; profile
+                    (concat (mastodon-auth--user-acct) "-statuses") ; profile
                     "favourites"
                     "search"))
          (buffer (cl-some (lambda (el)
@@ -194,7 +195,7 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (if buffer
         (switch-to-buffer buffer)
       (mastodon-tl--get-home-timeline)
-      (message "Loading Mastodon account %s on %s..." (mastodon-auth--get-account-name) mastodon-instance-url))))
+      (message "Loading Mastodon account %s on %s..." (mastodon-auth--user-acct) mastodon-instance-url))))
 
 ;;;###autoload
 (defun mastodon-toot (&optional user reply-to-id)
