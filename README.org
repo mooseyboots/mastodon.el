@@ -39,7 +39,11 @@ I did this for my own use and to learn more Elisp. If the code is terrible, feel
 
 (code adapted from https://github.com/alexjgriffith/mastodon-future.el).
 
-Works for federated, local, and home timelines and for notifications. It's pretty necro, so use at your own risk. Not a super high priority for me, but some people dig it. The command prefix is =mastodon-async--stream=.
+Works for federated, local, and home timelines and for notifications. It's pretty necro, so use at your own risk. Not a super high priority for me, but some people dig it. The command prefix is =mastodon-async--stream=, and you can load various timelines from within a mastodon session like so:
+- =C-c h= (home)
+- =C-c f= (federated)
+- =C-c l= (local)
+- =C-c n= (notifications).
 
 ** NB: dependency
 
@@ -64,9 +68,9 @@ I might add a few more features if the ones I added turn out to work ok. Possibl
 
 It looks like 2-factor auth was never completed in the original repo. It's not a priority for me, auth ain't my thing. If you want to hack on it, its on the develop branch in the original repo.
 
-** Original README
+* Original README
 
-*** Installation
+** Installation
 
 Clone this repository and add the lisp directory to your load path.
 Then, require it and go.
@@ -83,7 +87,7 @@ Or, with =use-package=:
     :ensure t)
 #+END_SRC
 
-**** MELPA
+*** MELPA
 
 Add =MELPA= to your archives:
 
@@ -99,12 +103,12 @@ Update and install:
 
 =M-x package-install RET mastodon RET=
 
-**** Emoji
+*** Emoji
 
 =mastodon-mode= will enable [[https://github.com/iqbalansari/emacs-emojify][Emojify]] if it is loaded in your Emacs environment, so
 there's no need to write your own hook anymore. =emojify-mode= is not required.
 
-**** Discover
+*** Discover
 
 =mastodon-mode= can provide a context menu for its keybindings if [[https://github.com/mickeynp/discover.el][Discover]] is
 installed. It is not required.
@@ -125,12 +129,12 @@ Or, with =use-package=:
     (mastodon-discover))
 #+END_SRC
 
-*** Usage
-**** 2 Factor Auth
+** Usage
+*** 2 Factor Auth
 2FA is not supported yet. It is in the [[https://github.com/jdenen/mastodon.el/milestone/2][plans]] for the =1.0.0= release.
 
 If you have 2FA enabled and try to use mastodon.el, your Emacs client will hang until you `C-g` your way out.
-**** Instance
+*** Instance
 
 Set =mastodon-instance-url= in your =.emacs= or =customize=. Defaults to the [[https://mastodon.social][flagship]].
 
@@ -142,13 +146,13 @@ There is an option to have your user credentials (email address and password) sa
 The default is not to do this because if not properly configured it would save these unencrypted which is not a good default to have.
 Customize the variable =mastodon-auth-source-file= if you want to enable this feature.
 
-**** Timelines
+*** Timelines
 
 =M-x mastodon=
 
 Opens a =*mastodon-home*= buffer in the major mode so you can see toots. You will be prompted for email and password. The app registration process will take place if your =mastodon-token-file= does not contain =:client_id= and =:client_secret=.
 
-***** Keybindings
+**** Keybindings
 
 |-----------------+---------------------------------------------------------|
 | Key             | Action                                                  |
@@ -181,7 +185,7 @@ Opens a =*mastodon-home*= buffer in the major mode so you can see toots. You wil
 | =Q=             | Quit mastodon buffer and kill window                    |
 |-----------------+---------------------------------------------------------|
 
-***** Legend
+**** Legend
 
 |--------+-------------------------|
 | Marker | Meaning                 |
@@ -190,7 +194,7 @@ Opens a =*mastodon-home*= buffer in the major mode so you can see toots. You wil
 | =(F)=  | I favourited this toot. |
 |--------+-------------------------|
 
-**** Toot toot
+*** Toot toot
 
 =M-x mastodon-toot=
 
@@ -205,12 +209,12 @@ Authentication stores your access token in the =mastodon-auth--token=
 variable. It is not stored on your filesystem, so you will have to
 re-authenticate when you close/reopen Emacs.
 
-***** Customization
+**** Customization
 The default toot visibility can be changed by setting or customizing the =mastodon-toot--default-visibility= variable. Valid values are ="public"=, ="unlisted"=, ="private"=, or =direct=.
 
 Toot visibility can also be changed on a per-toot basis from the new toot buffer.
 
-***** Keybindings
+**** Keybindings
 
 |-----------+------------------------|
 | Key       | Action                 |
@@ -221,28 +225,28 @@ Toot visibility can also be changed on a per-toot basis from the new toot buffer
 | =C-c C-v= | Change toot visibility |
 |-----------+------------------------|
 
-*** Roadmap
+** Roadmap
 
 [[https://github.com/jdenen/mastodon.el/milestone/1][Here]] are the features I plan to implement before putting mastodon.el on MELPA.
 
 [[https://github.com/jdenen/mastodon.el/milestone/2][Here]] are the plans I have for the =1.0.0= release.
 
-*** Contributing
+** Contributing
 
 PRs, issues, and feature requests are very welcome!
 
-**** Features
+*** Features
 
 1. Create an [[https://github.com/jdenen/mastodon.el/issues][issue]] detailing the feature you'd like to add.
 2. Fork the repository and create a branch off of =develop=.
 3. Create a pull request referencing the issue created in step 1.
 
-**** Fixes
+*** Fixes
 
 1. In an [[https://github.com/jdenen/mastodon.el/issues][issue]], let me know that you're working to fix it.
 2. Fork the repository and create a branch off of =develop=.
 3. Create a pull request referencing the issue from step 1.
 
-*** Connect
+** Connect
 
 If you want to get in touch with me, give me a [[https://mastodon.social/@johnson][toot]] or leave an [[https://github.com/jdenen/mastodon.el/issues][issue]].

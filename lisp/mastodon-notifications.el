@@ -140,7 +140,7 @@
 (defun mastodon-notifications--get ()
   "Display NOTIFICATIONS in buffer."
   (interactive)
-  (message "Loading your nofications...")
+  (message "Loading your notifications...")
   (mastodon-tl--init
    "notifications"
    "notifications"
