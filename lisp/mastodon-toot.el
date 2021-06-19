@@ -516,9 +516,9 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
     (when (not buffer-exists)
       (mastodon-toot--display-docs-and-status-fields)
       (mastodon-toot--setup-as-reply reply-to-user reply-to-id))
+    (mastodon-toot-mode t)
     (push #'mastodon-toot--update-status-fields after-change-functions)
-    (mastodon-toot--update-status-fields)
-    (mastodon-toot-mode t)))
+    (mastodon-toot--update-status-fields)))
 
 (define-minor-mode mastodon-toot-mode
   "Minor mode to capture Mastodon toots."

@@ -30,7 +30,7 @@
 ;; it is a labor of love.
 
 ;;; Code:
-(require 'cl-lib) ; for `some' call in mastodon
+(require 'cl-lib) ; for `cl-some' call in mastodon
 
 (declare-function discover-add-context-menu "discover")
 (declare-function emojify-mode "emojify")
