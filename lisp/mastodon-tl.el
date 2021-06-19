@@ -1171,8 +1171,8 @@ UPDATE-FUNCTION is used to recieve more toots."
   (with-current-buffer buffer
     (setq mastodon-tl--buffer-spec
           `(buffer-name ,buffer
-                        endpoint ,endpoint update-function
-                        ,update-function)
+                        endpoint ,endpoint
+                        update-function ,update-function)
           mastodon-tl--timestamp-update-timer
           (when mastodon-tl--enable-relative-timestamps
             (run-at-time mastodon-tl--timestamp-next-update

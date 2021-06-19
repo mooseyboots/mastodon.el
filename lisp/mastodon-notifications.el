@@ -65,8 +65,9 @@
 
 (defun mastodon-notifications--mention (note)
   "Format for a `mention' NOTE."
-  (let ((status (mastodon-tl--field 'status note)))
-    (mastodon-tl--insert-status
+  (let ((id (cdr (assoc 'id note)))
+        (status (mastodon-tl--field 'status note)))
+    (mastodon-notifications--insert-status
      status
      (mastodon-tl--clean-tabs-and-nl
       (if (mastodon-tl--has-spoiler status)
@@ -75,7 +76,8 @@
      'mastodon-tl--byline-author
      (lambda (_status)
        (mastodon-notifications--byline-concat
-        "Mentioned")))))
+        "Mentioned"))
+     id)))
 
 (defun mastodon-notifications--follow (note)
   "Format for a `follow' NOTE."
@@ -92,8 +94,9 @@
 
 (defun mastodon-notifications--favourite (note)
   "Format for a `favourite' NOTE."
-  (let ((status (mastodon-tl--field 'status note)))
-    (mastodon-tl--insert-status
+  (let ((id (cdr (assoc 'id note)))
+        (status (mastodon-tl--field 'status note)))
+    (mastodon-notifications--insert-status
      status
      (mastodon-tl--clean-tabs-and-nl
       (if (mastodon-tl--has-spoiler status)
@@ -104,12 +107,14 @@
         note))
      (lambda (_status)
        (mastodon-notifications--byline-concat
-        "Favourited")))))
+        "Favourited"))
+     id)))
 
 (defun mastodon-notifications--reblog (note)
   "Format for a `boost' NOTE."
-  (let ((status (mastodon-tl--field 'status note)))
-    (mastodon-tl--insert-status
+  (let ((id (cdr (assoc 'id note)))
+        (status (mastodon-tl--field 'status note)))
+    (mastodon-notifications--insert-status
      status
      (mastodon-tl--clean-tabs-and-nl
       (if (mastodon-tl--has-spoiler status)
@@ -120,7 +125,31 @@
         note))
      (lambda (_status)
        (mastodon-notifications--byline-concat
-        "Boosted")))))
+        "Boosted"))
+     id)))
+
+(defun mastodon-notifications--insert-status (toot body author-byline action-byline &optional id)
+  "Display the content and byline of timeline element TOOT.
+
+BODY will form the section of the toot above the byline.
+AUTHOR-BYLINE is an optional function for adding the author portion of
+the byline that takes one variable. By default it is `mastodon-tl--byline-author'
+ACTION-BYLINE is also an optional function for adding an action, such as boosting
+favouriting and following to the byline. It also takes a single function. By default
+it is `mastodon-tl--byline-boosted'"
+  (let ((start-pos (point)))
+    (insert
+     (propertize
+      (concat "\n"
+              body
+              " \n"
+              (mastodon-tl--byline toot author-byline action-byline))
+      'toot-id      id
+      'base-toot-id (mastodon-tl--toot-id toot)
+      'toot-json    toot)
+     "\n")
+    (when mastodon-tl--display-media-p
+      (mastodon-media--inline-images start-pos (point)))))
 
 (defun mastodon-notifications--by-type (note)
   "Filters NOTE for those listed in `mastodon-notifications--types-alist'."
