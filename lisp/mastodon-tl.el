@@ -645,8 +645,11 @@ message is a link which unhides/hides the main body."
 
 (defun mastodon-tl--content (toot)
   "Retrieve text content from TOOT."
-  (let ((content (mastodon-tl--field 'content toot))
-        (poll-p (cdr (assoc 'poll toot))))
+  (let* ((content (mastodon-tl--field 'content toot))
+         (reblog (cdr (assoc 'reblog toot)))
+         (poll-p (if reblog
+                     (cdr (assoc 'poll reblog))
+                   (cdr (assoc 'poll toot)))))
     (concat
      (when poll-p
        (mastodon-tl--get-poll toot))
