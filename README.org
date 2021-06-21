@@ -37,7 +37,7 @@ I did this for my own use and to learn more Elisp. If the code is terrible, feel
 
 ** live-updating timelines
 
-(code adapted from https://github.com/alexjgriffith/mastodon-future.el).
+(code adapted from https://github.com/alexjgriffith/mastodon-future.el.)
 
 Works for federated, local, and home timelines and for notifications. It's pretty necro, so use at your own risk. Not a super high priority for me, but some people dig it. The command prefix is =mastodon-async--stream=, and you can load various timelines from within a mastodon session like so:
 - =C-c h= (home)

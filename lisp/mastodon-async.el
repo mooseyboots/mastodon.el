@@ -342,7 +342,7 @@ Full messages are seperated by two newlines"
 
 It then processes its output."
   (with-current-buffer (process-buffer proc)
-    (let ((start (max 1 ( - (point-max) 2))))
+    (let ((start (max 1 (- (point-max) 2))))
       (url-http-generic-filter proc data)
       (when (> url-http-end-of-headers start)
         (setq start url-http-end-of-headers))

@@ -126,9 +126,8 @@ Pass response buffer to CALLBACK function."
           (buffer-substring-no-properties (point) (point-max))
           'utf-8)))
     (kill-buffer)
-    (if (not (or (string= "" json-string) (equal nil json-string)))
-        (json-read-from-string json-string)
-      (message "Looks like we got no JSON from the server."))))
+    (unless (or (string= "" json-string) (equal nil json-string)))
+        (json-read-from-string json-string)))
 
 (defun mastodon-http--delete (url)
   "Make DELETE request to URL."
