@@ -70,8 +70,8 @@
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "O") #'mastodon-profile--open-followers)
     (define-key map (kbd "o") #'mastodon-profile--open-following)
-    (define-key map (kbd "a") #'mastodon-profile--follow-request-accept)
-    (define-key map (kbd "r") #'mastodon-profile--follow-request-reject)
+    (define-key map (kbd "C-c a") #'mastodon-profile--follow-request-accept)
+    (define-key map (kbd "C-c r") #'mastodon-profile--follow-request-reject)
     map)
   "Keymap for `mastodon-profile-mode'.")
 
