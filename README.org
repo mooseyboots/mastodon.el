@@ -53,6 +53,8 @@ This version depends on the library =request= (for uploading attachments). You c
 
 As it stands the client still has some bugs. In particular, when composing a toot, hit =C-g= before sending your toot. If you don't, your draft may disappear. You may also see a related error when you try to add a media attachment. You should be able to run the command again and it should work. See the issues on the original repo.
 
+In addition, if you create and send a toot with =mastodon-toot= / =C-c t= before otherwise opening the client, various little things break.
+
 Some people have also had niggling troubles with initial auth and set-up, but I couldn't reproduce.
 
 ** roadmap-ish
