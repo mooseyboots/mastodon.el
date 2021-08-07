@@ -432,15 +432,18 @@ links in the text. If TOOT is nil no parsing occurs."
                               mastodon-instance-url))
          (maybe-hashtag (mastodon-tl--extract-hashtag-from-url
                          url toot-instance-url))
-         (maybe-userhandle (mastodon-tl--extract-userhandle-from-url
-                            url (buffer-substring-no-properties start end))))
+         (url-instance (concat "https://"
+                               (url-host (url-generic-parse-url url))))
+         (maybe-userhandle (if (string= mastodon-instance-url url-instance)
+                               (buffer-substring-no-properties start end)
+                             (mastodon-tl--extract-userhandle-from-url
+                              url (buffer-substring-no-properties start end)))))
     (cond (;; Hashtags:
            maybe-hashtag
            (setq mastodon-tab-stop-type 'hashtag
                  keymap mastodon-tl--link-keymap
                  help-echo (concat "Browse tag #" maybe-hashtag)
                  extra-properties (list 'mastodon-tag maybe-hashtag)))
-
           (;; User handles:
            maybe-userhandle
            (let ((maybe-userid (mastodon-tl--extract-userid-toot
@@ -566,6 +569,7 @@ LINK-TYPE is the type of link to produce."
            (mastodon-tl--toggle-spoiler-text position))
           ((eq link-type 'hashtag)
            (mastodon-tl--show-tag-timeline (get-text-property position 'mastodon-tag)))
+          ;; FIXME: user-handle / account / account-id is broken/empty
           ((eq link-type 'user-handle)
            (let ((account-json (get-text-property position 'account))
                  (account-id (get-text-property position 'account-id)))
