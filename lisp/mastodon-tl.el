@@ -435,6 +435,7 @@ links in the text. If TOOT is nil no parsing occurs."
          (url-instance (concat "https://"
                                (url-host (url-generic-parse-url url))))
          (maybe-userhandle (if (string= mastodon-instance-url url-instance)
+                               ; if handle is local, then no instance suffix:
                                (buffer-substring-no-properties start end)
                              (mastodon-tl--extract-userhandle-from-url
                               url (buffer-substring-no-properties start end)))))
@@ -787,7 +788,7 @@ Move forward (down) the timeline unless BACKWARD is non-nil."
   "Return toot-id from the bottom of the buffer."
   (save-excursion
     (goto-char (point-max))
-    (mastodon-tl--property 'toot-id t)))
+    (mastodon-tl--property 'base-toot-id t)))
 
 (defun mastodon-tl--as-string (numeric)
   "Convert NUMERIC to string."
