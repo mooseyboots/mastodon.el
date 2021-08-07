@@ -185,7 +185,7 @@
   "Ensure get request format for notifictions is accurate."
   (let ((mastodon-instance-url "https://instance.url"))
     (with-mock
-      (mock (mastodon-http--get-json "https://instance.url/api/v1/notifications"))
+      (mock (mastodon-http--get-json-async "https://instance.url/api/v1/notifications" 'mastodon-tl--init* "*mastodon-notifications*" "notifications" 'mastodon-notifications--timeline))
       (mastodon-notifications--get))))
 
 (defun mastodon-notifications--test-type (fun sample)
@@ -205,9 +205,9 @@ notification to be tested."
                     (mastodon-notifications--byline-concat "Mentioned"))
            (string= " Followed you"
                     (mastodon-notifications--byline-concat "Followed"))
-           (string= " Favourited your status"
+           (string= " Favourited your status from"
                     (mastodon-notifications--byline-concat "Favourited"))
-           (string= " Boosted your status"
+           (string= " Boosted your status from"
                     (mastodon-notifications--byline-concat "Boosted")))))
 
 

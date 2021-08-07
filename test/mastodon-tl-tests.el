@@ -81,7 +81,7 @@
                           (username . "acct42"))])
             (tags . [])
             (uri . "tag:example.space,2017-04-24:objectId=654321:objectType=Status")
-            (content . "<p><span class=\"h-card\"><a href=\"https://example.spacs/@acct42\">@<span>acct42</span></a></span> boost</p>")
+            (content . "<p><span class=\"h-card\"><a href=\"https://example.space/@acct42\">@<span>acct42</span></a></span> boost</p>")
             (url . "https://example.space/users/acct42/updates/123456789")
             (reblogs_count . 1)
             (favourites_count . 1)
@@ -262,9 +262,9 @@ a string or a numeric."
 	    (handle-location 20))
 	(should (string= (substring-no-properties
 			  byline)
-			 "
- | Account 42 (@acct42@example.space) 2999-99-99 00:11:22
-  ------------"))
+			 "Account 42 (@acct42@example.space) 2999-99-99 00:11:22
+  ------------
+"))
 	(should (eq (get-text-property handle-location 'mastodon-tab-stop byline)
                     'user-handle))
         (should (string= (get-text-property handle-location 'mastodon-handle byline)
@@ -285,9 +285,9 @@ a string or a numeric."
                         (mastodon-tl--byline mastodon-tl-test-base-toot
                                              'mastodon-tl--byline-author
                                              'mastodon-tl--byline-boosted))
-                       "
- |   Account 42 (@acct42@example.space) 2999-99-99 00:11:22
-  ------------")))))
+                       "  Account 42 (@acct42@example.space) 2999-99-99 00:11:22
+  ------------
+")))))
 
 (ert-deftest mastodon-tl--byline-boosted ()
   "Should format the boosted toot correctly."
@@ -302,9 +302,9 @@ a string or a numeric."
                         (mastodon-tl--byline toot
                                              'mastodon-tl--byline-author
                                              'mastodon-tl--byline-boosted))
-                      "
- | (B) Account 42 (@acct42@example.space) 2999-99-99 00:11:22
-  ------------")))))
+                       "(B) Account 42 (@acct42@example.space) 2999-99-99 00:11:22
+  ------------
+")))))
 
 (ert-deftest mastodon-tl--byline-favorited ()
   "Should format the favourited toot correctly."
@@ -319,9 +319,9 @@ a string or a numeric."
                         (mastodon-tl--byline toot
                                              'mastodon-tl--byline-author
                                              'mastodon-tl--byline-boosted))
-                       "
- | (F) Account 42 (@acct42@example.space) 2999-99-99 00:11:22
-  ------------")))))
+                       "(F) Account 42 (@acct42@example.space) 2999-99-99 00:11:22
+  ------------
+")))))
 
 
 (ert-deftest mastodon-tl--byline-boosted/favorited ()
@@ -337,9 +337,9 @@ a string or a numeric."
                         (mastodon-tl--byline toot
                                              'mastodon-tl--byline-author
                                              'mastodon-tl--byline-boosted))
-                       "
- | (B) (F) Account 42 (@acct42@example.space) 2999-99-99 00:11:22
-  ------------")))))
+                       "(B) (F) Account 42 (@acct42@example.space) 2999-99-99 00:11:22
+  ------------
+")))))
 
 (ert-deftest mastodon-tl--byline-reblogged ()
   "Should format the reblogged toot correctly."
@@ -362,9 +362,10 @@ a string or a numeric."
 	    (handle1-location 20)
 	    (handle2-location 65))
 	(should (string= (substring-no-properties byline)
-			 "
- | Account 42 (@acct42@example.space) Boosted Account 43 (@acct43@example.space) original time
-  ------------"))
+			 "Account 42 (@acct42@example.space)
+ Boosted Account 43 (@acct43@example.space) original time
+  ------------
+"))
 	(should (eq (get-text-property handle1-location 'mastodon-tab-stop byline)
                 'user-handle))
 	(should (equal (get-text-property handle1-location 'help-echo byline)
@@ -393,9 +394,11 @@ a string or a numeric."
       (should (string= (substring-no-properties
                         (mastodon-tl--byline toot
                                              'mastodon-tl--byline-author
-                                             'mastodon-tl--byline-boosted))"
- |   Account 42 (@acct42@example.space) Boosted   Account 43 (@acct43@example.space) original time
-  ------------")))))
+                                             'mastodon-tl--byline-boosted))
+                       "  Account 42 (@acct42@example.space)
+ Boosted   Account 43 (@acct43@example.space) original time
+  ------------
+")))))
 
 (ert-deftest mastodon-tl--byline-reblogged-boosted/favorited ()
   "Should format the reblogged toot that was also boosted & favoritedcorrectly."
@@ -416,9 +419,10 @@ a string or a numeric."
                         (mastodon-tl--byline toot
                                              'mastodon-tl--byline-author
                                              'mastodon-tl--byline-boosted))
-                      "
- | (B) (F) Account 42 (@acct42@example.space) Boosted Account 43 (@acct43@example.space) original time
-  ------------")))))
+                      "(B) (F) Account 42 (@acct42@example.space)
+ Boosted Account 43 (@acct43@example.space) original time
+  ------------
+")))))
 
 (ert-deftest mastodon-tl--byline-timestamp-has-relative-display ()
   "Should display the timestamp with a relative time."
@@ -841,14 +845,14 @@ constant."
 	     'toot-id (cdr (assoc 'id normal-toot-with-spoiler))))
 
       (goto-char toot-start)
-      (should (eq t (looking-at "This is the spoiler warning text")))
+      ;; (should (eq t (looking-at "This is the spoiler warning text")))
 
       (setq link-region (mastodon-tl--find-next-or-previous-property-range
                          'mastodon-tab-stop toot-start nil))
       ;; There should be a link following the text:
       (should-not (null link-region))
       (goto-char (car link-region))
-      (should (eq t (looking-at "Content Warning")))
+      (should (eq t (looking-at "CW: This is the spoiler warning text"))) ;Content Warning")))
 
       (setq body-position (+ 25 (cdr link-region))) ;; 25 is enough to skip the "\n--------------...."
 
