@@ -45,14 +45,16 @@
   '(("mention" . mastodon-notifications--mention)
     ("follow" . mastodon-notifications--follow)
     ("favourite" . mastodon-notifications--favourite)
-    ("reblog" . mastodon-notifications--reblog))
+    ("reblog" . mastodon-notifications--reblog)
+    ("follow_request" . mastodon-notifications--follow-request))
   "Alist of notification types and their corresponding function.")
 
 (defvar mastodon-notifications--response-alist
   '(("Mentioned" . "you")
     ("Followed" . "you")
     ("Favourited" . "your status from")
-    ("Boosted" . "your status from"))
+    ("Boosted" . "your status from")
+    ("Follow request" . "requested to follow you"))
   "Alist of subjects for notification types.")
 
 (defun mastodon-notifications--byline-concat (message)
@@ -91,6 +93,23 @@
    (lambda (_status)
      (mastodon-notifications--byline-concat
       "Followed"))))
+
+(defun mastodon-notifications--follow-request (note)
+  "Format for a `follow-request' NOTE."
+  (let ((id (cdr (assoc 'id note)))
+        (status (mastodon-tl--field 'status note))
+        (follower (cdr (assoc 'username (cdr (assoc 'account note))))))
+    (mastodon-notifications--insert-status
+   ;; Using reblog with an empty id will mark this as something
+   ;; non-boostable/non-favable.
+   (cons '(reblog (id . nil)) note)
+   (propertize (format "You have a follow request from... %s" follower)
+               'face 'default)
+   'mastodon-tl--byline-author
+   (lambda (_status)
+     (mastodon-notifications--byline-concat
+      "Requested to follow you"))
+   id)))
 
 (defun mastodon-notifications--favourite (note)
   "Format for a `favourite' NOTE."
