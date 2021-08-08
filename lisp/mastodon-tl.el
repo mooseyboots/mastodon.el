@@ -447,6 +447,7 @@ links in the text. If TOOT is nil no parsing occurs."
                  extra-properties (list 'mastodon-tag maybe-hashtag)))
           (;; User handles:
            maybe-userhandle
+           ;; this fails on mentions in profile notes:
            (let ((maybe-userid (mastodon-tl--extract-userid-toot
                                 toot maybe-userhandle)))
              (setq mastodon-tab-stop-type 'user-handle
@@ -455,7 +456,7 @@ links in the text. If TOOT is nil no parsing occurs."
                    extra-properties (append
                                      (list 'mastodon-handle maybe-userhandle)
                                      (when maybe-userid
-                                       (list 'acccount-id maybe-userid))))))
+                                       (list 'account-id maybe-userid))))))
           ;; Anything else:
           (t
            ;; Leave it as a url handled by shr.el.
@@ -570,7 +571,8 @@ LINK-TYPE is the type of link to produce."
            (mastodon-tl--toggle-spoiler-text position))
           ((eq link-type 'hashtag)
            (mastodon-tl--show-tag-timeline (get-text-property position 'mastodon-tag)))
-          ;; FIXME: user-handle / account / account-id is broken/empty
+          ;; FIXME: 'account / 'account-id is not set for mentions
+          ;; only works for bylines, not mentions
           ((eq link-type 'user-handle)
            (let ((account-json (get-text-property position 'account))
                  (account-id (get-text-property position 'account-id)))

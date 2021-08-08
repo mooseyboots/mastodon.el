@@ -330,7 +330,7 @@ Returns a list of lists."
                      'face 'default)
          "\n ------------\n"
          (mastodon-tl--render-text note account)
-                                        ; account here to enable tab-stops in profile note
+         ;; account here to enable tab-stops in profile note
          (if fields
              (progn
                (concat "\n"
