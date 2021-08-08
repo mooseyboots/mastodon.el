@@ -790,7 +790,7 @@ Move forward (down) the timeline unless BACKWARD is non-nil."
   "Return toot-id from the bottom of the buffer."
   (save-excursion
     (goto-char (point-max))
-    (mastodon-tl--property 'base-toot-id t)))
+    (mastodon-tl--property 'toot-id t)))
 
 (defun mastodon-tl--as-string (numeric)
   "Convert NUMERIC to string."
