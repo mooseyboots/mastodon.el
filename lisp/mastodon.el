@@ -66,6 +66,8 @@
 (autoload 'mastodon-profile--my-profile "mastodon-profile")
 (autoload 'mastodon-profile--view-favourites "mastodon-profile")
 (autoload 'mastodon-profile--view-follow-requests "mastodon-profile")
+(autoload 'mastodon-notifications--follow-request-accept-notifs "mastodon-profile")
+(autoload 'mastodon-notifications--follow-request-reject-notifs "mastodon-profile")
 (autoload 'mastodon-search--search-query "mastodon-search")
 (autoload 'mastodon-toot--delete-toot "mastodon-toot")
 (autoload 'mastodon-toot--copy-toot-url "mastodon-toot")
@@ -149,6 +151,8 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map (kbd "C-c l") #'mastodon-async--stream-local)
     (define-key map (kbd "C-c n") #'mastodon-async--stream-notifications)
     (define-key map (kbd "U") #'mastodon-profile--update-user-profile-note)
+    (define-key map (kbd "a") #'mastodon-notifications--follow-request-accept-notifs)
+    (define-key map (kbd "j") #'mastodon-notifications--follow-request-reject-notifs)
     map)
 
   "Keymap for `mastodon-mode'.")

@@ -62,6 +62,7 @@ I might add a few more features if the ones I added turn out to work ok. Possibl
 
 - [X] update profile note.
 - [X] fix loading more notifications re-loads the same ones
+- [X] view/accept/reject follow requests in notifications view.
 - voting on polls
 - better display of polls
 - display number of boosts/faves in toot byline

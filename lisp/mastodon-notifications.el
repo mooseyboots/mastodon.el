@@ -54,7 +54,7 @@
     ("Followed" . "you")
     ("Favourited" . "your status from")
     ("Boosted" . "your status from")
-    ("Follow request" . "requested to follow you"))
+    ("Requested to follow" . "you"))
   "Alist of subjects for notification types.")
 
 (defun mastodon-notifications--byline-concat (message)
@@ -64,6 +64,59 @@
    (propertize message 'face 'highlight)
    " "
    (cdr (assoc message mastodon-notifications--response-alist))))
+
+
+(defun mastodon-notifications--follow-request-accept-notifs ()
+  "Accept the follow request of user at point, in notifications view."
+  (interactive)
+  (when (mastodon-tl--find-property-range 'toot-json (point))
+    (let* ((toot-json (mastodon-tl--property 'toot-json))
+           (f-req-p (string= "follow_request" (cdr (assoc 'type toot-json)))))
+      (if f-req-p
+        (let* ((account (cdr (assoc 'account toot-json)))
+               (id (cdr (assoc 'id account)))
+               (handle (cdr (assoc 'acct account)))
+               (name (cdr (assoc 'username account))))
+          (if id
+              (let ((response
+                     (mastodon-http--post
+                      (concat
+                       (mastodon-http--api "follow_requests")
+                       (format "/%s/authorize" id))
+                      nil nil)))
+                (mastodon-http--triage response
+                                       (lambda ()
+                                         (mastodon-notifications--get)
+                                         (message "Follow request of %s (@%s) accepted!"
+                                                  name handle))))
+            (message "No account result at point?")))
+        (message "No follow request at point?")))))
+
+(defun mastodon-notifications--follow-request-reject-notifs ()
+  "Reject the follow request of user at point, in notifications view."
+  (interactive)
+  (when (mastodon-tl--find-property-range 'toot-json (point))
+    (let* ((toot-json (mastodon-tl--property 'toot-json))
+           (f-req-p (string= "follow_request" (cdr (assoc 'type toot-json)))))
+      (if f-req-p
+        (let* ((account (cdr (assoc 'account toot-json)))
+               (id (cdr (assoc 'id account)))
+               (handle (cdr (assoc 'acct account)))
+               (name (cdr (assoc 'username account))))
+          (if id
+              (let ((response
+                     (mastodon-http--post
+                      (concat
+                       (mastodon-http--api "follow_requests")
+                       (format "/%s/reject" id))
+                      nil nil)))
+                (mastodon-http--triage response
+                                       (lambda ()
+                                         (mastodon-notifications--get)
+                                         (message "Follow request of %s (@%s) rejected!"
+                                                  name handle))))
+            (message "No account result at point?")))
+        (message "No follow request at point?")))))
 
 (defun mastodon-notifications--mention (note)
   "Format for a `mention' NOTE."
@@ -97,19 +150,16 @@
 (defun mastodon-notifications--follow-request (note)
   "Format for a `follow-request' NOTE."
   (let ((id (cdr (assoc 'id note)))
-        (status (mastodon-tl--field 'status note))
         (follower (cdr (assoc 'username (cdr (assoc 'account note))))))
     (mastodon-notifications--insert-status
-   ;; Using reblog with an empty id will mark this as something
-   ;; non-boostable/non-favable.
-   (cons '(reblog (id . nil)) note)
-   (propertize (format "You have a follow request from... %s" follower)
-               'face 'default)
-   'mastodon-tl--byline-author
-   (lambda (_status)
-     (mastodon-notifications--byline-concat
-      "Requested to follow you"))
-   id)))
+     (cons '(reblog (id . nil)) note)
+     (propertize (format "You have a follow request from... %s" follower)
+                 'face 'default)
+     'mastodon-tl--byline-author
+     (lambda (_status)
+       (mastodon-notifications--byline-concat
+        "Requested to follow"))
+     id)))
 
 (defun mastodon-notifications--favourite (note)
   "Format for a `favourite' NOTE."
@@ -155,7 +205,8 @@ AUTHOR-BYLINE is an optional function for adding the author portion of
 the byline that takes one variable. By default it is `mastodon-tl--byline-author'
 ACTION-BYLINE is also an optional function for adding an action, such as boosting
 favouriting and following to the byline. It also takes a single function. By default
-it is `mastodon-tl--byline-boosted'"
+it is `mastodon-tl--byline-boosted'.
+ID is the notification's own id, which is attached as a property."
   (let ((start-pos (point)))
     (insert
      (propertize
