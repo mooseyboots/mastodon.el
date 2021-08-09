@@ -708,7 +708,9 @@ it is `mastodon-tl--byline-boosted'"
   (interactive
    (list
     (let* ((toot (mastodon-tl--property 'toot-json))
-           (poll (mastodon-tl--field 'poll toot))
+           (reblog (cdr (assoc 'reblog toot)))
+           (poll (or (cdr (assoc 'poll reblog))
+                     (mastodon-tl--field 'poll toot)))
            (options (mastodon-tl--field 'options poll))
            (options-titles (mapcar (lambda (x)
                                    (cdr (assoc 'title x)))
@@ -735,6 +737,8 @@ it is `mastodon-tl--byline-boosted'"
               candidates))))))
   (if (null (mastodon-tl--field 'poll (mastodon-tl--property 'toot-json)))
       (message "No poll here.")
+    ;; TODO: match option number up to option titles so we can message
+    ;; the full option description, not just the number
     (let* ((toot (mastodon-tl--property 'toot-json))
            (poll (mastodon-tl--field 'poll toot))
            (poll-id (cdr (assoc 'id poll)))
