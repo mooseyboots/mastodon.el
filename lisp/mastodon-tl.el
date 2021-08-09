@@ -257,7 +257,9 @@ Optionally start from POS."
   "Propertize author of TOOT."
   (let* ((account (cdr (assoc 'account toot)))
          (handle (cdr (assoc 'acct account)))
-         (name (cdr (assoc 'display_name account)))
+         (name (if (not (string= "" (cdr (assoc 'display_name account))))
+                   (cdr (assoc 'display_name account))
+                 (cdr (assoc 'username account))))
          (profile-url (cdr (assoc 'url account)))
          (avatar-url (cdr (assoc 'avatar account))))
     ;; TODO: Once we have a view for a user (e.g. their posts
