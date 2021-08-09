@@ -703,29 +703,36 @@ it is `mastodon-tl--byline-boosted'"
                        options
                        "\n") "\n")))
 
-(defun mastodon-tl--poll-vote ()
-  "If toot at point is poll, call `mastodon-tl--poll-vote-yes'."
-  (interactive)
-  ;; hack coz i don't know how to put this if test before my interactive
-  (if (null (mastodon-tl--field 'poll (mastodon-tl--property 'toot-json)))
-      (message "No poll here.")
-    (call-interactively 'mastodon-tl--poll-vote-yes)))
-
-(defun mastodon-tl--poll-vote-yes (option)
-  "Prompt user for OPTION to vote on poll at point."
+(defun mastodon-tl--poll-vote (option)
+  "If there is a poll at point, prompt user for OPTION to vote on it."
   (interactive
    (list
     (let* ((toot (mastodon-tl--property 'toot-json))
            (poll (mastodon-tl--field 'poll toot))
            (options (mastodon-tl--field 'options poll))
+           (options-titles (mapcar (lambda (x)
+                                   (cdr (assoc 'title x)))
+                                 options))
            (options-number-seq (number-sequence 1 (length options)))
            (options-numbers (mapcar (lambda(x)
                                       (number-to-string x))
-                                    options-number-seq)))
-      (completing-read "Poll option to vote for: "
-                       options-numbers
-                       nil ;predicate
-                       t))))   ;require match
+                                    options-number-seq))
+           (options-alist (mapcar* 'cons options-numbers options-titles))
+           ;; we display both option number and the option title
+           ;; but also store option number as cdr, as we need it alone below
+           (candidates (mapcar (lambda (cell)
+                                 (cons (format "%s | %s" (car cell) (cdr cell))
+                                       (car cell)))
+                               options-alist)))
+      (if (null (mastodon-tl--field 'poll (mastodon-tl--property 'toot-json)))
+          (message "No poll here.")
+        ;; var "option" = just the cdr, just the option number
+        (cdr (assoc
+              (completing-read "Poll option to vote for: "
+                         candidates
+                         nil ;predicate
+                         t) ;require match
+              candidates))))))
   (if (null (mastodon-tl--field 'poll (mastodon-tl--property 'toot-json)))
       (message "No poll here.")
     (let* ((toot (mastodon-tl--property 'toot-json))
