@@ -4,28 +4,29 @@ This is a fork of of the great but seemingly dormant https://github.com/jdenen/m
 
 It adds the following features:
 
-| Profiles:         |                                                                                    |
-|                   | display profile metadata fields                                                    |
-|                   | display pinned toots on profiles                                                   |
-|                   | display relationship (follows you/followed by you) on profiles                     |
-|                   | display toots/follows/followers counts on profiles                                 |
-|                   | links and tags in profiles and metadata fields are tab stops like in posts         |
-| =R=, =a=, =r=           | view/accept/reject follow requests                                                 |
-| =v=                 | view your favorited toots                                                          |
-| =i=                 | (un)pin toots                                                                      |
-| =S-C-P=             | jump to your profile                                                               |
-| =U=                 | update your profile bio note                                                       |
-| Timelines:        |                                                                                    |
-| =W=, =M=, =B=           | (un)follow, (un)mute, (un)block users                                              |
-|                   | images are links to the full image, can be zoomed/rotated/saved (see their keymap) |
-| =C=                 | copy url of toot at point                                                          |
-| =d=                 | delete your toot at point                                                          |
-|                   | display polls (very basic for now)                                                 |
-| Toots:            |                                                                                    |
-| =C-c C-a= (=C-c C-n=) | media uploads (and sensitive/nsfw flag)                                            |
-|                   | mention booster in replies by default                                              |
-| Search:           |                                                                                    |
-| =S=                 | search (posts, users, tags) (improved! but still pretty basic!)                    |
+| Profiles:       |                                                                                                                                                                                                        |
+|                 | display profile metadata fields                                                                                                                                                                        |
+|                 | display pinned toots on profiles                                                                                                                                                                       |
+|                 | display relationship (follows you/followed by you) on profiles                                                                                                                                         |
+|                 | display toots/follows/followers counts on profiles                                                                                                                                                     |
+|                 | links/tags/mentions in profiles are active links                                                                                                                                                       |
+| =R=, =C-c a=, =C-c r= | view/accept/reject follow requests                                                                                                                                                                     |
+| =v=               | view your favorited toots                                                                                                                                                                              |
+| =i=               | toggle pinning of toots                                                                                                                                                                                |
+| =S-C-P=           | jump to your profile                                                                                                                                                                                   |
+| =U=               | update your profile bio note                                                                                                                                                                           |
+| Timelines:      |                                                                                                                                                                                                        |
+| =C=               | copy url of toot at point                                                                                                                                                                              |
+| =d=               | delete your toot at point                                                                                                                                                                              |
+| =W=, =M=, =B=         | (un)follow, (un)mute, (un)block author of toot at point                                                                                                                                                |
+|                 | display polls (very basic for now)                                                                                                                                                                     |
+|                 | images are links to the full image, can be zoomed/rotated/saved (see their keymap)                                                                                                                     |
+| Toots:          |                                                                                                                                                                                                        |
+|                 | mention booster in replies by default                                                                                                                                                                  |
+| =C-c C-a=         | media uploads                                                                                                                                                                                          |
+| =C-c C-n=         | and sensitive media/nsfw flag                                                                                                                                                                          |
+| Search:         |                                                                                                                                                                                                        |
+| =S=               | search (posts, users, tags) (improved! but still rly basic!) (NB: by default, posts searched will only be those you have interacted with in some way; your instance can optionally enable full search) |
 
 It also makes some small cosmetic changes to make timelines easier to read, and makes some functions asynchronous, based on https://github.com/ieure/mastodon.el.
 
@@ -33,17 +34,17 @@ This updated version is not on MELPA, to use it you need to clone and require it
 
 The minimum Emacs version is now 25.1. But if you are running an older version it shouldn't be very hard to get it working.
 
-I did this for my own use and to learn more Elisp. If the code is terrible, feel free to improve or replace it. It surely still contains errors, I'm only weeding them out as I find them.
+I did this for my own use and to learn more Elisp. Feel free to improve it.
 
 ** live-updating timelines
 
 (code adapted from https://github.com/alexjgriffith/mastodon-future.el.)
 
-Works for federated, local, and home timelines and for notifications. It's pretty necro, so use at your own risk. Not a super high priority for me, but some people dig it. The command prefix is =mastodon-async--stream=, and you can load various timelines from within a mastodon session like so:
+Works for federated, local, and home timelines and for notifications. It's pretty necro, sometimes it goes off the rails, so use at your own risk. Not a super high priority for me, but some people dig it. The command prefix is =mastodon-async--stream=, and you can load various timelines from within a mastodon session like so:
 - =C-c h= (home)
 - =C-c f= (federated)
 - =C-c l= (local)
-- =C-c n= (notifications).
+- =C-c n= (notifications)
 
 ** NB: dependency
 
@@ -53,17 +54,17 @@ This version depends on the library =request= (for uploading attachments). You c
 
 As it stands the client still has some bugs. In particular, when composing a toot, hit =C-g= before sending your toot. If you don't, your draft may disappear. You may also see a related error when you try to add a media attachment. You should be able to run the command again and it should work. See the issues on the original repo.
 
-In addition, if you create and send a toot with =mastodon-toot= / =C-c t= before otherwise opening the client, various little things break.
-
 Some people have also had niggling troubles with initial auth and set-up, but I couldn't reproduce.
 
 ** roadmap-ish
 
 I might add a few more features if the ones I added turn out to work ok. Possible additions/amendments:
 
-- update profile note.
+- [X] update profile note.
+- [X] fix loading more notifications re-loads the same ones
 - voting on polls
 - better display of polls
+- display number of boosts/faves in toot byline
 - mention all thread participants in replies
 - handle newlines in toots better, for poetry, etc.
 - improve async.
