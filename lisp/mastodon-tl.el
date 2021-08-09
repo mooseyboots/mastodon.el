@@ -52,7 +52,7 @@
 (autoload 'mastodon-http--triage "mastodon-http")
 (autoload 'mastodon-http--get-json-async "mastodon-http")
 (autoload 'mastodon-profile--lookup-account-in-status "mastodon-profile")
-
+(autoload 'mastodon-profile-mode "mastodon-profile")
 (defvar mastodon-instance-url)
 (defvar mastodon-toot-timestamp-format)
 (defvar shr-use-fonts)  ;; declare it since Emacs24 didn't have this
@@ -691,14 +691,52 @@ it is `mastodon-tl--byline-boosted'"
 (defun mastodon-tl--get-poll (toot)
   "If post TOOT is a poll, return a formatted string of poll."
   (let* ((poll (mastodon-tl--field 'poll toot))
-         (options (mastodon-tl--field 'options poll)))
+         (options (mastodon-tl--field 'options poll))
+         (option-counter 0))
     (concat "Poll: \n\n"
             (mapconcat (lambda (option)
-                         (format "Option: %s, %s votes.\n"
+                         (progn
+                         (format "Option %s: %s, %s votes.\n"
+                                 (setq option-counter (1+ option-counter))
                                  (cdr (assoc 'title option))
-                                 (cdr (assoc 'votes_count option))))
+                                 (cdr (assoc 'votes_count option)))))
                        options
                        "\n") "\n")))
+
+(defun mastodon-tl--poll-vote ()
+  "If toot at point is poll, call `mastodon-tl--poll-vote-yes'."
+  (interactive)
+  ;; hack coz i don't know how to put this if test before my interactive
+  (if (null (mastodon-tl--field 'poll (mastodon-tl--property 'toot-json)))
+      (message "No poll here.")
+    (call-interactively 'mastodon-tl--poll-vote-yes)))
+
+(defun mastodon-tl--poll-vote-yes (option)
+  "Prompt user for OPTION to vote on poll at point."
+  (interactive
+   (list
+    (let* ((toot (mastodon-tl--property 'toot-json))
+           (poll (mastodon-tl--field 'poll toot))
+           (options (mastodon-tl--field 'options poll))
+           (options-number-seq (number-sequence 1 (length options)))
+           (options-numbers (mapcar (lambda(x)
+                                      (number-to-string x))
+                                    options-number-seq)))
+      (completing-read "Poll option to vote for: "
+                       options-numbers
+                       nil ;predicate
+                       t))))   ;require match
+  (if (null (mastodon-tl--field 'poll (mastodon-tl--property 'toot-json)))
+      (message "No poll here.")
+    (let* ((toot (mastodon-tl--property 'toot-json))
+           (poll (mastodon-tl--field 'poll toot))
+           (poll-id (cdr (assoc 'id poll)))
+           (url (mastodon-http--api (format "polls/%s/votes" poll-id)))
+           (arg `(("choices[]" . ,option)))
+           (response (mastodon-http--post url arg nil)))
+      (mastodon-http--triage response
+                             (lambda ()
+                               (message "You voted for option %s!" option))))))
 
 (defun mastodon-tl--toot (toot)
   "Formats TOOT and insertes it into the buffer."

@@ -79,6 +79,7 @@
 (autoload 'mastodon-async--stream-notifications "mastodon-async")
 (autoload 'mastodon-profile--update-user-profile-note "mastodon-profile")
 (autoload 'mastodon-auth--user-acct "mastodon-auth")
+(autoload 'mastodon-tl--poll-vote "mastodon-http")
 
 (defgroup mastodon nil
   "Interface with Mastodon."
@@ -144,7 +145,7 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map (kbd "d") #'mastodon-toot--delete-toot)
     (define-key map (kbd "C") #'mastodon-toot--copy-toot-url)
     (define-key map (kbd "i") #'mastodon-toot--pin-toot-toggle)
-    (define-key map (kbd "v") #'mastodon-profile--view-favourites)
+    (define-key map (kbd "V") #'mastodon-profile--view-favourites)
     (define-key map (kbd "R") #'mastodon-profile--view-follow-requests)
     (define-key map (kbd "C-c h") #'mastodon-async--stream-home)
     (define-key map (kbd "C-c f") #'mastodon-async--stream-federated)
@@ -153,6 +154,7 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map (kbd "U") #'mastodon-profile--update-user-profile-note)
     (define-key map (kbd "a") #'mastodon-notifications--follow-request-accept-notifs)
     (define-key map (kbd "j") #'mastodon-notifications--follow-request-reject-notifs)
+    (define-key map (kbd "v") #'mastodon-tl--poll-vote)
     map)
 
   "Keymap for `mastodon-mode'.")

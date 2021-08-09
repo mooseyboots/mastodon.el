@@ -63,12 +63,13 @@ I might add a few more features if the ones I added turn out to work ok. Possibl
 - [X] update profile note.
 - [X] fix loading more notifications re-loads the same ones
 - [X] view/accept/reject follow requests in notifications view.
-- voting on polls
+- [X] fix sometimes usernames don't appear in timelines
+- [X] voting on polls
 - better display of polls
 - display number of boosts/faves in toot byline
 - mention all thread participants in replies
 - handle newlines in toots better, for poetry, etc.
-- improve async.
+- improve (or even partially disable) async.
 
 It looks like 2-factor auth was never completed in the original repo. It's not a priority for me, auth ain't my thing. If you want to hack on it, its on the develop branch in the original repo.
 
