@@ -67,15 +67,28 @@
     (string-match "[0-9][0-9][0-9]" status-line)
     (match-string 0 status-line)))
 
+;; (defun mastodon-http--triage (response success)
+;;   "Determine if RESPONSE was successful. Call SUCCESS if successful.
+
+;; Open RESPONSE buffer if unsuccessful."
+;;   (let ((status (with-current-buffer response
+;;                   (mastodon-http--status))))
+;;     (if (string-prefix-p "2" status)
+;;         (funcall success)
+;;       (switch-to-buffer response))))
+
 (defun mastodon-http--triage (response success)
   "Determine if RESPONSE was successful. Call SUCCESS if successful.
 
-Open RESPONSE buffer if unsuccessful."
+Message status and JSON error from RESPONSE if unsuccessful."
   (let ((status (with-current-buffer response
                   (mastodon-http--status))))
     (if (string-prefix-p "2" status)
         (funcall success)
-      (switch-to-buffer response))))
+      (progn
+        (switch-to-buffer response)
+        (let ((json-response (mastodon-http--process-json)))
+          (message "Error %s: %s" status (cdr (assoc 'error json-response))))))))
 
 (defun mastodon-http--post (url args headers &optional unauthenticed-p)
   "POST synchronously to URL with ARGS and HEADERS.
