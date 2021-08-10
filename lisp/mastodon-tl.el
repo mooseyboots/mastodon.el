@@ -721,33 +721,35 @@ it is `mastodon-tl--byline-boosted'"
                                     options-number-seq))
            (options-alist (mapcar* 'cons options-numbers options-titles))
            ;; we display both option number and the option title
-           ;; but also store option number as cdr, as we need it alone below
+           ;; but also store both as cons cell as cdr, as we need it below
            (candidates (mapcar (lambda (cell)
                                  (cons (format "%s | %s" (car cell) (cdr cell))
-                                       (car cell)))
+                                        cell))
                                options-alist)))
       (if (null (mastodon-tl--field 'poll (mastodon-tl--property 'toot-json)))
           (message "No poll here.")
-        ;; var "option" = just the cdr, just the option number
+        ;; var "option" = just the cdr, a cons of option number and desc
         (cdr (assoc
               (completing-read "Poll option to vote for: "
                          candidates
-                         nil ;predicate
-                         t) ;require match
+                         nil ; (predicate)
+                         t) ; require match
               candidates))))))
   (if (null (mastodon-tl--field 'poll (mastodon-tl--property 'toot-json)))
       (message "No poll here.")
-    ;; TODO: match option number up to option titles so we can message
-    ;; the full option description, not just the number
     (let* ((toot (mastodon-tl--property 'toot-json))
            (poll (mastodon-tl--field 'poll toot))
            (poll-id (cdr (assoc 'id poll)))
            (url (mastodon-http--api (format "polls/%s/votes" poll-id)))
-           (arg `(("choices[]" . ,option)))
+           ;; need to zero-index our option:
+           (option-as-arg (number-to-string (1- (string-to-number (car option)))))
+           ;; (option-indexed
+           (arg `(("choices[]" . ,option-as-arg)))
            (response (mastodon-http--post url arg nil)))
       (mastodon-http--triage response
                              (lambda ()
-                               (message "You voted for option %s!" option))))))
+                               (message "You voted for option %s: %s!"
+                                        (car option) (cdr option)))))))
 
 (defun mastodon-tl--toot (toot)
   "Formats TOOT and insertes it into the buffer."
