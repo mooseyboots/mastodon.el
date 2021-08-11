@@ -61,14 +61,16 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
   "Alist of account accts (name@domain) keyed by instance url.")
 
 (defun mastodon-auth--generate-token ()
-  "Make POST to generate auth token."
+  "Make POST to generate auth token.
+
+If no auth-sources file, runs `mastodon-auth--generate-token-no-storing-credentials'. If auth-sources file exists, runs `mastodon-auth--generate-token-and-store'."
   (if (or (null mastodon-auth-source-file)
 	  (string= "" mastodon-auth-source-file))
       (mastodon-auth--generate-token-no-storing-credentials)
     (mastodon-auth--generate-token-and-store)))
 
 (defun mastodon-auth--generate-token-no-storing-credentials ()
-  "Make POST to generate auth token."
+  "Make POST to generate auth token, without using auth-sources file."
   (mastodon-http--post
    (concat mastodon-instance-url "/oauth/token")
    `(("client_id" . ,(plist-get (mastodon-client) :client_id))
@@ -83,7 +85,7 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
 (defun mastodon-auth--generate-token-and-store ()
   "Make POST to generate auth token.
 
-Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
+Reads and/or stores secrets in `MASTODON-AUTH-SOURCE-FILE'."
   (let* ((auth-sources (list mastodon-auth-source-file))
 	 (auth-source-creation-prompts
           '((user . "Enter email for %h: ")
@@ -111,7 +113,7 @@ Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
         (funcall (plist-get credentials-plist :save-function))))))
 
 (defun mastodon-auth--get-token ()
-  "Make auth token request and return JSON response."
+  "Make a request to generate an auth token and return JSON response."
   (with-current-buffer (mastodon-auth--generate-token)
     (goto-char (point-min))
     (re-search-forward "^$" nil 'move)
@@ -122,15 +124,18 @@ Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
       (json-read-from-string json-string))))
 
 (defun mastodon-auth--access-token ()
-  "Return the access token to use with the current `mastodon-instance-url'.
+  "If an access token for the current `mastodon-instance-url' exists in `mastodon-auth--token-alist', return it.
 
-Generate token and set if none known yet."
+Otherwise, generate a token and pass it to `mastodon-auth--handle-token-reponse'."
   (if-let ((token (cdr (assoc mastodon-instance-url mastodon-auth--token-alist))))
       token
 
     (mastodon-auth--handle-token-response (mastodon-auth--get-token))))
 
 (defun mastodon-auth--handle-token-response (response)
+  "Add the token in RESPONSE returned by `mastodon-auth--get-token' in `mastodon-auth--token-alist'.
+
+Handle any errors from the server."
   (pcase response
     ((and (let token (plist-get response :access_token))
           (guard token))
