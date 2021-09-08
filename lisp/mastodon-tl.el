@@ -641,7 +641,10 @@ message is a link which unhides/hides the main body."
                           (let ((preview-url
                                  (cdr (assoc 'preview_url media-attachement)))
                                 (remote-url
-                                 (cdr (assoc 'remote_url media-attachement))))
+                                 (if (cdr (assoc 'remote_url media-attachement))
+                                     (cdr (assoc 'remote_url media-attachement))
+                                   ;; fallback b/c notifications don't have remote_url
+                                   (cdr (assoc 'url media-attachement)))))
                             (if mastodon-tl--display-media-p
                                 (mastodon-media--get-media-link-rendering
                                  preview-url remote-url) ; 2nd arg for shr-browse-url
