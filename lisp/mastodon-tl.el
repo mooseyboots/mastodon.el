@@ -82,11 +82,16 @@ width fonts when rendering HTML text"))
   "A unique identifier and functions for each Mastodon buffer.")
 (make-variable-buffer-local 'mastodon-tl--buffer-spec)
 
-(defvar mastodon-tl--show-avatars-p
-  (if (version< emacs-version "27.1")
-      (image-type-available-p 'imagemagick)
-    (image-transforms-p))
-  "A boolean value stating whether to show avatars in timelines.")
+(defcustom mastodon-tl--show-avatars-p t
+  "Whether to enable display of user avatars in timelines."
+  :group 'mastodon-tl
+  :type '(boolean :tag "Whether to display user avatars in timelines"))
+
+;; (defvar mastodon-tl--show-avatars-p nil
+        ;; (if (version< emacs-version "27.1")
+            ;; (image-type-available-p 'imagemagick)
+          ;; (image-transforms-p))
+  ;; "A boolean value stating whether to show avatars in timelines.")
 
 (defvar mastodon-tl--update-point nil
   "When updating a mastodon buffer this is where new toots will be inserted.
@@ -267,7 +272,11 @@ Optionally start from POS."
     ;; TODO: Once we have a view for a user (e.g. their posts
     ;; timeline) make this a tab-stop and attach an action
     (concat
-     (when (and mastodon-tl--show-avatars-p mastodon-tl--display-media-p)
+     (when (and mastodon-tl--show-avatars-p
+                mastodon-tl--display-media-p
+                (if (version< emacs-version "27.1")
+                    (image-type-available-p 'imagemagick)
+                  (image-transforms-p)))
        (mastodon-media--get-avatar-rendering avatar-url))
      (propertize name 'face 'mastodon-display-name-face)
      " ("
