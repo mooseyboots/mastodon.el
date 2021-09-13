@@ -83,7 +83,9 @@ width fonts when rendering HTML text"))
 (make-variable-buffer-local 'mastodon-tl--buffer-spec)
 
 (defvar mastodon-tl--show-avatars-p
-  (image-type-available-p 'imagemagick)
+  (if (version< emacs-version "27.1")
+      (image-type-available-p 'imagemagick)
+    (image-transforms-p))
   "A boolean value stating whether to show avatars in timelines.")
 
 (defvar mastodon-tl--update-point nil

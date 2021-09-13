@@ -372,7 +372,8 @@ Returns a list of lists."
         (if (and pinned (equal endpoint-type "statuses"))
             (mastodon-profile--insert-statuses-pinned pinned))
         (funcall update-function json)))
-    (mastodon-tl--goto-next-toot)))
+    ;;(mastodon-tl--goto-next-toot)
+    (goto-char (point-min))))
 
 (defun mastodon-profile--get-toot-author ()
   "Open profile of author of toot under point.

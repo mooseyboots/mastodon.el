@@ -41,7 +41,7 @@
   :prefix "mastodon-media-"
   :group 'mastodon)
 
-(defcustom mastodon-media--avatar-height 30
+(defcustom mastodon-media--avatar-height 20
   "Height of the user avatar images (if shown)."
   :group 'mastodon-media
   :type 'integer)
@@ -146,7 +146,10 @@ REGION-LENGTH is the length of the region that should be replaced with the image
                          (search-forward "\n\n")
                          (buffer-substring (point) (point-max))))
                  (image (when data
-                          (apply #'create-image data (when image-options 'imagemagick)
+                          (apply #'create-image data
+                                 (if (version< emacs-version "27.1")
+                                     (when image-options 'imagemagick)
+                                   nil) ; inbuilt scaling in 27.1
                                  t image-options))))
             (with-current-buffer (marker-buffer marker)
               ;; Save narrowing in our buffer
@@ -170,7 +173,8 @@ REGION-LENGTH is the length of the region that should be replaced with the image
 
 MEDIA-TYPE is a symbol and either 'avatar or 'media-link."
   ;; TODO: Cache the avatars
-  (let ((image-options (when (image-type-available-p 'imagemagick)
+  (let ((image-options (when (or (image-type-available-p 'imagemagick)
+                                 (image-transforms-p)) ; inbuilt scaling in 27.1
                          (cond
                           ((eq media-type 'avatar)
                            `(:height ,mastodon-media--avatar-height))
@@ -251,7 +255,8 @@ replacing them with the referenced image."
   ;; We use just an empty space as the textual representation.
   ;; This is what a user will see on a non-graphical display
   ;; where not showing an avatar at all is preferable.
-  (let ((image-options (when (image-type-available-p 'imagemagick)
+  (let ((image-options (when (or (image-type-available-p 'imagemagick)
+                                 (image-transforms-p)) ; inbuilt scaling in 27.1
                          `(:height ,mastodon-media--avatar-height))))
     (concat
      (propertize " "
@@ -259,7 +264,9 @@ replacing them with the referenced image."
                  'media-state 'needs-loading
                  'media-type 'avatar
                  'display (apply #'create-image mastodon-media--generic-avatar-data
-                                 (when image-options 'imagemagick)
+                                 (if (version< emacs-version "27.1")
+                                     (when image-options 'imagemagick)
+                                   nil) ; inbuilt scaling in 27.1
                                  t image-options))
      " ")))
 
