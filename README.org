@@ -32,19 +32,15 @@ It also makes some small cosmetic changes to make timelines easier to read, and 
 
 This updated version is not on MELPA, to use it you need to clone and require it as per the installation instructions below.
 
-The minimum Emacs version is now 25.1. But if you are running an older version it shouldn't be very hard to get it working.
+The minimum Emacs version is now 26.1. But if you are running an older version it shouldn't be very hard to get it working.
 
 I did this for my own use and to learn more Elisp. Feel free to improve it.
 
 ** live-updating timelines
 
-(code adapted from https://github.com/alexjgriffith/mastodon-future.el.)
+(code taken from https://github.com/alexjgriffith/mastodon-future.el.)
 
-Works for federated, local, and home timelines and for notifications. It's pretty necro, sometimes it goes off the rails, so use at your own risk. Not a super high priority for me, but some people dig it. The command prefix is =mastodon-async--stream=, and you can load various timelines from within a mastodon session like so:
-- =C-c h= (home)
-- =C-c f= (federated)
-- =C-c l= (local)
-- =C-c n= (notifications)
+Works for federated, local, and home timelines and for notifications. It's pretty necro, sometimes it goes off the rails, so use at your own risk. Not a super high priority for me, but some people dig it. The command prefix is =mastodon-async--stream=.
 
 ** NB: dependency
 
