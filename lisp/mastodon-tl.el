@@ -82,12 +82,12 @@ width fonts when rendering HTML text"))
   "A unique identifier and functions for each Mastodon buffer.")
 (make-variable-buffer-local 'mastodon-tl--buffer-spec)
 
-(defcustom mastodon-tl--show-avatars-p t
+(defcustom mastodon-tl--show-avatars t
   "Whether to enable display of user avatars in timelines."
   :group 'mastodon-tl
   :type '(boolean :tag "Whether to display user avatars in timelines"))
 
-;; (defvar mastodon-tl--show-avatars-p nil
+;; (defvar mastodon-tl--show-avatars nil
         ;; (if (version< emacs-version "27.1")
             ;; (image-type-available-p 'imagemagick)
           ;; (image-transforms-p))
@@ -272,7 +272,7 @@ Optionally start from POS."
     ;; TODO: Once we have a view for a user (e.g. their posts
     ;; timeline) make this a tab-stop and attach an action
     (concat
-     (when (and mastodon-tl--show-avatars-p
+     (when (and mastodon-tl--show-avatars
                 mastodon-tl--display-media-p
                 (if (version< emacs-version "27.1")
                     (image-type-available-p 'imagemagick)
