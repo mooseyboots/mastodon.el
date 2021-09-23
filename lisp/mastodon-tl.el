@@ -1054,6 +1054,21 @@ webapp"
                                      (message "User %s (@%s) unblocked!" name user-handle)))))
       (message "Cannot find a user with handle %S" user-handle))))
 
+(defun mastodon-tl--reload-timeline-or-profile ()
+  "Reload the current timeline or profile page.
+For use after e.g. deleting a toot."
+  (cond ((equal (mastodon-tl--get-endpoint) "timelines/home")
+         (mastodon-tl--get-home-timeline))
+        ((equal (mastodon-tl--get-endpoint) "timelines/public")
+         (mastodon-tl--get-federated-timeline))
+        ((equal (mastodon-tl--get-endpoint) "timelines/public?local=true")
+         (mastodon-tl--get-local-timeline))
+        ((equal (mastodon-tl--get-endpoint) "notifications")
+         (mastodon-notifications--get))
+        ((equal (mastodon-tl--buffer-name)
+                (concat "*mastodon-" (mastodon-auth--get-account-name) "-statuses*"))
+         (mastodon-profile--my-profile))))
+
 (defun mastodon-tl--more ()
   "Append older toots to timeline."
   (interactive)

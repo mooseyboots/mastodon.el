@@ -46,6 +46,7 @@
 (autoload 'mastodon-toot "mastodon")
 (autoload 'mastodon-http--post-media-attachment "mastodon-http")
 (autoload 'mastodon-tl--toot-id "mastodon-tl")
+(autoload 'mastodon-tl--reload-timeline-or-profile "mastodon-tl")
 
 (defgroup mastodon-toot nil
   "Tooting in Mastodon."
@@ -215,7 +216,6 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
     (kill-new url)
     (message "Toot URL copied to the clipboard.")))
 
-;; TODO redraw buffer on success?
 (defun mastodon-toot--delete-toot ()
   "Delete user's toot at point synchronously."
   (interactive)
@@ -231,6 +231,7 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
           (let ((response (mastodon-http--delete url)))
             (mastodon-http--triage response
                                    (lambda ()
+                                     (mastodon-tl--reload-timeline-or-profile)
                                      (message "Toot deleted!"))))))))
 
 (defun mastodon-toot--kill ()
