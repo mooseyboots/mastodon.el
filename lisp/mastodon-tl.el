@@ -82,7 +82,7 @@ width fonts when rendering HTML text"))
   "A unique identifier and functions for each Mastodon buffer.")
 (make-variable-buffer-local 'mastodon-tl--buffer-spec)
 
-(defcustom mastodon-tl--show-avatars t
+(defcustom mastodon-tl--show-avatars nil
   "Whether to enable display of user avatars in timelines."
   :group 'mastodon-tl
   :type '(boolean :tag "Whether to display user avatars in timelines"))
