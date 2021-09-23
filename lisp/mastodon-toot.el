@@ -58,10 +58,11 @@
 
 Must be one of \"public\", \"unlisted\", \"private\", or \"direct\"."
   :group 'mastodon-toot
-  :type '(choice ("public"
-                  "unlisted"
-                  "private"
-                  "direct")))
+  :type 'choice
+  :options '("public"
+             "unlisted"
+             "private"
+             "direct"))
 
 (defvar mastodon-toot--content-warning nil
   "A flag whether the toot should be marked with a content warning.")
