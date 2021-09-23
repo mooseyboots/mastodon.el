@@ -301,10 +301,12 @@ If media items have been uploaded with `mastodon-toot--add-media-attachment', at
         (message "Looks like your uploads are not yet ready...")
       (if empty-toot-p
           (message "Empty toot. Cowardly refusing to post this.")
-        (mastodon-toot--kill)
-        (let ((response (mastodon-http--post endpoint args nil)))
+          (let ((response (mastodon-http--post endpoint args nil)))
           (mastodon-http--triage response
-                                 (lambda () (message "Toot toot!"))))))))
+                                 (lambda ()
+                                   (kill-new toot) ; copy toot text to kill ring
+                                   (mastodon-toot--kill) ; only kill buffer after sending
+                                   (message "Toot toot!"))))))))
 
 (defun mastodon-toot--process-local (acct)
   "Adds domain to local ACCT and replaces the curent user name with \"\".
