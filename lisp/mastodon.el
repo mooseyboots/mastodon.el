@@ -80,6 +80,7 @@
 (autoload 'mastodon-profile--update-user-profile-note "mastodon-profile")
 (autoload 'mastodon-auth--user-acct "mastodon-auth")
 (autoload 'mastodon-tl--poll-vote "mastodon-http")
+(autoload 'mastodon-toot--delete-and-redraft-toot "mastodon-toot")
 
 (defgroup mastodon nil
   "Interface with Mastodon."
@@ -143,6 +144,7 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map (kbd "C-S-P") #'mastodon-profile--my-profile)
     (define-key map (kbd "S") #'mastodon-search--search-query)
     (define-key map (kbd "d") #'mastodon-toot--delete-toot)
+    (define-key map (kbd "D") #'mastodon-toot--delete-and-redraft-toot)
     (define-key map (kbd "C") #'mastodon-toot--copy-toot-url)
     (define-key map (kbd "i") #'mastodon-toot--pin-toot-toggle)
     (define-key map (kbd "V") #'mastodon-profile--view-favourites)

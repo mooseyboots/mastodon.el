@@ -234,6 +234,31 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
                                      (mastodon-tl--reload-timeline-or-profile)
                                      (message "Toot deleted!"))))))))
 
+;; TODO: handle media/poll for redrafting toots
+(defun mastodon-toot--delete-and-redraft-toot ()
+  "Delete and redraft user's toot at point synchronously."
+  (interactive)
+  (let* ((toot (mastodon-tl--property 'toot-json))
+         (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
+         (url (mastodon-http--api (format "statuses/%s" id))))
+    (if (or (cdr (assoc 'reblog toot))
+            (not (equal (cdr (assoc 'acct
+                                    (cdr (assoc 'account toot))))
+                        (mastodon-auth--user-acct))))
+        (message "You can only delete and redraft your own toots.")
+      (if (y-or-n-p (format "Delete and redraft this toot? "))
+          (let* ((response (mastodon-http--delete url)))
+            (mastodon-http--triage
+             response
+             (lambda ()
+               (with-current-buffer response
+                 (let* ((json-response (mastodon-http--process-json))
+                        (content (cdr (assoc 'text json-response)))
+                        (media (cdr (assoc 'media_attachments json-response))))
+                   (mastodon-toot--compose-buffer nil nil)
+                   (goto-char (point-max))
+                   (insert content))))))))))
+
 (defun mastodon-toot--kill ()
   "Kill `mastodon-toot-mode' buffer and window."
   (kill-buffer-and-window))
