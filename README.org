@@ -4,29 +4,32 @@ This is a fork of of the great but seemingly dormant https://github.com/jdenen/m
 
 It adds the following features:
 
-| Profiles:       |                                                                                                                                                                                                        |
-|                 | display profile metadata fields                                                                                                                                                                        |
-|                 | display pinned toots on profiles                                                                                                                                                                       |
-|                 | display relationship (follows you/followed by you) on profiles                                                                                                                                         |
-|                 | display toots/follows/followers counts on profiles                                                                                                                                                     |
-|                 | links/tags/mentions in profiles are active links                                                                                                                                                       |
-| =R=, =C-c a=, =C-c r= | view/accept/reject follow requests                                                                                                                                                                     |
-| =v=               | view your favorited toots                                                                                                                                                                              |
-| =i=               | toggle pinning of toots                                                                                                                                                                                |
-| =S-C-P=           | jump to your profile                                                                                                                                                                                   |
-| =U=               | update your profile bio note                                                                                                                                                                           |
-| Timelines:      |                                                                                                                                                                                                        |
-| =C=               | copy url of toot at point                                                                                                                                                                              |
-| =d=               | delete your toot at point                                                                                                                                                                              |
-| =W=, =M=, =B=         | (un)follow, (un)mute, (un)block author of toot at point                                                                                                                                                |
-|                 | display polls and vote on polls (very basic for now)                                                                                                                                               |
-|                 | images are links to the full image, can be zoomed/rotated/saved (see their keymap)                                                                                                                     |
-| Toots:          |                                                                                                                                                                                                        |
-|                 | mention booster in replies by default                                                                                                                                                                  |
-| =C-c C-a=         | media uploads                                                                                                                                                                                          |
-| =C-c C-n=         | and sensitive media/nsfw flag                                                                                                                                                                          |
-| Search:         |                                                                                                                                                                                                        |
-| =S=               | search (posts, users, tags) (improved! but still rly basic!) (NB: by default, posts searched will only be those you have interacted with in some way; your instance can optionally enable full search) |
+| Profiles:       |                                                                                    |
+|                 | display profile metadata fields                                                    |
+|                 | display pinned toots on profiles                                                   |
+|                 | display relationship (follows you/followed by you) on profiles                     |
+|                 | display toots/follows/followers counts on profiles                                 |
+|                 | links/tags/mentions in profiles are active links                                   |
+| =R=, =C-c a=, =C-c r= | view/accept/reject follow requests                                                 |
+| =v=               | view your favorited toots                                                          |
+| =i=               | toggle pinning of toots                                                            |
+| =S-C-P=           | jump to your profile                                                               |
+| =U=               | update your profile bio note                                                       |
+| Timelines:      |                                                                                    |
+| =C=               | copy url of toot at point                                                          |
+| =d=               | delete your toot at point, and reload current timeline                             |
+| =D=               | delete and redraft toot at point                                                   |
+| =W=, =M=, =B=         | (un)follow, (un)mute, (un)block author of toot at point                            |
+|                 | display polls and vote on polls (pretty basic for now)                             |
+|                 | images are links to the full image, can be zoomed/rotated/saved (see image keymap) |
+| Toots:          |                                                                                    |
+|                 | mention booster in replies by default                                              |
+| =C-c C-a=         | media uploads                                                                      |
+| =C-c C-n=         | and sensitive media/nsfw flag                                                      |
+|                 |                                                                                    |
+| Search:         |                                                                                    |
+| =S=               | search (posts, users, tags) (NB: only posts you have interacted with are searched) |
+|                 |                                                                                    |
 
 It also makes some small cosmetic changes to make timelines easier to read, and makes some functions asynchronous, based on https://github.com/ieure/mastodon.el.
 
@@ -48,9 +51,9 @@ This version depends on the library =request= (for uploading attachments). You c
 
 ** NB: bugs
 
-As it stands the client still has some bugs. In particular, when composing a toot, hit =C-g= before sending your toot. If you don't, your draft may disappear. You may also see a related error when you try to add a media attachment. You should be able to run the command again and it should work. See the issues on the original repo.
+As it stands the client still has some bugs. In particular, when composing a toot, there is a bug in the live character counting. For the moment, you'll likely need to hit =C-c C-c= twice rather than once to send a post. In case your toot buffed disappears and your toot does not post, the toot contents are also copied to the kill ring. You may also see a related error when you try to add a media attachment. You should be able to run the command again and it should work. See the issues on the original repo.
 
-Some people have also had niggling troubles with initial auth and set-up, but I couldn't reproduce.
+Some people have also had trouble with initial auth and set-up, but these should be fixed by =50062c5=, by Ian Eure.
 
 ** roadmap-ish
 
@@ -61,6 +64,8 @@ I might add a few more features if the ones I added turn out to work ok. Possibl
 - [X] view/accept/reject follow requests in notifications view.
 - [X] fix sometimes usernames don't appear in timelines
 - [X] voting on polls
+- [X] delete and redraft toots
+- [X] prevent loss of draft toots by the toot-send bug
 - better display of polls
 - display number of boosts/faves in toot byline
 - mention all thread participants in replies
