@@ -56,7 +56,7 @@
 (defcustom mastodon-toot--default-visibility "public"
   "The default visibility for new toots.
 
-Must be one of \"public\", \"unlisted\", \"private\", or \"direct\"."
+Must be one of \"public\", \"unlisted\", \"private\" (for followers-only), or \"direct\"."
   :group 'mastodon-toot
   :type 'choice
   :options '("public"
@@ -75,7 +75,7 @@ Must be one of \"public\", \"unlisted\", \"private\", or \"direct\"."
 (defvar mastodon-toot--visibility "public"
   "A string indicating the visibility of the toot being composed.
 
-Valid values are \"direct\", \"private\", \"unlisted\", and \"public\".")
+Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"public\".")
 (make-variable-buffer-local 'mastodon-toot--visibility)
 
 (defvar mastodon-toot--media-attachments nil
@@ -520,7 +520,11 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
     (add-text-properties (car visibility-region) (cdr visibility-region)
                          (list 'display
                                (format "Visibility: %s"
-                                       mastodon-toot--visibility)))
+                                       (if (equal
+                                            mastodon-toot--visibility
+                                            "private")
+                                           "followers-only"
+                                         mastodon-toot--visibility))))
     (add-text-properties (car attachment-region) (cdr attachment-region)
                          (list 'display
                                (format "Attached: %s"
