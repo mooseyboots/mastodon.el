@@ -122,7 +122,7 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map (kbd "P") #'mastodon-profile--show-user)
     (define-key map (kbd "T") #'mastodon-tl--thread)
     ;; navigation out of mastodon
-    (define-key map (kbd "q") #'kill-this-buffer)
+    (define-key map (kbd "q") #'kill-current-buffer)
     (define-key map (kbd "Q") #'kill-buffer-and-window)
     ;; timeline actions
     (define-key map (kbd "b") #'mastodon-toot--toggle-boost)
