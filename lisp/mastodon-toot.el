@@ -31,6 +31,8 @@
 
 (defvar mastodon-instance-url)
 
+(declare-function #'emojify-insert-emoji "emojify")
+
 (autoload 'mastodon-auth--user-acct "mastodon-auth")
 (autoload 'mastodon-http--api "mastodon-http")
 (autoload 'mastodon-http--post "mastodon-http")
@@ -98,6 +100,8 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
     (define-key map (kbd "C-c C-n") #'mastodon-toot--toggle-nsfw)
     (define-key map (kbd "C-c C-v") #'mastodon-toot--change-visibility)
     (define-key map (kbd "C-c C-a") #'mastodon-toot--add-media-attachment)
+    (when (require 'emojify nil :noerror)
+      (define-key map (kbd "C-c C-e") #'mastodon-toot--insert-emoji))
     map)
   "Keymap for `mastodon-toot'.")
 
@@ -264,6 +268,10 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   "Kill new-toot buffer/window. Does not POST content to Mastodon."
   (interactive)
   (mastodon-toot--kill))
+
+(defun mastodon-toot--insert-emoji ()
+  "Prompt to insert an emoji."
+  (emojify-insert-emoji))
 
 (defun mastodon-toot--remove-docs ()
   "Get the body of a toot from the current compose buffer."
