@@ -249,11 +249,11 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
 (defun mastodon-http--post-media-attachment (url filename caption)
   "Make POST request to upload FILENAME with CAPTION to the server's media URL.
 
-The upload is asynchronous. On succeeding, `mastodon-toot--media-attachment-ids' is set to the id(s) of the item uploaded, `mastodon-toot--media-attachments' is set to t, and `mastodon-toot--update-status-fields' is run."
+The upload is asynchronous. On succeeding, `mastodon-toot--media-attachment-ids' is set to the id(s) of the item uploaded, and `mastodon-toot--update-status-fields' is run."
   (let* ((file (file-name-nondirectory filename))
-         (request-backend 'curl)
-         (response
-          (request
+         (request-backend 'curl))
+         ;; (response
+         (request
             url
             :type "POST"
             :params `(("description" . ,caption))
@@ -278,15 +278,15 @@ The upload is asynchronous. On succeeding, `mastodon-toot--media-attachment-ids'
                             (mastodon-toot--update-status-fields)))))
             :error (cl-function
                     (lambda (&key error-thrown &allow-other-keys)
-                      (message "Got error: %s" error-thrown))))))
-    (pcase (request-response-status-code response)
-      (200
-       (request-response-data response))
-      (401
-       (error "Unauthorized: The access token is invalid"))
-      (422
-       (error "Unprocessable entity: file or file type is unsupported or invalid"))
-      (_ (error "Shit went south")))))
+                      (message "%s" (car (last error-thrown)))
+                      (message "%s" (type-of (car (last error-thrown))))
+                      (cond ((= (car (last error-thrown)) 401)
+                             (message "Got error: %s Unauthorized: The access token is invalid" error-thrown))
+                            ((= (car (last error-thrown)) 422)
+                             (message "Got error: %s Unprocessable entity: file or file type is unsupported or invalid" error-thrown))
+                            (t
+                             (message "Got error: %s Shit went south"
+                                      error-thrown))))))))
 
 (provide 'mastodon-http)
 ;;; mastodon-http.el ends here

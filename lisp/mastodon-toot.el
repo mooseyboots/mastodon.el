@@ -78,10 +78,6 @@ Must be one of \"public\", \"unlisted\", \"private\" (for followers-only), or \"
 Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"public\".")
 (make-variable-buffer-local 'mastodon-toot--visibility)
 
-(defvar mastodon-toot--media-attachments nil
-  "A flag indicating if the toot being composed has media attachments.")
-(make-variable-buffer-local 'mastodon-toot--media-attachments)
-
 (defvar mastodon-toot--media-attachment-ids nil
   "A list of any media attachment ids of the toot being composed.")
 (make-variable-buffer-local 'mastodon-toot--media-attachment-ids)
@@ -316,7 +312,7 @@ If media items have been uploaded with `mastodon-toot--add-media-attachment', at
                                             (symbol-name t)))
                           ("spoiler_text" . ,spoiler)))
          (args-media
-          (when mastodon-toot--media-attachments
+          (when mastodon-toot--media-attachment-ids
               (mapcar
                (lambda (id)
                  (cons "media_ids[]" id))
