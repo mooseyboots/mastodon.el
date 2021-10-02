@@ -87,6 +87,10 @@ Must be one of \"public\", \"unlisted\", \"private\" (for followers-only), or \"
 Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"public\".")
 (make-variable-buffer-local 'mastodon-toot--visibility)
 
+(defvar mastodon-toot--media-attachments nil
+  "A flag indicating if the toot being composed has media attachments.")
+(make-variable-buffer-local 'mastodon-toot--media-attachments)
+
 (defvar mastodon-toot--media-attachment-ids nil
   "A list of any media attachment ids of the toot being composed.")
 (make-variable-buffer-local 'mastodon-toot--media-attachment-ids)
@@ -469,9 +473,9 @@ e.g. mastodon-toot--send -> Send."
      (mastodon-toot--format-kbinds kbinds))))
 
 (defun mastodon-toot--display-docs-and-status-fields ()
-  "Insert propertized text with documentation about mastodon-toot mode and the
-status fields which will get updated based on the status of NSFW, content
-warning flags etc."
+  "Insert propertized text with documentation about `mastodon-toot-mode'.
+Also includes and the status fields which will get updated based
+on the status of NSFW, content warning flags, media attachments, etc."
   (let ((divider
          "|=================================================================|"))
     (insert
