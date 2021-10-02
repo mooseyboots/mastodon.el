@@ -31,13 +31,15 @@
 
 (defvar mastodon-instance-url)
 
-(declare-function #'emojify-insert-emoji "emojify")
+(when (require 'emojify nil :noerror)
+  (declare-function emojify-insert-emoji "emojify"))
 
 (autoload 'mastodon-auth--user-acct "mastodon-auth")
 (autoload 'mastodon-http--api "mastodon-http")
 (autoload 'mastodon-http--post "mastodon-http")
 (autoload 'mastodon-http--triage "mastodon-http")
 (autoload 'mastodon-http--delete "mastodon-http")
+(autoload 'mastodon-http--process-json "mastodon-http")
 (autoload 'mastodon-tl--as-string "mastodon-tl")
 (autoload 'mastodon-tl--clean-tabs-and-nl "mastodon-tl")
 (autoload 'mastodon-tl--field "mastodon-tl")
@@ -254,8 +256,8 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
              (lambda ()
                (with-current-buffer response
                  (let* ((json-response (mastodon-http--process-json))
-                        (content (cdr (assoc 'text json-response)))
-                        (media (cdr (assoc 'media_attachments json-response))))
+                        (content (cdr (assoc 'text json-response))))
+                        ;; (media (cdr (assoc 'media_attachments json-response))))
                    (mastodon-toot--compose-buffer nil nil)
                    (goto-char (point-max))
                    (insert content))))))))))
@@ -280,7 +282,7 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
     (buffer-substring (cdr header-region) (point-max))))
 
 (defun mastodon-toot--set-visibility (visibility)
-  "Sets the visiblity of the next toot to VISIBILITY."
+  "Set the visiblity of the next toot to VISIBILITY."
   (interactive
    (list (completing-read "Visiblity: " '("public"
                                           "unlisted"
@@ -339,7 +341,7 @@ If media items have been uploaded with `mastodon-toot--add-media-attachment', at
                                    (message "Toot toot!"))))))))
 
 (defun mastodon-toot--process-local (acct)
-  "Adds domain to local ACCT and replaces the curent user name with \"\".
+  "Add domain to local ACCT and replace the curent user name with \"\".
 
 Mastodon requires the full user@domain, even in the case of local accts.
 eg. \"user\" -> \"user@local.social \" (when local.social is the domain of the
@@ -502,7 +504,7 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
     (insert (format "%s " reply-to-user))
     (setq mastodon-toot--reply-to-id reply-to-id)))
 
-(defun mastodon-toot--update-status-fields (&rest args)
+(defun mastodon-toot--update-status-fields () ;(&rest args)
   "Update the status fields in the header based on the current state."
   (let ((inhibit-read-only t)
         (header-region (mastodon-tl--find-property-range 'toot-post-header

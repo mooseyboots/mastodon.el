@@ -41,8 +41,7 @@
 
 (defvar mastodon-instance-url)
 (defvar mastodon-tl--link-keymap)
-
-(defconst mastodon-http--timeout 5)
+(defvar mastodon-http--timeout)
 
 (defun mastodon-search--search-query (query)
   "Prompt for a search QUERY and return accounts, statuses, and hashtags."

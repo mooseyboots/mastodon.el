@@ -191,7 +191,9 @@ Pass response buffer to CALLBACK function."
 
 ;; hard coded just for bio note for now:
 (defun mastodon-http--patch (base-url &optional note)
-  "Make synchronous PATCH request to URL.
+  "Make synchronous PATCH request to BASE-URL.
+
+Optionally specify the NOTE to edit.
 
 Pass response buffer to CALLBACK function."
   (let ((url-request-method "PATCH")
@@ -227,6 +229,8 @@ Pass response buffer to CALLBACK function with args CBARGS."
 
 (defun mastodon-http--post-async (url args headers &optional callback &rest cbargs)
   "POST asynchronously to URL with ARGS and HEADERS.
+
+Then run function CALLBACK with arguements CBARGS.
 
 Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
   (let ((url-request-method "POST")
