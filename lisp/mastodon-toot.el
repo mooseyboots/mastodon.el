@@ -68,6 +68,11 @@ Must be one of \"public\", \"unlisted\", \"private\" (for followers-only), or \"
              "private"
              "direct"))
 
+(defcustom mastodon-toot--default-media-directory "~/"
+  "The default directory when prompting for a media file to upload."
+  :group 'mastodon-toot
+  :type 'string)
+
 (defvar mastodon-toot--content-warning nil
   "A flag whether the toot should be marked with a content warning.")
 (make-variable-buffer-local 'mastodon-toot--content-warning)
@@ -296,7 +301,8 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
 
 Set `mastodon-toot--media-attachment-ids' to the item's id so it can be attached to the toot."
   (interactive)
-  (let* ((filename (read-file-name "Choose file to attach to this toot: "))
+  (let* ((filename (read-file-name "Choose file to attach to this toot: "
+                                   mastodon-toot--default-media-directory))
          (caption (read-string "Enter a caption: "))
          (url (concat mastodon-instance-url "/api/v1/media")))
     (message "Uploading %s..." (file-name-nondirectory filename))
