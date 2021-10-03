@@ -280,9 +280,9 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (interactive)
   (mastodon-toot--kill))
 
-(defun mastodon-toot--insert-emoji ()
-  "Prompt to insert an emoji."
-  (emojify-insert-emoji))
+(defalias 'mastodon-toot--insert-emoji
+  'emojify-insert-emoji
+  "Prompt to insert an emoji.")
 
 (defun mastodon-toot--remove-docs ()
   "Get the body of a toot from the current compose buffer."
