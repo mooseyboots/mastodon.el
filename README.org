@@ -26,6 +26,7 @@ It adds the following features:
 |                 | mention booster in replies by default                                              |
 | =C-c C-a=         | media uploads                                                                      |
 | =C-c C-n=         | and sensitive media/nsfw flag                                                      |
+| =C-c C-e=         | add emoji (if =emojify= installed)                                                 |
 |                 |                                                                                    |
 | Search:         |                                                                                    |
 | =S=               | search (posts, users, tags) (NB: only posts you have interacted with are searched) |
@@ -49,12 +50,6 @@ Works for federated, local, and home timelines and for notifications. It's prett
 
 This version depends on the library =request= (for uploading attachments). You can install it from MELPA, or https://github.com/tkf/emacs-request.
 
-** NB: bugs
-
-As it stands the client still has some bugs. In particular, when composing a toot, there is a bug in the live character counting. For the moment, you'll likely need to hit =C-c C-c= twice rather than once to send a post. In case your toot buffed disappears and your toot does not post, the toot contents are also copied to the kill ring. You may also see a related error when you try to add a media attachment. You should be able to run the command again and it should work. See the issues on the original repo.
-
-Some people have also had trouble with initial auth and set-up, but these should be fixed by =50062c5=, by Ian Eure.
-
 ** roadmap-ish
 
 I might add a few more features if the ones I added turn out to work ok. Possible additions/amendments:
@@ -66,6 +61,7 @@ I might add a few more features if the ones I added turn out to work ok. Possibl
 - [X] voting on polls
 - [X] delete and redraft toots
 - [X] prevent loss of draft toots by the toot-send bug
+- [ ] display post visibility status
 - better display of polls
 - display number of boosts/faves in toot byline
 - mention all thread participants in replies
