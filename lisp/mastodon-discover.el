@@ -32,6 +32,8 @@
 
 ;;; Code:
 
+(declare-function discover-add-context-menu "discover")
+
 (defun mastodon-discover ()
   "Plug Mastodon functionality into `discover'."
   (interactive)

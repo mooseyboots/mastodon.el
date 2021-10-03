@@ -94,7 +94,7 @@ Make `mastodon-client--fetch' call to determine client values."
     (cdr mastodon)))
 
 (defun mastodon-client ()
-  "Return variable client secrets to use for the current `mastodon-instance-url'..
+  "Return variable client secrets to use for `mastodon-instance-url'.
 
 Read plist from `mastodon-client--token-file' if variable is nil.
 Fetch and store plist if `mastodon-client--read' returns nil."

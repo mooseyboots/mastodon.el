@@ -124,7 +124,7 @@ Reads and/or stores secrets in `MASTODON-AUTH-SOURCE-FILE'."
       (json-read-from-string json-string))))
 
 (defun mastodon-auth--access-token ()
-  "If an access token for the current `mastodon-instance-url' exists in `mastodon-auth--token-alist', return it.
+  "If an access token for `mastodon-instance-url' is in `mastodon-auth--token-alist', return it.
 
 Otherwise, generate a token and pass it to `mastodon-auth--handle-token-reponse'."
   (if-let ((token (cdr (assoc mastodon-instance-url mastodon-auth--token-alist))))
@@ -133,7 +133,9 @@ Otherwise, generate a token and pass it to `mastodon-auth--handle-token-reponse'
     (mastodon-auth--handle-token-response (mastodon-auth--get-token))))
 
 (defun mastodon-auth--handle-token-response (response)
-  "Add the token in RESPONSE returned by `mastodon-auth--get-token' in `mastodon-auth--token-alist'.
+  "Add token RESPONSE to `mastodon-auth--token-alist'.
+
+The token is returned by `mastodon-auth--get-token'.
 
 Handle any errors from the server."
   (pcase response
@@ -143,7 +145,7 @@ Handle any errors from the server."
                  mastodon-auth--token-alist)))
 
     (`(:error ,class :error_description ,error)
-     (error "mastodon-auth--access-token: %s: %s" class error))
+     (error "Mastodon-auth--access-token: %s: %s" class error))
 
     (_ (error "Unknown response from mastodon-auth--get-token!"))))
 

@@ -33,11 +33,18 @@
 (autoload 'mastodon-tl--byline-author "mastodon-tl.el")
 (autoload 'mastodon-tl--clean-tabs-and-nl "mastodon-tl.el")
 (autoload 'mastodon-tl--content "mastodon-tl.el")
+(autoload 'mastodon-tl--byline "mastodon-tl.el")
+(autoload 'mastodon-tl--toot-id "mastodon-tl.el")
 (autoload 'mastodon-tl--field "mastodon-tl.el")
 (autoload 'mastodon-tl--has-spoiler "mastodon-tl.el")
 (autoload 'mastodon-tl--init "mastodon-tl.el")
 (autoload 'mastodon-tl--insert-status "mastodon-tl.el")
 (autoload 'mastodon-tl--spoiler "mastodon-tl.el")
+(autoload 'mastodon-tl--property "mastodon-tl.el")
+(autoload 'mastodon-tl--find-property-range "mastodon-tl.el")
+(autoload 'mastodon-http--triage "mastodon-http.el")
+(autoload 'mastodon-http--post "mastodon-http.el")
+(autoload 'mastodon-http--api "mastodon-http.el")
 (defvar mastodon-tl--display-media-p)
 
 
@@ -201,11 +208,16 @@
   "Display the content and byline of timeline element TOOT.
 
 BODY will form the section of the toot above the byline.
-AUTHOR-BYLINE is an optional function for adding the author portion of
-the byline that takes one variable. By default it is `mastodon-tl--byline-author'
-ACTION-BYLINE is also an optional function for adding an action, such as boosting
-favouriting and following to the byline. It also takes a single function. By default
-it is `mastodon-tl--byline-boosted'.
+
+AUTHOR-BYLINE is an optional function for adding the author
+portion of the byline that takes one variable. By default it is
+`mastodon-tl--byline-author'.
+
+ACTION-BYLINE is also an optional function for adding an action,
+such as boosting favouriting and following to the byline. It also
+takes a single function. By default it is
+`mastodon-tl--byline-boosted'.
+
 ID is the notification's own id, which is attached as a property."
   (let ((start-pos (point)))
     (insert

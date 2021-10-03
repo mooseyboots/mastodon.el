@@ -87,7 +87,7 @@ m836fL6tra0jYkUiEb/fz8k3waLhikQiXq+3/NtiSayNjY1fv35BbVP5fN7pdG5tbR0Fy+12c360
 Hxzz5a8KI6V6EMMwzo/2fZ2YTqej0WgqlSoVLqRUDwYCAajNiqKoYDBYphOLY8ViscItVG1VJEmu
 r6+XeU8sjhWPxzc3N9sNiyAIDMOqS1YbDqwKx1YRrFQqxc7HJDRnpdPpUuEqgoVhWL0+i6hFz6tL
 ja3iM4u1zw1qwhlfJihI0bfCNhxYe4NSqg3/A862hQAbrdtHAAAAAElFTkSuQmCC")
-  "The PNG data for a generic 100x100 avatar")
+  "The PNG data for a generic 100x100 avatar.")
 
 (defvar mastodon-media--generic-broken-image-data
   (base64-decode-string
@@ -169,9 +169,11 @@ REGION-LENGTH is the length of the region that should be replaced with the image
               (kill-buffer url-buffer)))))))
 
 (defun mastodon-media--load-image-from-url (url media-type start region-length)
-  "Takes a URL and MEDIA-TYPE and load the image asynchronously.
+  "Take a URL and MEDIA-TYPE and load the image asynchronously.
 
-MEDIA-TYPE is a symbol and either 'avatar or 'media-link."
+MEDIA-TYPE is a symbol and either 'avatar or 'media-link.
+START is the position where we start loading the image.
+REGION-LENGTH is the range from start to propertize."
   ;; TODO: Cache the avatars
   (let ((image-options (when (or (image-type-available-p 'imagemagick)
                                  (image-transforms-p)) ; inbuilt scaling in 27.1
@@ -222,17 +224,17 @@ found."
           (list next-pos (+ next-pos 5) 'media-link)))))))
 
 (defun mastodon-media--valid-link-p (link)
-  "Checks to make sure that the missing string has
+  "Check if LINK is valid.
 
-not been returned."
+Checks to make sure the missing string has not been returned."
   (and link
        (> (length link) 8)
        (or (string= "http://" (substring link 0 7))
            (string= "https://" (substring link 0 8)))))
 
 (defun mastodon-media--inline-images (search-start search-end)
-  "Find all `Media_Links:' in the range from SEARCH-START to SEARCH-END
-replacing them with the referenced image."
+  "Find all `Media_Links:' in the range from SEARCH-START to SEARCH-END.
+Replace them with the referenced image."
   (save-excursion
     (goto-char search-start)
     (let (line-details)
@@ -251,7 +253,7 @@ replacing them with the referenced image."
              image-url media-type start (- end start))))))))
 
 (defun mastodon-media--get-avatar-rendering (avatar-url)
-  "Returns the string to be written that renders the avatar at AVATAR-URL."
+  "Return the string to be written that renders the avatar at AVATAR-URL."
   ;; We use just an empty space as the textual representation.
   ;; This is what a user will see on a non-graphical display
   ;; where not showing an avatar at all is preferable.
@@ -271,7 +273,8 @@ replacing them with the referenced image."
      " ")))
 
 (defun mastodon-media--get-media-link-rendering (media-url &optional full-remote-url)
-  "Returns the string to be written that renders the image at MEDIA-URL."
+  "Return the string to be written that renders the image at MEDIA-URL.
+FULL-REMOTE-URL is used for `shr-browse-image'."
   (concat
    (propertize "[img]"
                'media-url media-url

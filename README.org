@@ -61,7 +61,8 @@ I might add a few more features if the ones I added turn out to work ok. Possibl
 - [X] voting on polls
 - [X] delete and redraft toots
 - [X] prevent loss of draft toots by the toot-send bug
-- [ ] display post visibility status
+- [X] fix scaling of images
+- [ ] display post visibility status in timelines
 - better display of polls
 - display number of boosts/faves in toot byline
 - mention all thread participants in replies
