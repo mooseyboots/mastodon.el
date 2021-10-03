@@ -22,11 +22,12 @@ It adds the following features:
 | =W=, =M=, =B=         | (un)follow, (un)mute, (un)block author of toot at point                            |
 |                 | display polls and vote on polls (pretty basic for now)                             |
 |                 | images are links to the full image, can be zoomed/rotated/saved (see image keymap) |
+|                 | images scale properly                                                              |
 | Toots:          |                                                                                    |
 |                 | mention booster in replies by default                                              |
 | =C-c C-a=         | media uploads                                                                      |
 | =C-c C-n=         | and sensitive media/nsfw flag                                                      |
-| =C-c C-e=         | add emoji (if =emojify= installed)                                                 |
+| =C-c C-e=         | add emoji (if =emojify= installed)                                                   |
 |                 |                                                                                    |
 | Search:         |                                                                                    |
 | =S=               | search (posts, users, tags) (NB: only posts you have interacted with are searched) |
