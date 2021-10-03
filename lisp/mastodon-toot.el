@@ -346,8 +346,7 @@ If media items have been uploaded with `mastodon-toot--add-media-attachment', at
           (let ((response (mastodon-http--post endpoint args nil)))
           (mastodon-http--triage response
                                  (lambda ()
-                                   (kill-new toot) ; copy toot text to kill ring
-                                   (mastodon-toot--kill) ; only kill buffer after sending
+                                   (mastodon-toot--kill)
                                    (message "Toot toot!"))))))))
 
 (defun mastodon-toot--process-local (acct)
