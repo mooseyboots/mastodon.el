@@ -111,7 +111,7 @@ extra keybindings."
   (mastodon-tl--property 'toot-json))
 
 (defun mastodon-profile--make-author-buffer (account)
-  "Take a ACCOUNT and insert a user account into a new buffer."
+  "Take an ACCOUNT json and insert a user account into a new buffer."
   (mastodon-profile--make-profile-buffer-for
    account "statuses" #'mastodon-tl--timeline))
 
@@ -369,8 +369,9 @@ Returns a list of lists."
         (setq mastodon-tl--update-point (point))
         (mastodon-media--inline-images (point-min) (point))
          ;; insert pinned toots first
-        (if (and pinned (equal endpoint-type "statuses"))
-            (mastodon-profile--insert-statuses-pinned pinned))
+        (when (and pinned (equal endpoint-type "statuses"))
+          (mastodon-profile--insert-statuses-pinned pinned)
+          (setq mastodon-tl--update-point (point))) ;updates to follow pinned toots
         (funcall update-function json)))
     ;;(mastodon-tl--goto-next-toot)
     (goto-char (point-min))))
