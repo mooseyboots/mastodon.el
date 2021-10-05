@@ -51,6 +51,12 @@ Works for federated, local, and home timelines and for notifications. It's prett
 
 This version depends on the library =request= (for uploading attachments). You can install it from MELPA, or https://github.com/tkf/emacs-request.
 
+** NB: bugs
+
+This repo also incorporates fixes for two bugs that were never merged into the upstream repo: 
+- https://github.com/jdenen/mastodon.el/issues/227 (and https://github.com/jdenen/mastodon.el/issues/234)
+- https://github.com/jdenen/mastodon.el/issues/228
+
 ** roadmap-ish
 
 I might add a few more features if the ones I added turn out to work ok. Possible additions/amendments:
