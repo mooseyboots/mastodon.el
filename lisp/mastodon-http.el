@@ -42,7 +42,7 @@
 
 (defvar mastodon-http--api-version "v1")
 
-(defconst mastodon-http--timeout 5
+(defconst mastodon-http--timeout 15
   "HTTP request timeout, in seconds.  Has no effect on Emacs < 26.1.")
 
 (defun mastodon-http--api (endpoint)
