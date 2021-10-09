@@ -130,7 +130,7 @@ fKRJkmVZjAQwh78A6vCRWJE8K+8AAAAASUVORK5CYII=")
   "The PNG data for a generic 200x200 'broken image' view.")
 
 (defun mastodon-media--process-image-response
-    (status-plist marker image-options region-length)
+    (status-plist marker image-options region-length url)
   "Callback function processing the url retrieve response for URL.
 
 STATUS-PLIST is the usual plist of status events as per `url-retrieve'.
@@ -151,6 +151,8 @@ REGION-LENGTH is the length of the region that should be replaced with the image
                                      (when image-options 'imagemagick)
                                    nil) ; inbuilt scaling in 27.1
                                  t image-options))))
+            (unless (url-is-cached url) ; cache image if not already cached
+              (url-store-in-cache url-buffer))
             (with-current-buffer (marker-buffer marker)
               ;; Save narrowing in our buffer
               (let ((inhibit-read-only t))
@@ -190,14 +192,16 @@ REGION-LENGTH is the range from start to propertize."
           ;; catch any errors in url-retrieve so as to not abort
           ;; whatever called us
           (if (url-is-cached url)
+              ;; if image url is cached, decompress and use it
               (with-current-buffer (url-fetch-from-cache url)
                 (set-buffer-multibyte nil)
                 (goto-char (point-min))
                 (zlib-decompress-region (goto-char (search-forward "\n\n")) (point-max))
-                (mastodon-media--process-image-response nil marker image-options region-length))
+                (mastodon-media--process-image-response nil marker image-options region-length url))
+            ;; else fetch as usual and process-image-response will cache it
             (url-retrieve url
                           #'mastodon-media--process-image-response
-                          (list marker image-options region-length)))
+                          (list marker image-options region-length url)))
         (error (with-current-buffer buffer
                  ;; TODO: Consider adding retries
                  (put-text-property marker
@@ -205,7 +209,7 @@ REGION-LENGTH is the range from start to propertize."
                                     'media-state
                                     'loading-failed)
                  :loading-failed))))))
-H
+
 (defun mastodon-media--select-next-media-line (end-pos)
   "Find coordinates of the next media to load before END-POS.
 
