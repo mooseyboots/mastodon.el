@@ -70,10 +70,10 @@ I might add a few more features if the ones I added turn out to work ok. Possibl
 - [X] prevent loss of draft toots by the toot-send bug
 - [X] fix scaling of images
 - [ ] display post visibility status in timelines
+- [ ] caching of images / avatars
 - better display of polls
 - display number of boosts/faves in toot byline
 - mention all thread participants in replies
-- handle newlines in toots better, for poetry, etc.
 - improve (or even partially disable) async.
 
 It looks like 2-factor auth was never completed in the original repo. It's not a priority for me, auth ain't my thing. If you want to hack on it, its on the develop branch in the original repo.
