@@ -477,12 +477,15 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
 
 (defun mastodon-toot--format-attachments ()
   (or (let ((counter 0)
-            (image-options (when (image-type-available-p 'imagemagick)
+            (image-options (when (or (image-type-available-p 'imagemagick)
+                                     (image-transforms-p))
                              `(:height ,mastodon-media--attachment-height))))
         (mapcan (lambda (attachment)
                   (let* ((data (cdr (assoc :contents attachment)))
                          (image (apply #'create-image data
-                                       (when image-options 'imagemagick)
+                                       (if (version< emacs-version "27.1")
+                                           (when image-options 'imagemagick)
+                                         nil) ; inbuilt scaling in 27.1
                                        t image-options))
                          (type (cdr (assoc :content-type attachment)))
                          (description (cdr (assoc :description attachment))))
@@ -491,8 +494,8 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
                           image
                           (format " \"%s\" (%s)" description type))))
                 mastodon-toot--media-attachments))
-      (list "None"))
-  )
+      (list "None")))
+
 ;; we'll need to revisit this if the binds get
 ;; more diverse than two-chord bindings
 (defun mastodon-toot--get-mode-kbinds ()
@@ -596,7 +599,7 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
                                                       (point-min))))
      (add-text-properties (car count-region) (cdr count-region)
                           (list 'display
-                                (format "%s characters in message"
+                                (format "%s characters"
                                         (- (point-max) (cdr header-region)))))
      (add-text-properties (car visibility-region) (cdr visibility-region)
                           (list 'display
