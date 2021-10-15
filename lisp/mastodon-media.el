@@ -47,12 +47,12 @@
   :type 'integer)
 
 (defcustom mastodon-media--preview-max-height 250
-  "Max height of any media attachment preview to be shown."
+  "Max height of any media attachment preview to be shown in timelines."
   :group 'mastodon-media
   :type 'integer)
 
-(defcustom mastodon-media--attachment-height 100
-  "Height of the attached images preview."
+(defcustom mastodon-media--attachment-height 80
+  "Height of the attached images preview in the toot draft buffer."
   :group 'mastodon-media
   :type 'integer)
 
