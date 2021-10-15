@@ -50,6 +50,7 @@
 (autoload 'mastodon-tl--find-property-range "mastodon-tl")
 (autoload 'mastodon-toot "mastodon")
 (autoload 'mastodon-http--post-media-attachment "mastodon-http")
+(autoload 'mastodon-http--read-file-as-string "mastodon-http")
 (autoload 'mastodon-tl--toot-id "mastodon-tl")
 (autoload 'mastodon-tl--reload-timeline-or-profile "mastodon-tl")
 
@@ -331,9 +332,9 @@ If media items have been uploaded with `mastodon-toot--add-media-attachment', at
                  (cons "media_ids[]" id))
                mastodon-toot--media-attachment-ids)))
          (args (append args-no-media args-media)))
-    (if (and mastodon-toot--media-attachments
+    (when (and mastodon-toot--media-attachments
              (equal mastodon-toot--media-attachment-ids nil))
-        (message "Looks like your uploads are not yet ready...")
+      (message "Looks like your uploads are not yet ready..."))
       (if empty-toot-p
           (message "Empty toot. Cowardly refusing to post this.")
         (let ((response (mastodon-http--post endpoint args nil)))
@@ -448,7 +449,7 @@ will be uploaded and attached to the toot upon sending."
   (mastodon-toot--refresh-attachments-display))
 
 (defun mastodon-toot--upload-media-attachments ()
-  "Actually upload the attachment files using `mastodon-http--post-media-attachment'.
+  "Actually upload attachments using `mastodon-http--post-media-attachment'.
 It adds the items' ids to `mastodon-toot--media-attachment-ids', which is used to actually attach them to a toot after uploading."
   (interactive)
   (mapcar (lambda (attachment)
@@ -460,6 +461,7 @@ It adds the items' ids to `mastodon-toot--media-attachment-ids', which is used t
           mastodon-toot--media-attachments))
 
 (defun mastodon-toot--refresh-attachments-display ()
+  "Display attachment previews in toot draft buffer."
   (let ((inhibit-read-only t)
         (attachments-region (mastodon-tl--find-property-range
                              'toot-attachments (point-min)))
@@ -470,6 +472,7 @@ It adds the items' ids to `mastodon-toot--media-attachment-ids', which is used t
                            (list 'display (or (nth i display-specs) ""))))))
 
 (defun mastodon-toot--format-attachments ()
+  "Format the attachment previews in toot draft buffer."
   (or (let ((counter 0)
             (image-options (when (or (image-type-available-p 'imagemagick)
                                      (image-transforms-p))
