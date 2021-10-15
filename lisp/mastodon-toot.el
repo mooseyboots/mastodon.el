@@ -557,9 +557,6 @@ on the status of NSFW, content warning flags, media attachments, etc."
        (propertize "Visibility"
                    'toot-post-visibility t)
        " ⋅ "
-       (propertize "Attachment"
-                   'toot-attachment t)
-       " ⋅ "
        (propertize "CW"
                    'toot-post-cw-flag t)
        " "
