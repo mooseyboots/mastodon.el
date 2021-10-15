@@ -462,7 +462,7 @@ It adds the items' ids to `mastodon-toot--media-attachment-ids', which is used t
             mastodon-toot--media-attachments))
 
 (defun mastodon-toot--refresh-attachments-display ()
-  "Display attachment previews in toot draft buffer."
+  "Update the display attachment previews in toot draft buffer."
   (let ((inhibit-read-only t)
         (attachments-region (mastodon-tl--find-property-range
                              'toot-attachments (point-min)))
@@ -473,7 +473,7 @@ It adds the items' ids to `mastodon-toot--media-attachment-ids', which is used t
                            (list 'display (or (nth i display-specs) ""))))))
 
 (defun mastodon-toot--format-attachments ()
-  "Format the attachment previews in toot draft buffer."
+  "Format the attachment previews for display in toot draft buffer."
   (or (let ((counter 0)
             (image-options (when (or (image-type-available-p 'imagemagick)
                                      (image-transforms-p))
