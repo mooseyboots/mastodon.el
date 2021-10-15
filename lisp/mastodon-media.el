@@ -51,6 +51,11 @@
   :group 'mastodon-media
   :type 'integer)
 
+(defcustom mastodon-media--attachment-height 100
+  "Height of the attached images preview."
+  :group 'mastodon-media
+  :type 'integer)
+
 (defvar mastodon-media--generic-avatar-data
   (base64-decode-string
    "iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAIAAAD/gAIDAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA

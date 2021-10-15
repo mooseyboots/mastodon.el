@@ -30,6 +30,7 @@
 ;;; Code:
 
 (defvar mastodon-instance-url)
+(defvar mastodon-media--attachment-height)
 
 (when (require 'emojify nil :noerror)
   (declare-function emojify-insert-emoji "emojify"))
@@ -103,6 +104,10 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
   "Buffer-local variable to hold the id of the toot being replied to.")
 (make-variable-buffer-local 'mastodon-toot--reply-to-id)
 
+(defvar mastodon-toot--media-attachments nil
+  "Buffer-local variable to hold the list of media attachments.")
+(make-variable-buffer-local 'mastodon-toot--media-attachments)
+
 (defvar mastodon-toot-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-c") #'mastodon-toot--send)
@@ -110,9 +115,10 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
     (define-key map (kbd "C-c C-w") #'mastodon-toot--toggle-warning)
     (define-key map (kbd "C-c C-n") #'mastodon-toot--toggle-nsfw)
     (define-key map (kbd "C-c C-v") #'mastodon-toot--change-visibility)
-    (define-key map (kbd "C-c C-a") #'mastodon-toot--add-media-attachment)
     (when (require 'emojify nil :noerror)
       (define-key map (kbd "C-c C-e") #'mastodon-toot--insert-emoji))
+    (define-key map (kbd "C-c C-a") #'mastodon-toot--attach-media)
+    (define-key map (kbd "C-c !") #'mastodon-toot--clear-all-attachments)
     map)
   "Keymap for `mastodon-toot'.")
 
@@ -146,6 +152,14 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
                                          action))))
     (let ((response (mastodon-http--post url nil nil)))
       (mastodon-http--triage response callback))))
+
+(defun mastodon-toot--post-media (contents content-type description)
+  (let* ((url (mastodon-http--api "media"))
+         (response (mastodon-http--post
+                    url
+                    (list (list "description" description)
+                          (list "file" "file" content-type contents)))))
+    response))
 
 (defun mastodon-toot--toggle-boost ()
   "Boost/unboost toot at `point'."
@@ -414,6 +428,7 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
   (interactive)
   (setq mastodon-toot--content-nsfw
         (not mastodon-toot--content-nsfw))
+  (message "NSFW flag is now %s" (if mastodon-toot--content-nsfw "on" "off"))
   (mastodon-toot--update-status-fields))
 
 (defun mastodon-toot--change-visibility ()
@@ -430,6 +445,54 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
                "public")))
   (mastodon-toot--update-status-fields))
 
+(defun mastodon-toot--clear-all-attachments ()
+  ""
+  (interactive)
+  (setq mastodon-toot--media-attachments nil)
+  (mastodon-toot--refresh-attachments-display)
+  (mastodon-toot--update-status-fields))
+
+(defun mastodon-toot--attach-media (file content-type description)
+  ""
+  (interactive "fFilename: \nsContent type: \nsDescription: ")
+  (when (>= (length mastodon-toot--media-attachments) 4)
+    ;; Only a max. of 4 attachments are allowed, so pop the oldest one.
+    (pop mastodon-toot--media-attachments))
+  (setq mastodon-toot--media-attachments
+        (nconc mastodon-toot--media-attachments
+               `(((:contents . ,(mastodon-http--read-file-as-string file))
+                  (:content-type . ,content-type)
+                  (:description . ,description)))))
+  (mastodon-toot--refresh-attachments-display))
+
+(defun mastodon-toot--refresh-attachments-display ()
+  (let ((inhibit-read-only t)
+        (attachments-region (mastodon-tl--find-property-range
+                             'toot-attachments (point-min)))
+        (display-specs (mastodon-toot--format-attachments)))
+    (dotimes (i (- (cdr attachments-region) (car attachments-region)))
+      (add-text-properties (+ (car attachments-region) i)
+                           (+ (car attachments-region) i 1)
+                           (list 'display (or (nth i display-specs) ""))))))
+
+(defun mastodon-toot--format-attachments ()
+  (or (let ((counter 0)
+            (image-options (when (image-type-available-p 'imagemagick)
+                             `(:height ,mastodon-media--attachment-height))))
+        (mapcan (lambda (attachment)
+                  (let* ((data (cdr (assoc :contents attachment)))
+                         (image (apply #'create-image data
+                                       (when image-options 'imagemagick)
+                                       t image-options))
+                         (type (cdr (assoc :content-type attachment)))
+                         (description (cdr (assoc :description attachment))))
+                    (setq counter (1+ counter))
+                    (list (format "\n    %d: " counter)
+                          image
+                          (format " \"%s\" (%s)" description type))))
+                mastodon-toot--media-attachments))
+      (list "None"))
+  )
 ;; we'll need to revisit this if the binds get
 ;; more diverse than two-chord bindings
 (defun mastodon-toot--get-mode-kbinds ()
@@ -483,6 +546,10 @@ on the status of NSFW, content warning flags, media attachments, etc."
        divider "\n"
        (mastodon-toot--make-mode-docs) "\n"
        divider "\n"
+       " Attachments: "
+       (propertize "None                  " 'toot-attachments t)
+       "\n"
+       divider "\n"
        " "
        (propertize "Count"
                    'toot-post-counter t)
@@ -515,43 +582,35 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
 
 (defun mastodon-toot--update-status-fields (&rest args)
   "Update the status fields in the header based on the current state."
-  (let ((inhibit-read-only t)
-        (header-region (mastodon-tl--find-property-range 'toot-post-header
+  (ignore-errors  ;; called from after-change-functions so let's not leak errors
+    (let ((inhibit-read-only t)
+         (header-region (mastodon-tl--find-property-range 'toot-post-header
+                                                          (point-min)))
+         (count-region (mastodon-tl--find-property-range 'toot-post-counter
                                                          (point-min)))
-        (count-region (mastodon-tl--find-property-range 'toot-post-counter
+         (visibility-region (mastodon-tl--find-property-range
+                             'toot-post-visibility (point-min)))
+         (nsfw-region (mastodon-tl--find-property-range 'toot-post-nsfw-flag
                                                         (point-min)))
-        (visibility-region (mastodon-tl--find-property-range
-                            'toot-post-visibility (point-min)))
-        (nsfw-region (mastodon-tl--find-property-range 'toot-post-nsfw-flag
-                                                       (point-min)))
-        (cw-region (mastodon-tl--find-property-range 'toot-post-cw-flag
-                                                     (point-min)))
-        (attachment-region (mastodon-tl--find-property-range
-                            'toot-attachment (point-min))))
-    (add-text-properties (car count-region) (cdr count-region)
-                         (list 'display
-                               (format "%s characters"
-                                       (- (point-max) (cdr header-region)))))
-    (add-text-properties (car visibility-region) (cdr visibility-region)
-                         (list 'display
-                               (format "Visibility: %s"
-                                       (if (equal
-                                            mastodon-toot--visibility
-                                            "private")
-                                           "followers-only"
-                                         mastodon-toot--visibility))))
-    (add-text-properties (car attachment-region) (cdr attachment-region)
-                         (list 'display
-                               (format "Attached: %s"
-                                       (mapconcat 'identity
-                                        mastodon-toot--media-attachment-filenames
-                                        ", "))))
-    (add-text-properties (car nsfw-region) (cdr nsfw-region)
-                         (list 'invisible (not mastodon-toot--content-nsfw)
-                               'face 'mastodon-cw-face))
-    (add-text-properties (car cw-region) (cdr cw-region)
-                         (list 'invisible (not mastodon-toot--content-warning)
-                               'face 'mastodon-cw-face))))
+         (cw-region (mastodon-tl--find-property-range 'toot-post-cw-flag
+                                                      (point-min))))
+     (add-text-properties (car count-region) (cdr count-region)
+                          (list 'display
+                                (format "%s characters in message"
+                                        (- (point-max) (cdr header-region)))))
+     (add-text-properties (car visibility-region) (cdr visibility-region)
+                          (list 'display
+                                (format "Visibility: %s"
+                                        mastodon-toot--visibility)))
+     (add-text-properties (car nsfw-region) (cdr nsfw-region)
+                          (list 'display (if mastodon-toot--content-nsfw
+                                             (if mastodon-toot--media-attachments
+                                                 "NSFW" "NSFW (no effect until attachments added)")
+                                           "")
+                                'face 'mastodon-cw-face))
+     (add-text-properties (car cw-region) (cdr cw-region)
+                          (list 'invisible (not mastodon-toot--content-warning)
+                                'face 'mastodon-cw-face)))))
 
 (defun mastodon-toot--compose-buffer (reply-to-user reply-to-id)
   "Create a new buffer to capture text for a new toot.
@@ -561,12 +620,14 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
          (buffer (or buffer-exists (get-buffer-create "*new toot*")))
          (inhibit-read-only t))
     (switch-to-buffer-other-window buffer)
+    (mastodon-toot-mode t)
     (when (not buffer-exists)
       (mastodon-toot--display-docs-and-status-fields)
       (mastodon-toot--setup-as-reply reply-to-user reply-to-id))
     (mastodon-toot-mode t)
     (make-local-variable 'after-change-functions)
     (push #'mastodon-toot--update-status-fields after-change-functions)
+    (mastodon-toot--refresh-attachments-display)
     (mastodon-toot--update-status-fields)))
 
 (define-minor-mode mastodon-toot-mode

@@ -49,10 +49,10 @@
   "POST client to Mastodon."
   (mastodon-http--post
    (mastodon-http--api "apps")
-   '(("client_name" . "mastodon.el")
-     ("redirect_uris" . "urn:ietf:wg:oauth:2.0:oob")
-     ("scopes" . "read write follow")
-     ("website" . "https://github.com/jdenen/mastodon.el"))
+   '(("client_name" "mastodon.el")
+     ("redirect_uris" "urn:ietf:wg:oauth:2.0:oob")
+     ("scopes" "read write follow")
+     ("website" "https://github.com/jdenen/mastodon.el"))
    nil
    :unauthenticated))
 
