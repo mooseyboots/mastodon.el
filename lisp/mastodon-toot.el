@@ -602,9 +602,13 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
                                 (format "%s characters"
                                         (- (point-max) (cdr header-region)))))
      (add-text-properties (car visibility-region) (cdr visibility-region)
-                          (list 'display
-                                (format "Visibility: %s"
-                                        mastodon-toot--visibility)))
+                         (list 'display
+                               (format "Visibility: %s"
+                                       (if (equal
+                                            mastodon-toot--visibility
+                                            "private")
+                                           "followers-only"
+                                         mastodon-toot--visibility))))
      (add-text-properties (car nsfw-region) (cdr nsfw-region)
                           (list 'display (if mastodon-toot--content-nsfw
                                              (if mastodon-toot--media-attachments
