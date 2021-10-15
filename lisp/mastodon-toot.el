@@ -89,7 +89,7 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
 (make-variable-buffer-local 'mastodon-toot--visibility)
 
 (defvar mastodon-toot--media-attachments nil
-  "A flag indicating if the toot being composed has media attachments.")
+  "A list of the media attachments of the toot being composed .")
 (make-variable-buffer-local 'mastodon-toot--media-attachments)
 
 (defvar mastodon-toot--media-attachment-ids nil
@@ -152,14 +152,6 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
                                          action))))
     (let ((response (mastodon-http--post url nil nil)))
       (mastodon-http--triage response callback))))
-
-(defun mastodon-toot--post-media (contents content-type description)
-  (let* ((url (mastodon-http--api "media"))
-         (response (mastodon-http--post
-                    url
-                    (list (list "description" description)
-                          (list "file" "file" content-type contents)))))
-    response))
 
 (defun mastodon-toot--toggle-boost ()
   "Boost/unboost toot at `point'."
@@ -314,19 +306,6 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (setq mastodon-toot--visibility visibility)
   (message "Visibility set to %s" visibility))
 
-(defun mastodon-toot--add-media-attachment ()
-  "Prompt the user for a file and POST it to the media endpoint on the server.
-
-Set `mastodon-toot--media-attachment-ids' to the item's id so it can be attached to the toot."
-  (interactive)
-  (let* ((filename (read-file-name "Choose file to attach to this toot: "
-                                   mastodon-toot--default-media-directory))
-         (caption (read-string "Enter a caption: "))
-         (url (concat mastodon-instance-url "/api/v1/media")))
-    (message "Uploading %s..." (file-name-nondirectory filename))
-    (mastodon-http--post-media-attachment url filename caption)
-    (setq mastodon-toot--media-attachments t)))
-
 (defun mastodon-toot--send ()
   "Kill new-toot buffer/window and POST contents to the Mastodon instance.
 
@@ -357,11 +336,11 @@ If media items have been uploaded with `mastodon-toot--add-media-attachment', at
         (message "Looks like your uploads are not yet ready...")
       (if empty-toot-p
           (message "Empty toot. Cowardly refusing to post this.")
-          (let ((response (mastodon-http--post endpoint args nil)))
+        (let ((response (mastodon-http--post endpoint args nil)))
           (mastodon-http--triage response
                                  (lambda ()
                                    (mastodon-toot--kill)
-                                   (message "Toot toot!"))))))))
+                                   (message "Toot toot!")))))))
 
 (defun mastodon-toot--process-local (acct)
   "Add domain to local ACCT and replace the curent user name with \"\".
@@ -446,14 +425,16 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
   (mastodon-toot--update-status-fields))
 
 (defun mastodon-toot--clear-all-attachments ()
-  ""
+  "Remove all attachments from a toot draft."
   (interactive)
   (setq mastodon-toot--media-attachments nil)
   (mastodon-toot--refresh-attachments-display)
   (mastodon-toot--update-status-fields))
 
 (defun mastodon-toot--attach-media (file content-type description)
-  ""
+  "Prompt for a attachment FILE of CONTENT-TYPE with DESCRIPTION.
+A preview is displayed in the toot create buffer, and the file
+will be uploaded and attached to the toot upon sending."
   (interactive "fFilename: \nsContent type: \nsDescription: ")
   (when (>= (length mastodon-toot--media-attachments) 4)
     ;; Only a max. of 4 attachments are allowed, so pop the oldest one.
@@ -462,8 +443,21 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
         (nconc mastodon-toot--media-attachments
                `(((:contents . ,(mastodon-http--read-file-as-string file))
                   (:content-type . ,content-type)
-                  (:description . ,description)))))
+                  (:description . ,description)
+                  (:filename . ,(file-name-nondirectory file))))))
   (mastodon-toot--refresh-attachments-display))
+
+(defun mastodon-toot--upload-media-attachments ()
+  "Actually upload the attachment files using `mastodon-http--post-media-attachment'.
+It adds the items' ids to `mastodon-toot--media-attachment-ids', which is used to actually attach them to a toot after uploading."
+  (interactive)
+  (mapcar (lambda (attachment)
+            (let* ((filename (cdr (assoc :filename attachment)))
+                   (caption (cdr (assoc :description attachment)))
+                   (url (concat mastodon-instance-url "/api/v1/media")))
+              (message "Uploading %s..." filename)
+              (mastodon-http--post-media-attachment url filename caption)))
+          mastodon-toot--media-attachments))
 
 (defun mastodon-toot--refresh-attachments-display ()
   (let ((inhibit-read-only t)
