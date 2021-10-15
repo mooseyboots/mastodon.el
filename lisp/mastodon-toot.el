@@ -446,7 +446,7 @@ will be uploaded and attached to the toot upon sending."
                `(((:contents . ,(mastodon-http--read-file-as-string file))
                   (:content-type . ,content-type)
                   (:description . ,description)
-                  (:filename . ,(file-name-nondirectory file))))))
+                  (:filename . ,file)))))
   (mastodon-toot--refresh-attachments-display))
 
 (defun mastodon-toot--upload-attached-media ()
@@ -457,9 +457,9 @@ It adds the items' ids to `mastodon-toot--media-attachment-ids', which is used t
             (let* ((filename (cdr (assoc :filename attachment)))
                    (caption (cdr (assoc :description attachment)))
                    (url (concat mastodon-instance-url "/api/v1/media")))
-              (message "Uploading %s..." filename)
+              (message "Uploading %s..." (file-name-nondirectory filename))
               (mastodon-http--post-media-attachment url filename caption)))
-          mastodon-toot--media-attachments))
+            mastodon-toot--media-attachments))
 
 (defun mastodon-toot--refresh-attachments-display ()
   "Display attachment previews in toot draft buffer."
