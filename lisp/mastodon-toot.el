@@ -118,6 +118,7 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
     (define-key map (kbd "C-c C-v") #'mastodon-toot--change-visibility)
     (when (require 'emojify nil :noerror)
       (define-key map (kbd "C-c C-e") #'mastodon-toot--insert-emoji))
+    (define-key map (kbd "C-c C-u") #'mastodon-toot--upload-attached-media)
     (define-key map (kbd "C-c C-a") #'mastodon-toot--attach-media)
     (define-key map (kbd "C-c !") #'mastodon-toot--clear-all-attachments)
     map)
@@ -332,16 +333,16 @@ If media items have been uploaded with `mastodon-toot--add-media-attachment', at
                  (cons "media_ids[]" id))
                mastodon-toot--media-attachment-ids)))
          (args (append args-no-media args-media)))
-    (when (and mastodon-toot--media-attachments
+    (if (and mastodon-toot--media-attachments
              (equal mastodon-toot--media-attachment-ids nil))
-      (message "Looks like your uploads are not yet ready..."))
+        (message "Looks like your uploads are not up: C-c C-u to upload...")
       (if empty-toot-p
           (message "Empty toot. Cowardly refusing to post this.")
         (let ((response (mastodon-http--post endpoint args nil)))
           (mastodon-http--triage response
                                  (lambda ()
                                    (mastodon-toot--kill)
-                                   (message "Toot toot!")))))))
+                                   (message "Toot toot!"))))))))
 
 (defun mastodon-toot--process-local (acct)
   "Add domain to local ACCT and replace the curent user name with \"\".
@@ -448,7 +449,7 @@ will be uploaded and attached to the toot upon sending."
                   (:filename . ,(file-name-nondirectory file))))))
   (mastodon-toot--refresh-attachments-display))
 
-(defun mastodon-toot--upload-media-attachments ()
+(defun mastodon-toot--upload-attached-media ()
   "Actually upload attachments using `mastodon-http--post-media-attachment'.
 It adds the items' ids to `mastodon-toot--media-attachment-ids', which is used to actually attach them to a toot after uploading."
   (interactive)
