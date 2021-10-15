@@ -90,64 +90,24 @@ Message status and JSON error from RESPONSE if unsuccessful."
         (let ((json-response (mastodon-http--process-json)))
           (message "Error %s: %s" status (cdr (assoc 'error json-response))))))))
 
-(defun mastodon-http--encode-multipart-form-data (boundary fields)
-  "Encode FIELDS suitable to post as multipart/form-data.
-
-It uses BOUNDARY as the boundary for the values.
-FIELDS should be a list of either 2-element (name contents) lists
-or 4-element list of (name file-name content-type contents)."
-  (with-temp-buffer
-    (dolist (field fields)
-      (insert "--" boundary "\r\n")
-      (if (= (length field) 2)
-          ;; a 2-element list is a simple name=value item:
-          (insert  "Content-Disposition: form-data; name=\""
-                   (url-hexify-string (car field))
-                   "\"\r\n"
-                   "\r\n"
-                   (cadr field) "\r\n")
-        ;; a 4-element list ist a file to be attached:
-        (insert "Content-Disposition: form-data; name=\""
-                (url-hexify-string (car field))
-                "\"; filename=\""
-                (url-hexify-string (cadr field))
-                "\"\r\n"
-                "Content-type: " (caddr field) "\r\n"
-                 "\r\n"
-                 (cadddr field) "\r\n")))
-    ;; Finally add the terminating boundary and another empty line:
-    (insert "--" boundary "--\r\n"
-            "\r\n")
-    (string-to-unibyte (buffer-string))))
-
 (defun mastodon-http--post (url args headers &optional unauthenticed-p)
   "POST synchronously to URL with ARGS and HEADERS.
 
 Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
-  (let* ((url-request-method "POST")
-         (boundary (md5 (format "b%s-%s-%s-%s"
-                                (random 1000000000) (random 1000000000)
-                                (random 1000000000) (random 1000000000))))
-         (needs-multi-form (> (apply #'max (mapcar #'length args)) 2))
-         (url-request-data
-          (when args
-            (if needs-multi-form
-                (mastodon-http--encode-multipart-form-data boundary args)
-              (mapconcat (lambda (arg)
-                           (concat (url-hexify-string (car arg))
-                                   "="
-                                   (url-hexify-string (cadr arg))))
-                         args
-                         "&"))))
+  (let ((url-request-method "POST")
+        (url-request-data
+         (when args
+           (mapconcat (lambda (arg)
+                        (concat (url-hexify-string (car arg))
+                                "="
+                                (url-hexify-string (cdr arg))))
+                      args
+                      "&")))
         (url-request-extra-headers
 	 (append
-          (when needs-multi-form
-            `(("Content-Type" .
-               ,(concat "multipart/form-data; boundary=\"" boundary "\""))))
 	  (unless unauthenticed-p
 	    `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token)))))
 	  headers)))
-    (message "Posting to %s with %d bytes of request data and headers %s" url (length url-request-data) url-request-extra-headers)
     (with-temp-buffer
       (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
           (url-retrieve-synchronously url)
