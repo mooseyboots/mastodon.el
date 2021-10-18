@@ -189,15 +189,9 @@ REGION-LENGTH is the range from start to propertize."
       (condition-case nil
           ;; catch any errors in url-retrieve so as to not abort
           ;; whatever called us
-          (if (url-is-cached url)
-              (with-current-buffer (url-fetch-from-cache url)
-                (set-buffer-multibyte nil)
-                (goto-char (point-min))
-                (zlib-decompress-region (goto-char (search-forward "\n\n")) (point-max))
-                (mastodon-media--process-image-response nil marker image-options region-length))
-            (url-retrieve url
-                          #'mastodon-media--process-image-response
-                          (list marker image-options region-length)))
+          (url-retrieve url
+                        #'mastodon-media--process-image-response
+                        (list marker image-options region-length))
         (error (with-current-buffer buffer
                  ;; TODO: Consider adding retries
                  (put-text-property marker
@@ -205,7 +199,7 @@ REGION-LENGTH is the range from start to propertize."
                                     'media-state
                                     'loading-failed)
                  :loading-failed))))))
-H
+
 (defun mastodon-media--select-next-media-line (end-pos)
   "Find coordinates of the next media to load before END-POS.
 
