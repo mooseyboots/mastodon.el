@@ -43,6 +43,25 @@
 (defvar mastodon-tl--link-keymap)
 (defvar mastodon-http--timeout)
 
+;; functions for company completion of mentions in mastodon-toot
+
+(defun mastodon-search--get-user-info-no-url (account)
+  "Get user handle, display name and account URL from ACCOUNT."
+  (list (cdr (assoc 'display_name account))
+        (cdr (assoc 'acct account))))
+
+(defun mastodon-search--search-accounts-query (query)
+  "Prompt for a search QUERY and return accounts.
+Returns a nested list containing user handle, display name, and URL."
+  (interactive "sSearch mastodon for: ")
+  (let* ((url (format "%s/api/v1/accounts/search" mastodon-instance-url))
+         (buffer (format "*mastodon-search-%s*" query))
+         (response (mastodon-http--get-search-json url query)))
+    (mapcar #'mastodon-search--get-user-info-no-url ;-handle-flat-propertized
+            response)))
+
+;; functions for mastodon search
+
 (defun mastodon-search--search-query (query)
   "Prompt for a search QUERY and return accounts, statuses, and hashtags."
   (interactive "sSearch mastodon for: ")

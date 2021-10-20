@@ -34,6 +34,9 @@
 (when (require 'emojify nil :noerror)
   (declare-function emojify-insert-emoji "emojify"))
 
+(require 'cl-lib)
+(require 'company nil :noerror)
+
 (autoload 'mastodon-auth--user-acct "mastodon-auth")
 (autoload 'mastodon-http--api "mastodon-http")
 (autoload 'mastodon-http--post "mastodon-http")
@@ -51,6 +54,7 @@
 (autoload 'mastodon-http--post-media-attachment "mastodon-http")
 (autoload 'mastodon-tl--toot-id "mastodon-tl")
 (autoload 'mastodon-tl--reload-timeline-or-profile "mastodon-tl")
+(autoload 'mastodon-search--search-accounts-query "mastodon-search")
 
 (defgroup mastodon-toot nil
   "Tooting in Mastodon."
@@ -72,6 +76,12 @@ Must be one of \"public\", \"unlisted\", \"private\" (for followers-only), or \"
   "The default directory when prompting for a media file to upload."
   :group 'mastodon-toot
   :type 'string)
+
+(when (require 'company nil :noerror)
+  (defcustom mastodon-toot--use-company-completion-for-mentions t
+    "Whether to enable company completion for mentions in toot compose buffer."
+      :group 'mastodon-toot
+      :type 'boolean))
 
 (defvar mastodon-toot--content-warning nil
   "A flag whether the toot should be marked with a content warning.")
@@ -376,6 +386,46 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
                (reverse (append mentions nil))
                "")))
 
+;; (defun mastodon-toot--mentions-company-meta (candidate)
+;;   (format "meta %s of candidate %s"
+;;           (get-text-property 0 'meta candidate)
+;;           (substring-no-properties candidate)))
+
+(defun mastodon-toot--mentions-company-annotation (candidate)
+  "Construct a company completion CANDIDATE's annotation for display."
+  (format " %s" (get-text-property 0 'meta candidate)))
+
+(defun mastodon-toot--mentions-company-candidates (prefix)
+  "Given a company PREFIX, build a list of candidates.
+The prefix string is tested against both user handles and display names."
+  (let (res)
+    (dolist (item (mastodon-search--search-accounts-query prefix))
+      (when (or (string-prefix-p prefix (cadr item))
+                (string-prefix-p prefix (car item)))
+        (push (mastodon-toot--mentions-company-make-candidate item) res)))
+    res))
+
+(defun mastodon-toot--mentions-company-make-candidate (candidate)
+  "Construct a company completion CANDIDATE for display."
+  (let ((display-name (car candidate))
+        (handle (cadr candidate)))
+    (propertize handle 'meta display-name)))
+
+(defun mastodon-toot--mentions-company-backend (command &optional arg &rest ignored)
+  "A company completion backend for toot mentions."
+   (interactive (list 'interactive))
+   (cl-case command
+     (interactive (company-begin-backend 'mastodon-toot--mentions-company-backend))
+     (prefix (and (bound-and-true-p mastodon-toot-mode) ; if masto toot minor mode
+                  (save-excursion
+                    (backward-word)
+                    (backward-char)
+                    (looking-at "@")) ; if we have a mention
+                  (company-grab-symbol))) ;; get thing before point, sans @
+     (candidates (mastodon-toot--mentions-company-candidates arg))
+     (annotation (mastodon-toot--mentions-company-annotation arg))))
+     ;; (meta (mastodon-toot--mentions-company-meta arg))))
+
 (defun mastodon-toot--reply ()
   "Reply to toot at `point'."
   (interactive)
@@ -565,6 +615,9 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
       (mastodon-toot--display-docs-and-status-fields)
       (mastodon-toot--setup-as-reply reply-to-user reply-to-id))
     (mastodon-toot-mode t)
+    (when mastodon-toot--use-company-completion-for-mentions
+      (add-to-list 'company-backends 'mastodon-toot--mentions-company-backend)
+      (company-mode-on))
     (make-local-variable 'after-change-functions)
     (push #'mastodon-toot--update-status-fields after-change-functions)
     (mastodon-toot--update-status-fields)))
