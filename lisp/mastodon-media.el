@@ -135,7 +135,7 @@ fKRJkmVZjAQwh78A6vCRWJE8K+8AAAAASUVORK5CYII=")
   "The PNG data for a generic 200x200 'broken image' view.")
 
 (defun mastodon-media--process-image-response
-    (status-plist marker image-options region-length url)
+    (status-plist marker image-options region-length)
   "Callback function processing the url retrieve response for URL.
 
 STATUS-PLIST is the usual plist of status events as per `url-retrieve'.
@@ -156,8 +156,6 @@ REGION-LENGTH is the length of the region that should be replaced with the image
                                      (when image-options 'imagemagick)
                                    nil) ; inbuilt scaling in 27.1
                                  t image-options))))
-            (unless (url-is-cached url) ; cache image if not already cached
-              (url-store-in-cache url-buffer))
             (with-current-buffer (marker-buffer marker)
               ;; Save narrowing in our buffer
               (let ((inhibit-read-only t))
