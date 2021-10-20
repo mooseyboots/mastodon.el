@@ -47,7 +47,12 @@
   :type 'integer)
 
 (defcustom mastodon-media--preview-max-height 250
-  "Max height of any media attachment preview to be shown."
+  "Max height of any media attachment preview to be shown in timelines."
+  :group 'mastodon-media
+  :type 'integer)
+
+(defcustom mastodon-media--attachment-height 80
+  "Height of the attached images preview in the toot draft buffer."
   :group 'mastodon-media
   :type 'integer)
 
@@ -130,7 +135,7 @@ fKRJkmVZjAQwh78A6vCRWJE8K+8AAAAASUVORK5CYII=")
   "The PNG data for a generic 200x200 'broken image' view.")
 
 (defun mastodon-media--process-image-response
-    (status-plist marker image-options region-length)
+    (status-plist marker image-options region-length url)
   "Callback function processing the url retrieve response for URL.
 
 STATUS-PLIST is the usual plist of status events as per `url-retrieve'.
@@ -151,6 +156,8 @@ REGION-LENGTH is the length of the region that should be replaced with the image
                                      (when image-options 'imagemagick)
                                    nil) ; inbuilt scaling in 27.1
                                  t image-options))))
+            (unless (url-is-cached url) ; cache image if not already cached
+              (url-store-in-cache url-buffer))
             (with-current-buffer (marker-buffer marker)
               ;; Save narrowing in our buffer
               (let ((inhibit-read-only t))

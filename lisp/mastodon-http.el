@@ -113,6 +113,12 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
           (url-retrieve-synchronously url)
         (url-retrieve-synchronously url nil nil mastodon-http--timeout)))))
 
+(defun mastodon-http--read-file-as-string (filename)
+  ""
+  (with-temp-buffer
+    (insert-file-contents filename)
+    (string-to-unibyte (buffer-string))))
+
 (defun mastodon-http--get (url)
   "Make synchronous GET request to URL.
 
