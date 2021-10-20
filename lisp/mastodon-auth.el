@@ -73,12 +73,12 @@ If no auth-sources file, runs `mastodon-auth--generate-token-no-storing-credenti
   "Make POST to generate auth token, without using auth-sources file."
   (mastodon-http--post
    (concat mastodon-instance-url "/oauth/token")
-   `(("client_id" ,(plist-get (mastodon-client) :client_id))
-     ("client_secret" ,(plist-get (mastodon-client) :client_secret))
-     ("grant_type" "password")
-     ("username" ,(read-string "Email: " user-mail-address))
-     ("password" ,(read-passwd "Password: "))
-     ("scope" "read write follow"))
+   `(("client_id" . ,(plist-get (mastodon-client) :client_id))
+     ("client_secret" . ,(plist-get (mastodon-client) :client_secret))
+     ("grant_type" . "password")
+     ("username" . ,(read-string "Email: " user-mail-address))
+     ("password" . ,(read-passwd "Password: "))
+     ("scope" . "read write follow"))
    nil
    :unauthenticated))
 
