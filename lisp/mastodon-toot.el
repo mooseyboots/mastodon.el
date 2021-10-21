@@ -30,9 +30,13 @@
 ;;; Code:
 
 (defvar mastodon-instance-url)
+(defvar mastodon-media--attachment-height)
 
 (when (require 'emojify nil :noerror)
   (declare-function emojify-insert-emoji "emojify"))
+
+(require 'cl-lib)
+(require 'company nil :noerror)
 
 (autoload 'mastodon-auth--user-acct "mastodon-auth")
 (autoload 'mastodon-http--api "mastodon-http")
@@ -49,8 +53,10 @@
 (autoload 'mastodon-tl--find-property-range "mastodon-tl")
 (autoload 'mastodon-toot "mastodon")
 (autoload 'mastodon-http--post-media-attachment "mastodon-http")
+(autoload 'mastodon-http--read-file-as-string "mastodon-http")
 (autoload 'mastodon-tl--toot-id "mastodon-tl")
 (autoload 'mastodon-tl--reload-timeline-or-profile "mastodon-tl")
+(autoload 'mastodon-search--search-accounts-query "mastodon-search")
 
 (defgroup mastodon-toot nil
   "Tooting in Mastodon."
@@ -62,19 +68,32 @@
 
 Must be one of \"public\", \"unlisted\", \"private\" (for followers-only), or \"direct\"."
   :group 'mastodon-toot
-  :type 'choice
-  :options '("public"
-             "unlisted"
-             "private"
-             "direct"))
+  :type '(choice
+          (const :tag "public" "public")
+          (const :tag "unlisted" "unlisted")
+          (const :tag "followers only" "private")
+          (const :tag "direct" "direct")))
 
 (defcustom mastodon-toot--default-media-directory "~/"
   "The default directory when prompting for a media file to upload."
   :group 'mastodon-toot
   :type 'string)
 
+(when (require 'company nil :noerror)
+  (defcustom mastodon-toot--enable-completion-for-mentions "followers"
+    "Whether to enable company completion for mentions in toot compose buffer."
+      :group 'mastodon-toot
+      :type '(choice
+              (const :tag "off" nil)
+              (const :tag "followers only" "followers")
+              (const :tag "all users" "all"))))
+
 (defvar mastodon-toot--content-warning nil
   "A flag whether the toot should be marked with a content warning.")
+(make-variable-buffer-local 'mastodon-toot--content-warning)
+
+(defvar mastodon-toot--content-warning-from-reply-or-redraft nil
+  "The content warning of the toot being replied to.")
 (make-variable-buffer-local 'mastodon-toot--content-warning)
 
 (defvar mastodon-toot--content-nsfw nil
@@ -88,7 +107,7 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
 (make-variable-buffer-local 'mastodon-toot--visibility)
 
 (defvar mastodon-toot--media-attachments nil
-  "A flag indicating if the toot being composed has media attachments.")
+  "A list of the media attachments of the toot being composed .")
 (make-variable-buffer-local 'mastodon-toot--media-attachments)
 
 (defvar mastodon-toot--media-attachment-ids nil
@@ -103,6 +122,10 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
   "Buffer-local variable to hold the id of the toot being replied to.")
 (make-variable-buffer-local 'mastodon-toot--reply-to-id)
 
+(defvar mastodon-toot--media-attachments nil
+  "Buffer-local variable to hold the list of media attachments.")
+(make-variable-buffer-local 'mastodon-toot--media-attachments)
+
 (defvar mastodon-toot-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-c") #'mastodon-toot--send)
@@ -110,9 +133,11 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
     (define-key map (kbd "C-c C-w") #'mastodon-toot--toggle-warning)
     (define-key map (kbd "C-c C-n") #'mastodon-toot--toggle-nsfw)
     (define-key map (kbd "C-c C-v") #'mastodon-toot--change-visibility)
-    (define-key map (kbd "C-c C-a") #'mastodon-toot--add-media-attachment)
     (when (require 'emojify nil :noerror)
       (define-key map (kbd "C-c C-e") #'mastodon-toot--insert-emoji))
+    (define-key map (kbd "C-c C-u") #'mastodon-toot--upload-attached-media)
+    (define-key map (kbd "C-c C-a") #'mastodon-toot--attach-media)
+    (define-key map (kbd "C-c !") #'mastodon-toot--clear-all-attachments)
     map)
   "Keymap for `mastodon-toot'.")
 
@@ -252,7 +277,10 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (interactive)
   (let* ((toot (mastodon-tl--property 'toot-json))
          (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
-         (url (mastodon-http--api (format "statuses/%s" id))))
+         (url (mastodon-http--api (format "statuses/%s" id)))
+         (toot-cw (cdr (assoc 'spoiler_text toot)))
+         (toot-visibility (cdr (assoc 'visibility toot)))
+         (reply-id (cdr (assoc 'in_reply_to_id toot))))
     (if (or (cdr (assoc 'reblog toot))
             (not (equal (cdr (assoc 'acct
                                     (cdr (assoc 'account toot))))
@@ -269,7 +297,15 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
                         ;; (media (cdr (assoc 'media_attachments json-response))))
                    (mastodon-toot--compose-buffer nil nil)
                    (goto-char (point-max))
-                   (insert content))))))))))
+                   (insert content)
+                   ;; adopt reply-to-id, visibility and CW from deleted toot:
+                   (when reply-id
+                     (setq mastodon-toot--reply-to-id reply-id))
+                   (setq mastodon-toot--visibility toot-visibility)
+                   (when (not (equal toot-cw ""))
+                     (setq mastodon-toot--content-warning t)
+                     (setq mastodon-toot--content-warning-from-reply-or-redraft toot-cw))
+                   (mastodon-toot--update-status-fields))))))))))
 
 (defun mastodon-toot--kill ()
   "Kill `mastodon-toot-mode' buffer and window."
@@ -300,19 +336,6 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (setq mastodon-toot--visibility visibility)
   (message "Visibility set to %s" visibility))
 
-(defun mastodon-toot--add-media-attachment ()
-  "Prompt the user for a file and POST it to the media endpoint on the server.
-
-Set `mastodon-toot--media-attachment-ids' to the item's id so it can be attached to the toot."
-  (interactive)
-  (let* ((filename (read-file-name "Choose file to attach to this toot: "
-                                   mastodon-toot--default-media-directory))
-         (caption (read-string "Enter a caption: "))
-         (url (concat mastodon-instance-url "/api/v1/media")))
-    (message "Uploading %s..." (file-name-nondirectory filename))
-    (mastodon-http--post-media-attachment url filename caption)
-    (setq mastodon-toot--media-attachments t)))
-
 (defun mastodon-toot--send ()
   "Kill new-toot buffer/window and POST contents to the Mastodon instance.
 
@@ -324,7 +347,7 @@ If media items have been uploaded with `mastodon-toot--add-media-attachment', at
          (endpoint (mastodon-http--api "statuses"))
          (spoiler (when (and (not empty-toot-p)
                              mastodon-toot--content-warning)
-                    (read-string "Warning: ")))
+                    (read-string "Warning: " mastodon-toot--content-warning-from-reply-or-redraft)))
          (args-no-media `(("status" . ,toot)
                           ("in_reply_to_id" . ,mastodon-toot--reply-to-id)
                           ("visibility" . ,mastodon-toot--visibility)
@@ -340,10 +363,10 @@ If media items have been uploaded with `mastodon-toot--add-media-attachment', at
          (args (append args-no-media args-media)))
     (if (and mastodon-toot--media-attachments
              (equal mastodon-toot--media-attachment-ids nil))
-        (message "Looks like your uploads are not yet ready...")
+        (message "Looks like your uploads are not up: C-c C-u to upload...")
       (if empty-toot-p
           (message "Empty toot. Cowardly refusing to post this.")
-          (let ((response (mastodon-http--post endpoint args nil)))
+        (let ((response (mastodon-http--post endpoint args nil)))
           (mastodon-http--triage response
                                  (lambda ()
                                    (mastodon-toot--kill)
@@ -376,6 +399,46 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
                (reverse (append mentions nil))
                "")))
 
+;; (defun mastodon-toot--mentions-company-meta (candidate)
+;;   (format "meta %s of candidate %s"
+;;           (get-text-property 0 'meta candidate)
+;;           (substring-no-properties candidate)))
+
+(defun mastodon-toot--mentions-company-annotation (candidate)
+  "Construct a company completion CANDIDATE's annotation for display."
+  (format " %s" (get-text-property 0 'meta candidate)))
+
+(defun mastodon-toot--mentions-company-candidates (prefix)
+  "Given a company PREFIX, build a list of candidates.
+The prefix string is tested against both user handles and display names."
+  (let (res)
+    (dolist (item (mastodon-search--search-accounts-query prefix))
+      (when (or (string-prefix-p prefix (cadr item))
+                (string-prefix-p prefix (car item)))
+        (push (mastodon-toot--mentions-company-make-candidate item) res)))
+    res))
+
+(defun mastodon-toot--mentions-company-make-candidate (candidate)
+  "Construct a company completion CANDIDATE for display."
+  (let ((display-name (car candidate))
+        (handle (cadr candidate)))
+    (propertize handle 'meta display-name)))
+
+(defun mastodon-toot--mentions-completion (command &optional arg &rest ignored)
+  "A company completion backend for toot mentions."
+   (interactive (list 'interactive))
+   (cl-case command
+     (interactive (company-begin-backend 'mastodon-toot--mentions-completion))
+     (prefix (when (and (bound-and-true-p mastodon-toot-mode) ; if masto toot minor mode
+                        (save-excursion
+                          (forward-whitespace -1)
+                          (forward-whitespace 1)
+                          (looking-at "@")))
+               ;; @ + thing before point
+               (concat "@" (company-grab-symbol))))
+     (candidates (mastodon-toot--mentions-company-candidates arg))
+     (annotation (mastodon-toot--mentions-company-annotation arg))))
+
 (defun mastodon-toot--reply ()
   "Reply to toot at `point'."
   (interactive)
@@ -400,7 +463,7 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
                                    mentions))
                        (concat (mastodon-toot--process-local user)
                                mentions)))
-                   id)))
+                   id toot)))
 
 (defun mastodon-toot--toggle-warning ()
   "Toggle `mastodon-toot--content-warning'."
@@ -414,6 +477,7 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
   (interactive)
   (setq mastodon-toot--content-nsfw
         (not mastodon-toot--content-nsfw))
+  (message "NSFW flag is now %s" (if mastodon-toot--content-nsfw "on" "off"))
   (mastodon-toot--update-status-fields))
 
 (defun mastodon-toot--change-visibility ()
@@ -429,6 +493,74 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
               (t
                "public")))
   (mastodon-toot--update-status-fields))
+
+(defun mastodon-toot--clear-all-attachments ()
+  "Remove all attachments from a toot draft."
+  (interactive)
+  (setq mastodon-toot--media-attachments nil)
+  (mastodon-toot--refresh-attachments-display)
+  (mastodon-toot--update-status-fields))
+
+(defun mastodon-toot--attach-media (file content-type description)
+  "Prompt for a attachment FILE of CONTENT-TYPE with DESCRIPTION.
+A preview is displayed in the toot create buffer, and the file
+will be uploaded and attached to the toot upon sending."
+  (interactive "fFilename: \nsContent type: \nsDescription: ")
+  (when (>= (length mastodon-toot--media-attachments) 4)
+    ;; Only a max. of 4 attachments are allowed, so pop the oldest one.
+    (pop mastodon-toot--media-attachments))
+  (setq mastodon-toot--media-attachments
+        (nconc mastodon-toot--media-attachments
+               `(((:contents . ,(mastodon-http--read-file-as-string file))
+                  (:content-type . ,content-type)
+                  (:description . ,description)
+                  (:filename . ,file)))))
+  (mastodon-toot--refresh-attachments-display))
+
+(defun mastodon-toot--upload-attached-media ()
+  "Actually upload attachments using `mastodon-http--post-media-attachment'.
+It adds the items' ids to `mastodon-toot--media-attachment-ids', which is used to actually attach them to a toot after uploading."
+  (interactive)
+  (mapcar (lambda (attachment)
+            (let* ((filename (cdr (assoc :filename attachment)))
+                   (caption (cdr (assoc :description attachment)))
+                   (url (concat mastodon-instance-url "/api/v1/media")))
+              (message "Uploading %s..." (file-name-nondirectory filename))
+              (mastodon-http--post-media-attachment url filename caption)))
+            mastodon-toot--media-attachments))
+
+(defun mastodon-toot--refresh-attachments-display ()
+  "Update the display attachment previews in toot draft buffer."
+  (let ((inhibit-read-only t)
+        (attachments-region (mastodon-tl--find-property-range
+                             'toot-attachments (point-min)))
+        (display-specs (mastodon-toot--format-attachments)))
+    (dotimes (i (- (cdr attachments-region) (car attachments-region)))
+      (add-text-properties (+ (car attachments-region) i)
+                           (+ (car attachments-region) i 1)
+                           (list 'display (or (nth i display-specs) ""))))))
+
+(defun mastodon-toot--format-attachments ()
+  "Format the attachment previews for display in toot draft buffer."
+  (or (let ((counter 0)
+            (image-options (when (or (image-type-available-p 'imagemagick)
+                                     (image-transforms-p))
+                             `(:height ,mastodon-media--attachment-height))))
+        (mapcan (lambda (attachment)
+                  (let* ((data (cdr (assoc :contents attachment)))
+                         (image (apply #'create-image data
+                                       (if (version< emacs-version "27.1")
+                                           (when image-options 'imagemagick)
+                                         nil) ; inbuilt scaling in 27.1
+                                       t image-options))
+                         (type (cdr (assoc :content-type attachment)))
+                         (description (cdr (assoc :description attachment))))
+                    (setq counter (1+ counter))
+                    (list (format "\n    %d: " counter)
+                          image
+                          (format " \"%s\" (%s)" description type))))
+                mastodon-toot--media-attachments))
+      (list "None")))
 
 ;; we'll need to revisit this if the binds get
 ;; more diverse than two-chord bindings
@@ -457,19 +589,51 @@ e.g. mastodon-toot--send -> Send."
   "Format a single keybinding, KBIND, for display in documentation."
   (let ((key (help-key-description (car kbind) nil))
         (command (mastodon-toot--format-kbind-command (cdr kbind))))
-    (format "\t%s - %s" key command)))
+    (format "    %s - %s" key command)))
 
 (defun mastodon-toot--format-kbinds (kbinds)
   "Format a list of keybindings, KBINDS, for display in documentation."
-  (mapconcat 'identity (cons "" (mapcar #'mastodon-toot--format-kbind kbinds))
-               "\n"))
+  (mapcar #'mastodon-toot--format-kbind kbinds))
+
+(defvar mastodon-toot--kbinds-pairs nil
+  "Contains a list of paired toot compose buffer keybindings for inserting.")
+(make-variable-buffer-local 'mastodon-toot--kbinds-pairs)
+
+(defun mastodon-toot--formatted-kbinds-pairs (kbinds-list longest)
+  "Return a list of strings each containing two formatted kbinds.
+KBINDS-LIST is the list of formatted bindings to pair.
+LONGEST is the length of the longest binding."
+  (when kbinds-list
+    (push (concat "\n"
+                  (car kbinds-list)
+                  (make-string (- (1+ longest) (length (car kbinds-list)))
+                               ?\ )
+                  (cadr kbinds-list))
+          mastodon-toot--kbinds-pairs)
+    (mastodon-toot--formatted-kbinds-pairs (cddr kbinds-list) longest))
+  (reverse mastodon-toot--kbinds-pairs))
+
+(defun mastodon-toot--formatted-kbinds-longest (kbinds-list)
+  "Return the length of the longest item in KBINDS-LIST."
+  (let ((lengths (mapcar (lambda (x)
+                           (length x))
+                         kbinds-list)))
+    (car (sort lengths #'>))))
 
 (defun mastodon-toot--make-mode-docs ()
   "Create formatted documentation text for the mastodon-toot-mode."
-  (let ((kbinds (mastodon-toot--get-mode-kbinds)))
+  (let* ((kbinds (mastodon-toot--get-mode-kbinds))
+         (longest-kbind
+          (mastodon-toot--formatted-kbinds-longest
+           (mastodon-toot--format-kbinds kbinds))))
     (concat
      " Compose a new toot here. The following keybindings are available:"
-     (mastodon-toot--format-kbinds kbinds))))
+     ;; (mastodon-toot--format-kbinds kbinds))))
+     (mapconcat 'identity
+                (mastodon-toot--formatted-kbinds-pairs
+                 (mastodon-toot--format-kbinds kbinds)
+                 longest-kbind)
+                nil))))
 
 (defun mastodon-toot--display-docs-and-status-fields ()
   "Insert propertized text with documentation about `mastodon-toot-mode'.
@@ -482,6 +646,8 @@ on the status of NSFW, content warning flags, media attachments, etc."
       (concat
        divider "\n"
        (mastodon-toot--make-mode-docs) "\n"
+       ;; divider "\n"
+       ;; "\n"
        divider "\n"
        " "
        (propertize "Count"
@@ -490,14 +656,14 @@ on the status of NSFW, content warning flags, media attachments, etc."
        (propertize "Visibility"
                    'toot-post-visibility t)
        " ⋅ "
-       (propertize "Attachment"
-                   'toot-attachment t)
-       " ⋅ "
        (propertize "CW"
                    'toot-post-cw-flag t)
        " "
        (propertize "NSFW"
                    'toot-post-nsfw-flag t)
+       "\n"
+       " Attachments: "
+       (propertize "None                  " 'toot-attachments t)
        "\n"
        divider
        (propertize "\n"
@@ -506,33 +672,40 @@ on the status of NSFW, content warning flags, media attachments, etc."
       'read-only "Edit your message below."
       'toot-post-header t))))
 
-(defun mastodon-toot--setup-as-reply (reply-to-user reply-to-id)
+(defun mastodon-toot--setup-as-reply (reply-to-user reply-to-id reply-json)
   "If REPLY-TO-USER is provided, inject their handle into the message.
 If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
-  (when reply-to-user
-    (insert (format "%s " reply-to-user))
-    (setq mastodon-toot--reply-to-id reply-to-id)))
+  (let ((reply-visibility (cdr (assoc 'visibility reply-json)))
+        (reply-cw (cdr (assoc 'spoiler_text reply-json))))
+    (when reply-to-user
+      (insert (format "%s " reply-to-user))
+      (setq mastodon-toot--reply-to-id reply-to-id)
+      (if (not (equal mastodon-toot--visibility
+                      reply-visibility))
+          (setq mastodon-toot--visibility reply-visibility))
+      (when (not (equal reply-cw ""))
+        (setq mastodon-toot--content-warning t)
+        (setq mastodon-toot--content-warning-from-reply-or-redraft reply-cw)))))
 
 (defun mastodon-toot--update-status-fields (&rest args)
   "Update the status fields in the header based on the current state."
-  (let ((inhibit-read-only t)
-        (header-region (mastodon-tl--find-property-range 'toot-post-header
+  (ignore-errors  ;; called from after-change-functions so let's not leak errors
+    (let ((inhibit-read-only t)
+         (header-region (mastodon-tl--find-property-range 'toot-post-header
+                                                          (point-min)))
+         (count-region (mastodon-tl--find-property-range 'toot-post-counter
                                                          (point-min)))
-        (count-region (mastodon-tl--find-property-range 'toot-post-counter
+         (visibility-region (mastodon-tl--find-property-range
+                             'toot-post-visibility (point-min)))
+         (nsfw-region (mastodon-tl--find-property-range 'toot-post-nsfw-flag
                                                         (point-min)))
-        (visibility-region (mastodon-tl--find-property-range
-                            'toot-post-visibility (point-min)))
-        (nsfw-region (mastodon-tl--find-property-range 'toot-post-nsfw-flag
-                                                       (point-min)))
-        (cw-region (mastodon-tl--find-property-range 'toot-post-cw-flag
-                                                     (point-min)))
-        (attachment-region (mastodon-tl--find-property-range
-                            'toot-attachment (point-min))))
-    (add-text-properties (car count-region) (cdr count-region)
-                         (list 'display
-                               (format "%s characters"
-                                       (- (point-max) (cdr header-region)))))
-    (add-text-properties (car visibility-region) (cdr visibility-region)
+         (cw-region (mastodon-tl--find-property-range 'toot-post-cw-flag
+                                                      (point-min))))
+     (add-text-properties (car count-region) (cdr count-region)
+                          (list 'display
+                                (format "%s characters"
+                                        (- (point-max) (cdr header-region)))))
+     (add-text-properties (car visibility-region) (cdr visibility-region)
                          (list 'display
                                (format "Visibility: %s"
                                        (if (equal
@@ -540,20 +713,17 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
                                             "private")
                                            "followers-only"
                                          mastodon-toot--visibility))))
-    (add-text-properties (car attachment-region) (cdr attachment-region)
-                         (list 'display
-                               (format "Attached: %s"
-                                       (mapconcat 'identity
-                                        mastodon-toot--media-attachment-filenames
-                                        ", "))))
-    (add-text-properties (car nsfw-region) (cdr nsfw-region)
-                         (list 'invisible (not mastodon-toot--content-nsfw)
-                               'face 'mastodon-cw-face))
-    (add-text-properties (car cw-region) (cdr cw-region)
-                         (list 'invisible (not mastodon-toot--content-warning)
-                               'face 'mastodon-cw-face))))
+     (add-text-properties (car nsfw-region) (cdr nsfw-region)
+                          (list 'display (if mastodon-toot--content-nsfw
+                                             (if mastodon-toot--media-attachments
+                                                 "NSFW" "NSFW (no effect until attachments added)")
+                                           "")
+                                'face 'mastodon-cw-face))
+     (add-text-properties (car cw-region) (cdr cw-region)
+                          (list 'invisible (not mastodon-toot--content-warning)
+                                'face 'mastodon-cw-face)))))
 
-(defun mastodon-toot--compose-buffer (reply-to-user reply-to-id)
+(defun mastodon-toot--compose-buffer (reply-to-user reply-to-id &optional reply-json)
   "Create a new buffer to capture text for a new toot.
 If REPLY-TO-USER is provided, inject their handle into the message.
 If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
@@ -561,12 +731,18 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
          (buffer (or buffer-exists (get-buffer-create "*new toot*")))
          (inhibit-read-only t))
     (switch-to-buffer-other-window buffer)
+    (mastodon-toot-mode t)
     (when (not buffer-exists)
       (mastodon-toot--display-docs-and-status-fields)
-      (mastodon-toot--setup-as-reply reply-to-user reply-to-id))
+      (mastodon-toot--setup-as-reply reply-to-user reply-to-id reply-json))
     (mastodon-toot-mode t)
+    (when mastodon-toot--enable-completion-for-mentions
+      (set (make-local-variable 'company-backends)
+           (add-to-list 'company-backends 'mastodon-toot--mentions-completion))
+      (company-mode-on))
     (make-local-variable 'after-change-functions)
     (push #'mastodon-toot--update-status-fields after-change-functions)
+    (mastodon-toot--refresh-attachments-display)
     (mastodon-toot--update-status-fields)))
 
 (define-minor-mode mastodon-toot-mode

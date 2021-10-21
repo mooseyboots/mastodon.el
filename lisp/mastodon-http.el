@@ -113,6 +113,12 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
           (url-retrieve-synchronously url)
         (url-retrieve-synchronously url nil nil mastodon-http--timeout)))))
 
+(defun mastodon-http--read-file-as-string (filename)
+  ""
+  (with-temp-buffer
+    (insert-file-contents filename)
+    (string-to-unibyte (buffer-string))))
+
 (defun mastodon-http--get (url)
   "Make synchronous GET request to URL.
 
@@ -163,18 +169,20 @@ Pass response buffer to CALLBACK function."
     (kill-buffer)
     (json-read-from-string json-string)))
 
-(defun mastodon-http--get-search-json (url query)
+(defun mastodon-http--get-search-json (url query &optional param)
   "Make GET request to URL, searching for QUERY and return JSON response."
-  (let ((buffer (mastodon-http--get-search url query)))
+  (let ((buffer (mastodon-http--get-search url query param)))
     (with-current-buffer buffer
       (mastodon-http--process-json-search))))
 
-(defun mastodon-http--get-search (base-url query)
+(defun mastodon-http--get-search (base-url query &optional param)
   "Make GET request to BASE-URL, searching for QUERY.
-
-Pass response buffer to CALLBACK function."
+Pass response buffer to CALLBACK function.
+PARAM is a formatted request parameter, eg 'following=true'."
   (let ((url-request-method "GET")
-        (url (concat base-url "?q=" (url-hexify-string query)))
+        (url (if param
+                 (concat base-url "?" param "&q=" (url-hexify-string query))
+               (concat base-url "?q=" (url-hexify-string query))))
         (url-request-extra-headers
          `(("Authorization" . ,(concat "Bearer "
                                        (mastodon-auth--access-token))))))
@@ -192,9 +200,7 @@ Pass response buffer to CALLBACK function."
 ;; hard coded just for bio note for now:
 (defun mastodon-http--patch (base-url &optional note)
   "Make synchronous PATCH request to BASE-URL.
-
 Optionally specify the NOTE to edit.
-
 Pass response buffer to CALLBACK function."
   (let ((url-request-method "PATCH")
         (url (if note
@@ -211,7 +217,6 @@ Pass response buffer to CALLBACK function."
 
 (defun mastodon-http--get-async (url &optional callback &rest cbargs)
   "Make GET request to URL.
-
 Pass response buffer to CALLBACK function with args CBARGS."
   (let ((url-request-method "GET")
         (url-request-extra-headers
@@ -229,9 +234,7 @@ Pass response buffer to CALLBACK function with args CBARGS."
 
 (defun mastodon-http--post-async (url args headers &optional callback &rest cbargs)
   "POST asynchronously to URL with ARGS and HEADERS.
-
 Then run function CALLBACK with arguements CBARGS.
-
 Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
   (let ((url-request-method "POST")
         (request-timeout 5)
@@ -252,7 +255,6 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
 ;; TODO: test for curl first?
 (defun mastodon-http--post-media-attachment (url filename caption)
   "Make POST request to upload FILENAME with CAPTION to the server's media URL.
-
 The upload is asynchronous. On succeeding, `mastodon-toot--media-attachment-ids' is set to the id(s) of the item uploaded, and `mastodon-toot--update-status-fields' is run."
   (let* ((file (file-name-nondirectory filename))
          (request-backend 'curl))
