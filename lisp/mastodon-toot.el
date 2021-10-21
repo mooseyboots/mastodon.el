@@ -92,7 +92,7 @@ Must be one of \"public\", \"unlisted\", \"private\" (for followers-only), or \"
   "A flag whether the toot should be marked with a content warning.")
 (make-variable-buffer-local 'mastodon-toot--content-warning)
 
-(defvar mastodon-toot--content-warning-from-reply nil
+(defvar mastodon-toot--content-warning-from-reply-or-redraft nil
   "The content warning of the toot being replied to.")
 (make-variable-buffer-local 'mastodon-toot--content-warning)
 
@@ -277,7 +277,9 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (interactive)
   (let* ((toot (mastodon-tl--property 'toot-json))
          (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
-         (url (mastodon-http--api (format "statuses/%s" id))))
+         (url (mastodon-http--api (format "statuses/%s" id)))
+         (toot-cw (cdr (assoc 'spoiler_text toot)))
+         (toot-visibility (cdr (assoc 'visibility toot))))
     (if (or (cdr (assoc 'reblog toot))
             (not (equal (cdr (assoc 'acct
                                     (cdr (assoc 'account toot))))
@@ -294,7 +296,13 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
                         ;; (media (cdr (assoc 'media_attachments json-response))))
                    (mastodon-toot--compose-buffer nil nil)
                    (goto-char (point-max))
-                   (insert content))))))))))
+                   (insert content)
+                   ;; adopt visibility and CW from deleted toot:
+                   (setq mastodon-toot--visibility toot-visibility)
+                   (when toot-cw
+                     (setq mastodon-toot--content-warning t)
+                     (setq mastodon-toot--content-warning-from-reply-or-redraft toot-cw))
+                   (mastodon-toot--update-status-fields))))))))))
 
 (defun mastodon-toot--kill ()
   "Kill `mastodon-toot-mode' buffer and window."
@@ -336,7 +344,7 @@ If media items have been uploaded with `mastodon-toot--add-media-attachment', at
          (endpoint (mastodon-http--api "statuses"))
          (spoiler (when (and (not empty-toot-p)
                              mastodon-toot--content-warning)
-                    (read-string "Warning: " mastodon-toot--content-warning-from-reply)))
+                    (read-string "Warning: " mastodon-toot--content-warning-from-reply-or-redraft)))
          (args-no-media `(("status" . ,toot)
                           ("in_reply_to_id" . ,mastodon-toot--reply-to-id)
                           ("visibility" . ,mastodon-toot--visibility)
@@ -637,7 +645,7 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
           (setq mastodon-toot--visibility reply-visibility))
       (when reply-cw
         (setq mastodon-toot--content-warning t)
-        (setq mastodon-toot--content-warning-from-reply reply-cw)))))
+        (setq mastodon-toot--content-warning-from-reply-or-redraft reply-cw)))))
 
 (defun mastodon-toot--update-status-fields (&rest args)
   "Update the status fields in the header based on the current state."
@@ -675,7 +683,7 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
                           (list 'invisible (not mastodon-toot--content-warning)
                                 'face 'mastodon-cw-face)))))
 
-(defun mastodon-toot--compose-buffer (reply-to-user reply-to-id reply-json)
+(defun mastodon-toot--compose-buffer (reply-to-user reply-to-id &optional reply-json)
   "Create a new buffer to capture text for a new toot.
 If REPLY-TO-USER is provided, inject their handle into the message.
 If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
