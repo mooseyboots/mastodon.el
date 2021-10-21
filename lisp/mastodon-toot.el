@@ -126,6 +126,9 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
   "Buffer-local variable to hold the list of media attachments.")
 (make-variable-buffer-local 'mastodon-toot--media-attachments)
 
+(defvar mastodon-toot--max-toot-chars nil
+  "The maximum allowed characters count for a single toot.")
+
 (defvar mastodon-toot-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-c") #'mastodon-toot--send)
@@ -140,6 +143,15 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
     (define-key map (kbd "C-c !") #'mastodon-toot--clear-all-attachments)
     map)
   "Keymap for `mastodon-toot'.")
+
+(defun mastodon-toot--get-max-toot-chars ()
+  ""
+  (let ((instance-json (mastodon-http--get-json
+                        (concat mastodon-instance-url
+                                "/api/v1/instance"))))
+    (setq mastodon-toot--max-toot-chars
+          (number-to-string
+          (cdr (assoc 'max_toot_chars instance-json))))))
 
 (defun mastodon-toot--action-success (marker byline-region remove)
   "Insert/remove the text MARKER with 'success face in byline.
@@ -703,8 +715,9 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
                                                       (point-min))))
      (add-text-properties (car count-region) (cdr count-region)
                           (list 'display
-                                (format "%s characters"
-                                        (- (point-max) (cdr header-region)))))
+                                (format "%s/%s characters"
+                                        (- (point-max) (cdr header-region))
+                                        mastodon-toot--max-toot-chars)))
      (add-text-properties (car visibility-region) (cdr visibility-region)
                          (list 'display
                                (format "Visibility: %s"
@@ -736,6 +749,8 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
       (mastodon-toot--display-docs-and-status-fields)
       (mastodon-toot--setup-as-reply reply-to-user reply-to-id reply-json))
     (mastodon-toot-mode t)
+    (unless mastodon-toot--max-toot-chars
+      (mastodon-toot--get-max-toot-chars))
     (when mastodon-toot--enable-completion-for-mentions
       (set (make-local-variable 'company-backends)
            (add-to-list 'company-backends 'mastodon-toot--mentions-completion))
