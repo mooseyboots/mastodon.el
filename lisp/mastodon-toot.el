@@ -611,10 +611,8 @@ on the status of NSFW, content warning flags, media attachments, etc."
       (concat
        divider "\n"
        (mastodon-toot--make-mode-docs) "\n"
-       divider "\n"
-       " Attachments: "
-       (propertize "None                  " 'toot-attachments t)
-       "\n"
+       ;; divider "\n"
+       ;; "\n"
        divider "\n"
        " "
        (propertize "Count"
@@ -628,6 +626,9 @@ on the status of NSFW, content warning flags, media attachments, etc."
        " "
        (propertize "NSFW"
                    'toot-post-nsfw-flag t)
+       "\n"
+       " Attachments: "
+       (propertize "None                  " 'toot-attachments t)
        "\n"
        divider
        (propertize "\n"
