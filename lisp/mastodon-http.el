@@ -163,18 +163,20 @@ Pass response buffer to CALLBACK function."
     (kill-buffer)
     (json-read-from-string json-string)))
 
-(defun mastodon-http--get-search-json (url query)
+(defun mastodon-http--get-search-json (url query &optional param)
   "Make GET request to URL, searching for QUERY and return JSON response."
-  (let ((buffer (mastodon-http--get-search url query)))
+  (let ((buffer (mastodon-http--get-search url query param)))
     (with-current-buffer buffer
       (mastodon-http--process-json-search))))
 
-(defun mastodon-http--get-search (base-url query)
+(defun mastodon-http--get-search (base-url query &optional param)
   "Make GET request to BASE-URL, searching for QUERY.
-
-Pass response buffer to CALLBACK function."
+Pass response buffer to CALLBACK function.
+PARAM is a formatted request parameter, eg 'following=true'."
   (let ((url-request-method "GET")
-        (url (concat base-url "?q=" (url-hexify-string query)))
+        (url (if param
+                 (concat base-url "?" param "&q=" (url-hexify-string query))
+               (concat base-url "?q=" (url-hexify-string query))))
         (url-request-extra-headers
          `(("Authorization" . ,(concat "Bearer "
                                        (mastodon-auth--access-token))))))

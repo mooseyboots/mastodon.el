@@ -80,10 +80,13 @@ Must be one of \"public\", \"unlisted\", \"private\" (for followers-only), or \"
   :type 'string)
 
 (when (require 'company nil :noerror)
-  (defcustom mastodon-toot--use-company-completion-for-mentions t
+  (defcustom mastodon-toot--enable-completion-for-mentions "followers"
     "Whether to enable company completion for mentions in toot compose buffer."
       :group 'mastodon-toot
-      :type 'boolean))
+      :type '(choice
+              (const :tag "off" nil)
+              (const :tag "followers only" "followers")
+              (const :tag "all users" "all"))))
 
 (defvar mastodon-toot--content-warning nil
   "A flag whether the toot should be marked with a content warning.")
@@ -406,20 +409,16 @@ The prefix string is tested against both user handles and display names."
         (handle (cadr candidate)))
     (propertize handle 'meta display-name)))
 
-(defun mastodon-toot--mentions-company-backend (command &optional arg &rest ignored)
+(defun mastodon-toot--mentions-completion (command &optional arg &rest ignored)
   "A company completion backend for toot mentions."
    (interactive (list 'interactive))
    (cl-case command
-     (interactive (company-begin-backend 'mastodon-toot--mentions-company-backend))
+     (interactive (company-begin-backend 'mastodon-toot--mentions-completion))
      (prefix (and (bound-and-true-p mastodon-toot-mode) ; if masto toot minor mode
-                  (save-excursion
-                    (backward-word)
-                    (backward-char)
-                    (looking-at "@")) ; if we have a mention
-                  (company-grab-symbol))) ;; get thing before point, sans @
+     ;; @ + thing before point
+                  (concat "@" (company-grab-symbol-cons "^@[0-9A-Za-z-.\\_@]+" 2))))
      (candidates (mastodon-toot--mentions-company-candidates arg))
      (annotation (mastodon-toot--mentions-company-annotation arg))))
-     ;; (meta (mastodon-toot--mentions-company-meta arg))))
 
 (defun mastodon-toot--reply ()
   "Reply to toot at `point'."
@@ -677,9 +676,9 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
       (mastodon-toot--display-docs-and-status-fields)
       (mastodon-toot--setup-as-reply reply-to-user reply-to-id))
     (mastodon-toot-mode t)
-    (when mastodon-toot--use-company-completion-for-mentions
+    (when mastodon-toot--enable-completion-for-mentions
       (set (make-local-variable 'company-backends)
-           (add-to-list 'company-backends 'mastodon-toot--mentions-company-backend))
+           (add-to-list 'company-backends 'mastodon-toot--mentions-completion))
       (company-mode-on))
     (make-local-variable 'after-change-functions)
     (push #'mastodon-toot--update-status-fields after-change-functions)
