@@ -426,9 +426,13 @@ The prefix string is tested against both user handles and display names."
    (interactive (list 'interactive))
    (cl-case command
      (interactive (company-begin-backend 'mastodon-toot--mentions-completion))
-     (prefix (and (bound-and-true-p mastodon-toot-mode) ; if masto toot minor mode
-     ;; @ + thing before point
-                  (concat "@" (company-grab-symbol-cons "^@[0-9A-Za-z-.\\_@]+" 2))))
+     (prefix (when (and (bound-and-true-p mastodon-toot-mode) ; if masto toot minor mode
+                        (save-excursion
+                          (forward-whitespace -1)
+                          (forward-whitespace 1)
+                          (looking-at "@")))
+               ;; @ + thing before point
+               (concat "@" (company-grab-symbol))))
      (candidates (mastodon-toot--mentions-company-candidates arg))
      (annotation (mastodon-toot--mentions-company-annotation arg))))
 
