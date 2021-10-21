@@ -279,7 +279,8 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
          (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
          (url (mastodon-http--api (format "statuses/%s" id)))
          (toot-cw (cdr (assoc 'spoiler_text toot)))
-         (toot-visibility (cdr (assoc 'visibility toot))))
+         (toot-visibility (cdr (assoc 'visibility toot)))
+         (reply-id (cdr (assoc 'in_reply_to_id toot))))
     (if (or (cdr (assoc 'reblog toot))
             (not (equal (cdr (assoc 'acct
                                     (cdr (assoc 'account toot))))
@@ -297,7 +298,9 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
                    (mastodon-toot--compose-buffer nil nil)
                    (goto-char (point-max))
                    (insert content)
-                   ;; adopt visibility and CW from deleted toot:
+                   ;; adopt reply-to-id, visibility and CW from deleted toot:
+                   (when reply-id
+                     (setq mastodon-toot--reply-to-id reply-id))
                    (setq mastodon-toot--visibility toot-visibility)
                    (when (not (equal toot-cw ""))
                      (setq mastodon-toot--content-warning t)
