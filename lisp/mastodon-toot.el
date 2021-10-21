@@ -586,19 +586,51 @@ e.g. mastodon-toot--send -> Send."
   "Format a single keybinding, KBIND, for display in documentation."
   (let ((key (help-key-description (car kbind) nil))
         (command (mastodon-toot--format-kbind-command (cdr kbind))))
-    (format "\t%s - %s" key command)))
+    (format "    %s - %s" key command)))
 
 (defun mastodon-toot--format-kbinds (kbinds)
   "Format a list of keybindings, KBINDS, for display in documentation."
-  (mapconcat 'identity (cons "" (mapcar #'mastodon-toot--format-kbind kbinds))
-               "\n"))
+  (mapcar #'mastodon-toot--format-kbind kbinds))
+
+(defvar mastodon-toot--kbinds-pairs nil
+  "Contains a list of paired toot compose buffer keybindings for inserting.")
+(make-variable-buffer-local 'mastodon-toot--kbinds-pairs)
+
+(defun mastodon-toot--formatted-kbinds-pairs (kbinds-list longest)
+  "Return a list of strings each containing two formatted kbinds.
+KBINDS-LIST is the list of formatted bindings to pair.
+LONGEST is the length of the longest binding."
+  (when kbinds-list
+    (push (concat "\n"
+                  (car kbinds-list)
+                  (make-string (- (1+ longest) (length (car kbinds-list)))
+                               ?\ )
+                  (cadr kbinds-list))
+          mastodon-toot--kbinds-pairs)
+    (mastodon-toot--formatted-kbinds-pairs (cddr kbinds-list) longest))
+  (reverse mastodon-toot--kbinds-pairs))
+
+(defun mastodon-toot--formatted-kbinds-longest (kbinds-list)
+  "Return the length of the longest item in KBINDS-LIST."
+  (let ((lengths (mapcar (lambda (x)
+                           (length x))
+                         kbinds-list)))
+    (car (sort lengths #'>))))
 
 (defun mastodon-toot--make-mode-docs ()
   "Create formatted documentation text for the mastodon-toot-mode."
-  (let ((kbinds (mastodon-toot--get-mode-kbinds)))
+  (let* ((kbinds (mastodon-toot--get-mode-kbinds))
+         (longest-kbind
+          (mastodon-toot--formatted-kbinds-longest
+           (mastodon-toot--format-kbinds kbinds))))
     (concat
      " Compose a new toot here. The following keybindings are available:"
-     (mastodon-toot--format-kbinds kbinds))))
+     ;; (mastodon-toot--format-kbinds kbinds))))
+     (mapconcat 'identity
+                (mastodon-toot--formatted-kbinds-pairs
+                 (mastodon-toot--format-kbinds kbinds)
+                 longest-kbind)
+                nil))))
 
 (defun mastodon-toot--display-docs-and-status-fields ()
   "Insert propertized text with documentation about `mastodon-toot-mode'.
