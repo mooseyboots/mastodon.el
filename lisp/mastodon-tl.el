@@ -389,7 +389,8 @@ favouriting and following to the byline. It also takes a single function.
 By default it is `mastodon-tl--byline-boosted'"
   (let ((parsed-time (date-to-time (mastodon-tl--field 'created_at toot)))
         (faved (equal 't (mastodon-tl--field 'favourited toot)))
-        (boosted (equal 't (mastodon-tl--field 'reblogged toot))))
+        (boosted (equal 't (mastodon-tl--field 'reblogged toot)))
+        (visibility (mastodon-tl--field 'visibility toot)))
     (concat
      ;; (propertize "\n | " 'face 'default)
      (propertize
@@ -400,6 +401,14 @@ By default it is `mastodon-tl--byline-boosted'"
                 (format "(%s) "
                         (propertize "F" 'face 'mastodon-boost-fave-face)))
               (funcall author-byline toot)
+              (cond ((equal visibility "direct")
+                     (if (fontp (char-displayable-p #10r128274))
+                         " 🔒"
+                       " [direct]"))
+                    ((equal visibility "private")
+                     (if (fontp (char-displayable-p #10r9993))
+                         " ✉"
+                       " [followers]")))
               (funcall action-byline toot)
               " "
               ;; TODO: Once we have a view for toot (responses etc.) make
