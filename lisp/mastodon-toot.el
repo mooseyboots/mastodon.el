@@ -92,6 +92,10 @@ Must be one of \"public\", \"unlisted\", \"private\" (for followers-only), or \"
   "A flag whether the toot should be marked with a content warning.")
 (make-variable-buffer-local 'mastodon-toot--content-warning)
 
+(defvar mastodon-toot--content-warning-from-reply nil
+  "The content warning of the toot being replied to.")
+(make-variable-buffer-local 'mastodon-toot--content-warning)
+
 (defvar mastodon-toot--content-nsfw nil
   "A flag indicating whether the toot should be marked as NSFW.")
 (make-variable-buffer-local 'mastodon-toot--content-nsfw)
@@ -332,7 +336,7 @@ If media items have been uploaded with `mastodon-toot--add-media-attachment', at
          (endpoint (mastodon-http--api "statuses"))
          (spoiler (when (and (not empty-toot-p)
                              mastodon-toot--content-warning)
-                    (read-string "Warning: ")))
+                    (read-string "Warning: " mastodon-toot--content-warning-from-reply)))
          (args-no-media `(("status" . ,toot)
                           ("in_reply_to_id" . ,mastodon-toot--reply-to-id)
                           ("visibility" . ,mastodon-toot--visibility)
@@ -623,13 +627,17 @@ on the status of NSFW, content warning flags, media attachments, etc."
 (defun mastodon-toot--setup-as-reply (reply-to-user reply-to-id reply-json)
   "If REPLY-TO-USER is provided, inject their handle into the message.
 If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
-  (let ((reply-visibility (cdr (assoc 'visibility reply-json))))
+  (let ((reply-visibility (cdr (assoc 'visibility reply-json)))
+        (reply-cw (cdr (assoc 'spoiler_text reply-json))))
     (when reply-to-user
       (insert (format "%s " reply-to-user))
       (setq mastodon-toot--reply-to-id reply-to-id)
       (if (not (equal mastodon-toot--visibility
                       reply-visibility))
-          (setq mastodon-toot--visibility reply-visibility)))))
+          (setq mastodon-toot--visibility reply-visibility))
+      (when reply-cw
+        (setq mastodon-toot--content-warning t)
+        (setq mastodon-toot--content-warning-from-reply reply-cw)))))
 
 (defun mastodon-toot--update-status-fields (&rest args)
   "Update the status fields in the header based on the current state."
