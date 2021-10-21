@@ -192,9 +192,7 @@ Pass response buffer to CALLBACK function."
 ;; hard coded just for bio note for now:
 (defun mastodon-http--patch (base-url &optional note)
   "Make synchronous PATCH request to BASE-URL.
-
 Optionally specify the NOTE to edit.
-
 Pass response buffer to CALLBACK function."
   (let ((url-request-method "PATCH")
         (url (if note
@@ -211,7 +209,6 @@ Pass response buffer to CALLBACK function."
 
 (defun mastodon-http--get-async (url &optional callback &rest cbargs)
   "Make GET request to URL.
-
 Pass response buffer to CALLBACK function with args CBARGS."
   (let ((url-request-method "GET")
         (url-request-extra-headers
@@ -229,9 +226,7 @@ Pass response buffer to CALLBACK function with args CBARGS."
 
 (defun mastodon-http--post-async (url args headers &optional callback &rest cbargs)
   "POST asynchronously to URL with ARGS and HEADERS.
-
 Then run function CALLBACK with arguements CBARGS.
-
 Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
   (let ((url-request-method "POST")
         (request-timeout 5)
@@ -252,7 +247,6 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
 ;; TODO: test for curl first?
 (defun mastodon-http--post-media-attachment (url filename caption)
   "Make POST request to upload FILENAME with CAPTION to the server's media URL.
-
 The upload is asynchronous. On succeeding, `mastodon-toot--media-attachment-ids' is set to the id(s) of the item uploaded, and `mastodon-toot--update-status-fields' is run."
   (let* ((file (file-name-nondirectory filename))
          (request-backend 'curl))
