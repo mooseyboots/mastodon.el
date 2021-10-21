@@ -678,7 +678,8 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
       (mastodon-toot--setup-as-reply reply-to-user reply-to-id))
     (mastodon-toot-mode t)
     (when mastodon-toot--use-company-completion-for-mentions
-      (add-to-list 'company-backends 'mastodon-toot--mentions-company-backend)
+      (set (make-local-variable 'company-backends)
+           (add-to-list 'company-backends 'mastodon-toot--mentions-company-backend))
       (company-mode-on))
     (make-local-variable 'after-change-functions)
     (push #'mastodon-toot--update-status-fields after-change-functions)
