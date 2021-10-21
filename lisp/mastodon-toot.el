@@ -299,7 +299,7 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
                    (insert content)
                    ;; adopt visibility and CW from deleted toot:
                    (setq mastodon-toot--visibility toot-visibility)
-                   (when toot-cw
+                   (when (not (equal toot-cw ""))
                      (setq mastodon-toot--content-warning t)
                      (setq mastodon-toot--content-warning-from-reply-or-redraft toot-cw))
                    (mastodon-toot--update-status-fields))))))))))
@@ -680,7 +680,7 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
       (if (not (equal mastodon-toot--visibility
                       reply-visibility))
           (setq mastodon-toot--visibility reply-visibility))
-      (when reply-cw
+      (when (not (equal reply-cw ""))
         (setq mastodon-toot--content-warning t)
         (setq mastodon-toot--content-warning-from-reply-or-redraft reply-cw)))))
 
