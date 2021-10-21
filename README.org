@@ -9,26 +9,32 @@ It adds the following features:
 |                 | display pinned toots on profiles                                                   |
 |                 | display relationship (follows you/followed by you) on profiles                     |
 |                 | display toots/follows/followers counts on profiles                                 |
-|                 | links/tags/mentions in profiles are active links                                   |
+|                 | links/tags/mentions in profile bios are active links                               |
 | =R=, =C-c a=, =C-c r= | view/accept/reject follow requests                                                 |
 | =v=               | view your favorited toots                                                          |
 | =i=               | toggle pinning of toots                                                            |
 | =S-C-P=           | jump to your profile                                                               |
 | =U=               | update your profile bio note                                                       |
+| Notifications:  |                                                                                    |
+|                 | follow requests now also appear in notifications                                   |
+| =a=, =r=            | accept/reject follow requests                                                      |
 | Timelines:      |                                                                                    |
 | =C=               | copy url of toot at point                                                          |
 | =d=               | delete your toot at point, and reload current timeline                             |
-| =D=               | delete and redraft toot at point                                                   |
+| =D=               | delete and redraft toot at point, preserving reply/CW/visibility                   |
 | =W=, =M=, =B=         | (un)follow, (un)mute, (un)block author of toot at point                            |
 |                 | display polls and vote on polls (pretty basic for now)                             |
 |                 | images are links to the full image, can be zoomed/rotated/saved (see image keymap) |
 |                 | images scale properly                                                              |
+|                 | toot visibility (direct, followers only) icon appears in toot bylines              |
 | Toots:          |                                                                                    |
 |                 | mention booster in replies by default                                              |
+|                 | autocompletion of mentions, via company-mode (must be installed to work)           |
 | =C-c C-a=         | media uploads                                                                      |
+|                 | media uploads appear in toot compose buffer to preview                             |
 | =C-c C-n=         | and sensitive media/nsfw flag                                                      |
 | =C-c C-e=         | add emoji (if =emojify= installed)                                                   |
-|                 |                                                                                    |
+|                 | replies preserve visibility status/CW of original toot                             |
 | Search:         |                                                                                    |
 | =S=               | search (posts, users, tags) (NB: only posts you have interacted with are searched) |
 |                 |                                                                                    |
@@ -69,8 +75,8 @@ I might add a few more features if the ones I added turn out to work ok. Possibl
 - [X] delete and redraft toots
 - [X] prevent loss of draft toots by the toot-send bug
 - [X] fix scaling of images
-- [ ] display post visibility status in timelines
-- [ ] caching of images / avatars
+- [X] display post visibility status in timelines
+- [X] caching of images / avatars
 - better display of polls
 - display number of boosts/faves in toot byline
 - mention all thread participants in replies
