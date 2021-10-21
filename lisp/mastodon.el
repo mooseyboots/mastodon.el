@@ -206,13 +206,12 @@ Use. e.g. \"%c\" for your locale's date and time format."
       (message "Loading Mastodon account %s on %s..." (mastodon-auth--user-acct) mastodon-instance-url))))
 
 ;;;###autoload
-(defun mastodon-toot (&optional user reply-to-id)
+(defun mastodon-toot (&optional user reply-to-id reply-json)
   "Update instance with new toot. Content is captured in a new buffer.
-
 If USER is non-nil, insert after @ symbol to begin new toot.
 If REPLY-TO-ID is non-nil, attach new toot to a conversation."
   (interactive)
-  (mastodon-toot--compose-buffer user reply-to-id))
+  (mastodon-toot--compose-buffer user reply-to-id reply-json))
 
 ;;;###autoload
 (add-hook 'mastodon-mode-hook (lambda ()

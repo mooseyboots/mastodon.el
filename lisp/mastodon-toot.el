@@ -444,7 +444,7 @@ The prefix string is tested against both user handles and display names."
                                    mentions))
                        (concat (mastodon-toot--process-local user)
                                mentions)))
-                   id)))
+                   id toot)))
 
 (defun mastodon-toot--toggle-warning ()
   "Toggle `mastodon-toot--content-warning'."
@@ -620,12 +620,16 @@ on the status of NSFW, content warning flags, media attachments, etc."
       'read-only "Edit your message below."
       'toot-post-header t))))
 
-(defun mastodon-toot--setup-as-reply (reply-to-user reply-to-id)
+(defun mastodon-toot--setup-as-reply (reply-to-user reply-to-id reply-json)
   "If REPLY-TO-USER is provided, inject their handle into the message.
 If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
-  (when reply-to-user
-    (insert (format "%s " reply-to-user))
-    (setq mastodon-toot--reply-to-id reply-to-id)))
+  (let ((reply-visibility (cdr (assoc 'visibility reply-json))))
+    (when reply-to-user
+      (insert (format "%s " reply-to-user))
+      (setq mastodon-toot--reply-to-id reply-to-id)
+      (if (not (equal mastodon-toot--visibility
+                      reply-visibility))
+          (setq mastodon-toot--visibility reply-visibility)))))
 
 (defun mastodon-toot--update-status-fields (&rest args)
   "Update the status fields in the header based on the current state."
@@ -663,7 +667,7 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
                           (list 'invisible (not mastodon-toot--content-warning)
                                 'face 'mastodon-cw-face)))))
 
-(defun mastodon-toot--compose-buffer (reply-to-user reply-to-id)
+(defun mastodon-toot--compose-buffer (reply-to-user reply-to-id reply-json)
   "Create a new buffer to capture text for a new toot.
 If REPLY-TO-USER is provided, inject their handle into the message.
 If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
@@ -674,7 +678,7 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
     (mastodon-toot-mode t)
     (when (not buffer-exists)
       (mastodon-toot--display-docs-and-status-fields)
-      (mastodon-toot--setup-as-reply reply-to-user reply-to-id))
+      (mastodon-toot--setup-as-reply reply-to-user reply-to-id reply-json))
     (mastodon-toot-mode t)
     (when mastodon-toot--enable-completion-for-mentions
       (set (make-local-variable 'company-backends)
