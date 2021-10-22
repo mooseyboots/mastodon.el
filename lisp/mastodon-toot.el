@@ -145,10 +145,9 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
   "Keymap for `mastodon-toot'.")
 
 (defun mastodon-toot--get-max-toot-chars ()
-  ""
+  "Fetch max_toot_chars from `mastodon-instance-url'."
   (let ((instance-json (mastodon-http--get-json
-                        (concat mastodon-instance-url
-                                "/api/v1/instance"))))
+                        (mastodon-http--api "instance"))))
     (setq mastodon-toot--max-toot-chars
           (number-to-string
           (cdr (assoc 'max_toot_chars instance-json))))))
