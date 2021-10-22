@@ -29,9 +29,6 @@
 
 ;;; Code:
 
-(defvar mastodon-instance-url)
-(defvar mastodon-media--attachment-height)
-(defvar mastodon-toot--enable-completion-for-mentions)
 
 (when (require 'emojify nil :noerror)
   (declare-function emojify-insert-emoji "emojify"))
@@ -39,6 +36,7 @@
 (require 'cl-lib)
 (require 'company nil :noerror)
 
+(defvar mastodon-instance-url)
 (autoload 'mastodon-auth--user-acct "mastodon-auth")
 (autoload 'mastodon-http--api "mastodon-http")
 (autoload 'mastodon-http--post "mastodon-http")
@@ -80,6 +78,11 @@ Must be one of \"public\", \"unlisted\", \"private\" (for followers-only), or \"
   "The default directory when prompting for a media file to upload."
   :group 'mastodon-toot
   :type 'string)
+
+(defcustom mastodon-toot--attachment-height 80
+  "Height of the attached images preview in the toot draft buffer."
+  :group 'mastodon-media
+  :type 'integer)
 
 (when (require 'company nil :noerror)
   (defcustom mastodon-toot--enable-completion-for-mentions "followers"
@@ -584,7 +587,7 @@ It adds the items' ids to `mastodon-toot--media-attachment-ids', which is used t
   (or (let ((counter 0)
             (image-options (when (or (image-type-available-p 'imagemagick)
                                      (image-transforms-p))
-                             `(:height ,mastodon-media--attachment-height))))
+                             `(:height ,mastodon-toot--attachment-height))))
         (mapcan (lambda (attachment)
                   (let* ((data (cdr (assoc :contents attachment)))
                          (image (apply #'create-image data
