@@ -32,10 +32,11 @@ It adds the following features:
 |                 | mention booster in replies by default                                              |
 |                 | autocompletion of mentions, via company-mode (must be installed to work)           |
 | =C-c C-a=         | media uploads                                                                      |
-|                 | media uploads appear in toot compose buffer to preview                             |
+|                 | media uploads previews in toot compose buffer                                      |
 | =C-c C-n=         | and sensitive media/nsfw flag                                                      |
 | =C-c C-e=         | add emoji (if =emojify= installed)                                                   |
 |                 | replies preserve visibility status/CW of original toot                             |
+|                 | server's maximum toot length shown                                                 |
 | Search:         |                                                                                    |
 | =S=               | search (posts, users, tags) (NB: only posts you have interacted with are searched) |
 |                 |                                                                                    |
