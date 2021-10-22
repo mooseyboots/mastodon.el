@@ -11,7 +11,8 @@ It adds the following features:
 |                 | display toots/follows/followers counts on profiles                                 |
 |                 | links/tags/mentions in profile bios are active links                               |
 | =R=, =C-c a=, =C-c r= | view/accept/reject follow requests                                                 |
-| =v=               | view your favorited toots                                                          |
+| =V=               | view your favorited toots                                                          |
+| =K=               | view your bookmarked toots                                                         |
 | =i=               | toggle pinning of toots                                                            |
 | =S-C-P=           | jump to your profile                                                               |
 | =U=               | update your profile bio note                                                       |
@@ -31,10 +32,11 @@ It adds the following features:
 |                 | mention booster in replies by default                                              |
 |                 | autocompletion of mentions, via company-mode (must be installed to work)           |
 | =C-c C-a=         | media uploads                                                                      |
-|                 | media uploads appear in toot compose buffer to preview                             |
+|                 | media uploads previews in toot compose buffer                                      |
 | =C-c C-n=         | and sensitive media/nsfw flag                                                      |
 | =C-c C-e=         | add emoji (if =emojify= installed)                                                   |
 |                 | replies preserve visibility status/CW of original toot                             |
+|                 | server's maximum toot length shown                                                 |
 | Search:         |                                                                                    |
 | =S=               | search (posts, users, tags) (NB: only posts you have interacted with are searched) |
 |                 |                                                                                    |

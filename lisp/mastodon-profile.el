@@ -143,6 +143,14 @@ extra keybindings."
                      "favourites"
                      'mastodon-tl--timeline))
 
+(defun mastodon-profile--view-bookmarks ()
+  "Open a new buffer displaying the user's bookmarks."
+  (interactive)
+  (message "Loading your bookmarked toots...")
+  (mastodon-tl--init "bookmarks"
+                     "bookmarks"
+                     'mastodon-tl--timeline))
+
 (defun mastodon-profile--view-follow-requests ()
   "Open a new buffer displaying the user's follow requests."
   (interactive)

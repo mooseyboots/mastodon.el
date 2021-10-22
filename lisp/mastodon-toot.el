@@ -31,6 +31,7 @@
 
 (defvar mastodon-instance-url)
 (defvar mastodon-media--attachment-height)
+(defvar mastodon-toot--enable-completion-for-mentions)
 
 (when (require 'emojify nil :noerror)
   (declare-function emojify-insert-emoji "emojify"))
@@ -44,6 +45,7 @@
 (autoload 'mastodon-http--triage "mastodon-http")
 (autoload 'mastodon-http--delete "mastodon-http")
 (autoload 'mastodon-http--process-json "mastodon-http")
+(autoload 'mastodon-http--get-json "mastodon-http")
 (autoload 'mastodon-tl--as-string "mastodon-tl")
 (autoload 'mastodon-tl--clean-tabs-and-nl "mastodon-tl")
 (autoload 'mastodon-tl--field "mastodon-tl")
@@ -126,6 +128,9 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
   "Buffer-local variable to hold the list of media attachments.")
 (make-variable-buffer-local 'mastodon-toot--media-attachments)
 
+(defvar mastodon-toot--max-toot-chars nil
+  "The maximum allowed characters count for a single toot.")
+
 (defvar mastodon-toot-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-c") #'mastodon-toot--send)
@@ -140,6 +145,14 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
     (define-key map (kbd "C-c !") #'mastodon-toot--clear-all-attachments)
     map)
   "Keymap for `mastodon-toot'.")
+
+(defun mastodon-toot--get-max-toot-chars ()
+  "Fetch max_toot_chars from `mastodon-instance-url'."
+  (let ((instance-json (mastodon-http--get-json
+                        (mastodon-http--api "instance"))))
+    (setq mastodon-toot--max-toot-chars
+          (number-to-string
+          (cdr (assoc 'max_toot_chars instance-json))))))
 
 (defun mastodon-toot--action-success (marker byline-region remove)
   "Insert/remove the text MARKER with 'success face in byline.
@@ -307,6 +320,30 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
                      (setq mastodon-toot--content-warning-from-reply-or-redraft toot-cw))
                    (mastodon-toot--update-status-fields))))))))))
 
+(defun mastodon-toot--bookmark-toot ()
+  "Bookmark toot at point synchronously."
+  (interactive)
+  (let* ((toot (mastodon-tl--property 'toot-json))
+         (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
+         (url (mastodon-http--api (format "statuses/%s/bookmark" id))))
+      (if (y-or-n-p (format "Bookmark this toot? "))
+          (let ((response (mastodon-http--post url nil nil)))
+            (mastodon-http--triage response
+                                   (lambda ()
+                                     (message "Toot bookmarked!")))))))
+
+(defun mastodon-toot--unbookmark-toot ()
+  "Bookmark toot at point synchronously."
+  (interactive)
+  (let* ((toot (mastodon-tl--property 'toot-json))
+         (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
+         (url (mastodon-http--api (format "statuses/%s/unbookmark" id))))
+      (if (y-or-n-p (format "Remove this toot from your bookmarks? "))
+          (let ((response (mastodon-http--post url nil nil)))
+            (mastodon-http--triage response
+                                   (lambda ()
+                                     (message "Toot unbookmarked!")))))))
+
 (defun mastodon-toot--kill ()
   "Kill `mastodon-toot-mode' buffer and window."
   (kill-buffer-and-window))
@@ -364,13 +401,15 @@ If media items have been uploaded with `mastodon-toot--add-media-attachment', at
     (if (and mastodon-toot--media-attachments
              (equal mastodon-toot--media-attachment-ids nil))
         (message "Looks like your uploads are not up: C-c C-u to upload...")
-      (if empty-toot-p
-          (message "Empty toot. Cowardly refusing to post this.")
-        (let ((response (mastodon-http--post endpoint args nil)))
-          (mastodon-http--triage response
-                                 (lambda ()
-                                   (mastodon-toot--kill)
-                                   (message "Toot toot!"))))))))
+      (if (> (length toot) (string-to-number mastodon-toot--max-toot-chars))
+          (message "Looks like your toot is longer than that maximum allowed length.")
+        (if empty-toot-p
+            (message "Empty toot. Cowardly refusing to post this.")
+          (let ((response (mastodon-http--post endpoint args nil)))
+            (mastodon-http--triage response
+                                   (lambda ()
+                                     (mastodon-toot--kill)
+                                     (message "Toot toot!")))))))))
 
 (defun mastodon-toot--process-local (acct)
   "Add domain to local ACCT and replace the curent user name with \"\".
@@ -674,7 +713,8 @@ on the status of NSFW, content warning flags, media attachments, etc."
 
 (defun mastodon-toot--setup-as-reply (reply-to-user reply-to-id reply-json)
   "If REPLY-TO-USER is provided, inject their handle into the message.
-If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
+If REPLY-TO-ID is provided, set `mastodon-toot--reply-to-id'.
+REPLY-JSON is the full JSON of the toot being replied to."
   (let ((reply-visibility (cdr (assoc 'visibility reply-json)))
         (reply-cw (cdr (assoc 'spoiler_text reply-json))))
     (when reply-to-user
@@ -703,8 +743,9 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
                                                       (point-min))))
      (add-text-properties (car count-region) (cdr count-region)
                           (list 'display
-                                (format "%s characters"
-                                        (- (point-max) (cdr header-region)))))
+                                (format "%s/%s characters"
+                                        (- (point-max) (cdr header-region))
+                                        mastodon-toot--max-toot-chars)))
      (add-text-properties (car visibility-region) (cdr visibility-region)
                          (list 'display
                                (format "Visibility: %s"
@@ -726,7 +767,8 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
 (defun mastodon-toot--compose-buffer (reply-to-user reply-to-id &optional reply-json)
   "Create a new buffer to capture text for a new toot.
 If REPLY-TO-USER is provided, inject their handle into the message.
-If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
+If REPLY-TO-ID is provided, set the `mastodon-toot--reply-to-id' var.
+REPLY-JSON is the full JSON of the toot being replied to."
   (let* ((buffer-exists (get-buffer "*new toot*"))
          (buffer (or buffer-exists (get-buffer-create "*new toot*")))
          (inhibit-read-only t))
@@ -736,6 +778,8 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
       (mastodon-toot--display-docs-and-status-fields)
       (mastodon-toot--setup-as-reply reply-to-user reply-to-id reply-json))
     (mastodon-toot-mode t)
+    (unless mastodon-toot--max-toot-chars
+      (mastodon-toot--get-max-toot-chars))
     (when mastodon-toot--enable-completion-for-mentions
       (set (make-local-variable 'company-backends)
            (add-to-list 'company-backends 'mastodon-toot--mentions-completion))

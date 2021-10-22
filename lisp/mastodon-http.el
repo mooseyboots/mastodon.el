@@ -46,7 +46,7 @@
   "HTTP request timeout, in seconds.  Has no effect on Emacs < 26.1.")
 
 (defun mastodon-http--api (endpoint)
-  "Return Mastondon API URL for ENDPOINT."
+  "Return Mastodon API URL for ENDPOINT."
   (concat mastodon-instance-url "/api/"
           mastodon-http--api-version "/" endpoint))
 
@@ -114,7 +114,7 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
         (url-retrieve-synchronously url nil nil mastodon-http--timeout)))))
 
 (defun mastodon-http--read-file-as-string (filename)
-  ""
+  "Read a file FILENAME as a string. Used to generate image preview."
   (with-temp-buffer
     (insert-file-contents filename)
     (string-to-unibyte (buffer-string))))
@@ -170,7 +170,8 @@ Pass response buffer to CALLBACK function."
     (json-read-from-string json-string)))
 
 (defun mastodon-http--get-search-json (url query &optional param)
-  "Make GET request to URL, searching for QUERY and return JSON response."
+  "Make GET request to URL, searching for QUERY and return JSON response.
+PARAM is any extra parameters to send with the request."
   (let ((buffer (mastodon-http--get-search url query param)))
     (with-current-buffer buffer
       (mastodon-http--process-json-search))))
