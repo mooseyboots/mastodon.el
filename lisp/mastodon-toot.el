@@ -401,13 +401,15 @@ If media items have been uploaded with `mastodon-toot--add-media-attachment', at
     (if (and mastodon-toot--media-attachments
              (equal mastodon-toot--media-attachment-ids nil))
         (message "Looks like your uploads are not up: C-c C-u to upload...")
-      (if empty-toot-p
-          (message "Empty toot. Cowardly refusing to post this.")
-        (let ((response (mastodon-http--post endpoint args nil)))
-          (mastodon-http--triage response
-                                 (lambda ()
-                                   (mastodon-toot--kill)
-                                   (message "Toot toot!"))))))))
+      (if (> (length toot) (string-to-number mastodon-toot--max-toot-chars))
+          (message "Looks like your toot is longer than that maximum allowed length.")
+        (if empty-toot-p
+            (message "Empty toot. Cowardly refusing to post this.")
+          (let ((response (mastodon-http--post endpoint args nil)))
+            (mastodon-http--triage response
+                                   (lambda ()
+                                     (mastodon-toot--kill)
+                                     (message "Toot toot!")))))))))
 
 (defun mastodon-toot--process-local (acct)
   "Add domain to local ACCT and replace the curent user name with \"\".
