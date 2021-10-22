@@ -31,6 +31,7 @@
 
 (defvar mastodon-instance-url)
 (defvar mastodon-media--attachment-height)
+(defvar mastodon-toot--enable-completion-for-mentions)
 
 (when (require 'emojify nil :noerror)
   (declare-function emojify-insert-emoji "emojify"))
@@ -44,6 +45,7 @@
 (autoload 'mastodon-http--triage "mastodon-http")
 (autoload 'mastodon-http--delete "mastodon-http")
 (autoload 'mastodon-http--process-json "mastodon-http")
+(autoload 'mastodon-http--get-json "mastodon-http")
 (autoload 'mastodon-tl--as-string "mastodon-tl")
 (autoload 'mastodon-tl--clean-tabs-and-nl "mastodon-tl")
 (autoload 'mastodon-tl--field "mastodon-tl")
@@ -709,7 +711,8 @@ on the status of NSFW, content warning flags, media attachments, etc."
 
 (defun mastodon-toot--setup-as-reply (reply-to-user reply-to-id reply-json)
   "If REPLY-TO-USER is provided, inject their handle into the message.
-If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
+If REPLY-TO-ID is provided, set `mastodon-toot--reply-to-id'.
+REPLY-JSON is the full JSON of the toot being replied to."
   (let ((reply-visibility (cdr (assoc 'visibility reply-json)))
         (reply-cw (cdr (assoc 'spoiler_text reply-json))))
     (when reply-to-user
@@ -762,7 +765,8 @@ If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
 (defun mastodon-toot--compose-buffer (reply-to-user reply-to-id &optional reply-json)
   "Create a new buffer to capture text for a new toot.
 If REPLY-TO-USER is provided, inject their handle into the message.
-If REPLY-TO-ID is provided, set the MASTODON-TOOT--REPLY-TO-ID var."
+If REPLY-TO-ID is provided, set the `mastodon-toot--reply-to-id' var.
+REPLY-JSON is the full JSON of the toot being replied to."
   (let* ((buffer-exists (get-buffer "*new toot*"))
          (buffer (or buffer-exists (get-buffer-create "*new toot*")))
          (inhibit-read-only t))

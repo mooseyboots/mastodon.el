@@ -42,6 +42,7 @@
 (defvar mastodon-instance-url)
 (defvar mastodon-tl--link-keymap)
 (defvar mastodon-http--timeout)
+(defvar mastodon-toot--enable-completion-for-mentions)
 
 ;; functions for company completion of mentions in mastodon-toot
 
@@ -55,7 +56,7 @@
 Returns a nested list containing user handle, display name, and URL."
   (interactive "sSearch mastodon for: ")
   (let* ((url (format "%s/api/v1/accounts/search" mastodon-instance-url))
-         (buffer (format "*mastodon-search-%s*" query))
+         ;; (buffer (format "*mastodon-search-%s*" query))
          (response (if (equal mastodon-toot--enable-completion-for-mentions "followers")
                        (mastodon-http--get-search-json url query "following=true")
                      (mastodon-http--get-search-json url query))))
