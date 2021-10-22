@@ -11,7 +11,8 @@ It adds the following features:
 |                 | display toots/follows/followers counts on profiles                                 |
 |                 | links/tags/mentions in profile bios are active links                               |
 | =R=, =C-c a=, =C-c r= | view/accept/reject follow requests                                                 |
-| =v=               | view your favorited toots                                                          |
+| =V=               | view your favorited toots                                                          |
+| =K=               | view your bookmarked toots                                                         |
 | =i=               | toggle pinning of toots                                                            |
 | =S-C-P=           | jump to your profile                                                               |
 | =U=               | update your profile bio note                                                       |
