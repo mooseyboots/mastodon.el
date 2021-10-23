@@ -223,7 +223,7 @@ Pass response buffer to CALLBACK function with args CBARGS."
         (url-request-extra-headers
          `(("Authorization" . ,(concat "Bearer "
                                        (mastodon-auth--access-token))))))
-    (url-retrieve url callback cbargs mastodon-http--timeout)))
+    (url-retrieve url callback cbargs)))
 
 (defun mastodon-http--get-json-async (url &optional callback &rest args)
   "Make GET request to URL. Call CALLBACK with json-vector and ARGS."
@@ -251,7 +251,7 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
 	     (append `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token))))
 	             headers)))
     (with-temp-buffer
-      (url-retrieve url callback cbargs mastodon-http--timeout))))
+      (url-retrieve url callback cbargs))))
 
 ;; TODO: test for curl first?
 (defun mastodon-http--post-media-attachment (url filename caption)
