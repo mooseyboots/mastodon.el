@@ -323,29 +323,26 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
                      (setq mastodon-toot--content-warning-from-reply-or-redraft toot-cw))
                    (mastodon-toot--update-status-fields))))))))))
 
-(defun mastodon-toot--bookmark-toot ()
-  "Bookmark toot at point synchronously."
+(defun mastodon-toot--bookmark-toot-toggle ()
+  "Bookmark or unbookmark toot at point synchronously."
   (interactive)
   (let* ((toot (mastodon-tl--property 'toot-json))
          (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
-         (url (mastodon-http--api (format "statuses/%s/bookmark" id))))
-      (if (y-or-n-p (format "Bookmark this toot? "))
-          (let ((response (mastodon-http--post url nil nil)))
-            (mastodon-http--triage response
-                                   (lambda ()
-                                     (message "Toot bookmarked!")))))))
-
-(defun mastodon-toot--unbookmark-toot ()
-  "Bookmark toot at point synchronously."
-  (interactive)
-  (let* ((toot (mastodon-tl--property 'toot-json))
-         (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
-         (url (mastodon-http--api (format "statuses/%s/unbookmark" id))))
-      (if (y-or-n-p (format "Remove this toot from your bookmarks? "))
-          (let ((response (mastodon-http--post url nil nil)))
-            (mastodon-http--triage response
-                                   (lambda ()
-                                     (message "Toot unbookmarked!")))))))
+         (bookmarked (cdr (assoc 'bookmarked toot)))
+         (url (mastodon-http--api (if (equal bookmarked t)
+                                      (format "statuses/%s/unbookmark" id)
+                                    (format "statuses/%s/bookmark" id))))
+         (prompt (if (equal bookmarked t)
+                     (format "Toot already bookmarked. Remove? ")
+                   (format "Bookmark this toot? ")))
+         (message (if (equal bookmarked t)
+                       "Bookmark removed!"
+                     "Toot bookmarked!")))
+    (when (y-or-n-p prompt)
+      (let ((response (mastodon-http--post url nil nil)))
+        (mastodon-http--triage response
+                               (lambda ()
+                                 (message message)))))))
 
 (defun mastodon-toot--kill ()
   "Kill `mastodon-toot-mode' buffer and window."

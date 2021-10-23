@@ -82,6 +82,7 @@
 (autoload 'mastodon-tl--poll-vote "mastodon-http")
 (autoload 'mastodon-toot--delete-and-redraft-toot "mastodon-toot")
 (autoload 'mastodon-profile--view-bookmarks "mastodon-profile")
+(autoload 'mastodon-toot--bookmark-toot-toggle "mastodon-toot")
 
 (defgroup mastodon nil
   "Interface with Mastodon."
@@ -158,7 +159,7 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map (kbd "a") #'mastodon-notifications--follow-request-accept-notifs)
     (define-key map (kbd "j") #'mastodon-notifications--follow-request-reject-notifs)
     (define-key map (kbd "v") #'mastodon-tl--poll-vote)
-    (define-key map (kbd "k") #'mastodon-toot--bookmark-toot)
+    (define-key map (kbd "k") #'mastodon-toot--bookmark-toot-toggle)
     (define-key map (kbd "K") #'mastodon-profile--view-bookmarks)
     map)
 
