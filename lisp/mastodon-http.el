@@ -90,6 +90,12 @@ Message status and JSON error from RESPONSE if unsuccessful."
         (let ((json-response (mastodon-http--process-json)))
           (message "Error %s: %s" status (cdr (assoc 'error json-response))))))))
 
+(defun mastodon-http--read-file-as-string (filename)
+  "Read a file FILENAME as a string. Used to generate image preview."
+  (with-temp-buffer
+    (insert-file-contents filename)
+    (string-to-unibyte (buffer-string))))
+
 (defun mastodon-http--post (url args headers &optional unauthenticed-p)
   "POST synchronously to URL with ARGS and HEADERS.
 
@@ -112,12 +118,6 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
       (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
           (url-retrieve-synchronously url)
         (url-retrieve-synchronously url nil nil mastodon-http--timeout)))))
-
-(defun mastodon-http--read-file-as-string (filename)
-  "Read a file FILENAME as a string. Used to generate image preview."
-  (with-temp-buffer
-    (insert-file-contents filename)
-    (string-to-unibyte (buffer-string))))
 
 (defun mastodon-http--get (url)
   "Make synchronous GET request to URL.
