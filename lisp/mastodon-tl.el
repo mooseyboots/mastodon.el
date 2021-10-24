@@ -149,6 +149,9 @@ types of mastodon links and not just shr.el-generated ones.")
     ;; browse-url loads the preview only, we want browse-image
     ;; on RET to browse full sized image URL
     (define-key map [remap shr-browse-url] 'shr-browse-image)
+    ;; remove shr's u binding, as it the maybe-probe-and-copy-url
+    ;; is already bound to w also
+    (define-key map (kbd "u") 'mastodon-tl--update)
     (keymap-canonicalize map))
   "The keymap to be set for shr.el generated image links.
 

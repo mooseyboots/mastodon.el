@@ -90,6 +90,12 @@ Message status and JSON error from RESPONSE if unsuccessful."
         (let ((json-response (mastodon-http--process-json)))
           (message "Error %s: %s" status (cdr (assoc 'error json-response))))))))
 
+(defun mastodon-http--read-file-as-string (filename)
+  "Read a file FILENAME as a string. Used to generate image preview."
+  (with-temp-buffer
+    (insert-file-contents filename)
+    (string-to-unibyte (buffer-string))))
+
 (defun mastodon-http--post (url args headers &optional unauthenticed-p)
   "POST synchronously to URL with ARGS and HEADERS.
 
@@ -112,12 +118,6 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
       (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
           (url-retrieve-synchronously url)
         (url-retrieve-synchronously url nil nil mastodon-http--timeout)))))
-
-(defun mastodon-http--read-file-as-string (filename)
-  "Read a file FILENAME as a string. Used to generate image preview."
-  (with-temp-buffer
-    (insert-file-contents filename)
-    (string-to-unibyte (buffer-string))))
 
 (defun mastodon-http--get (url)
   "Make synchronous GET request to URL.
@@ -223,7 +223,7 @@ Pass response buffer to CALLBACK function with args CBARGS."
         (url-request-extra-headers
          `(("Authorization" . ,(concat "Bearer "
                                        (mastodon-auth--access-token))))))
-    (url-retrieve url callback cbargs mastodon-http--timeout)))
+    (url-retrieve url callback cbargs)))
 
 (defun mastodon-http--get-json-async (url &optional callback &rest args)
   "Make GET request to URL. Call CALLBACK with json-vector and ARGS."
@@ -251,7 +251,7 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
 	     (append `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token))))
 	             headers)))
     (with-temp-buffer
-      (url-retrieve url callback cbargs mastodon-http--timeout))))
+      (url-retrieve url callback cbargs))))
 
 ;; TODO: test for curl first?
 (defun mastodon-http--post-media-attachment (url filename caption)
