@@ -1314,5 +1314,36 @@ JSON is the data returned from the server."
                          (current-buffer)
                          nil)))))
 
+(defun mastodon-tl--init-sync (buffer-name endpoint update-function)
+  "Initialize BUFFER-NAME with timeline targeted by ENDPOINT.
+
+UPDATE-FUNCTION is used to recieve more toots.
+Runs synchronously."
+  (let* ((url (mastodon-http--api endpoint))
+         (buffer (concat "*mastodon-" buffer-name "*"))
+         (json (mastodon-http--get-json url)))
+    (with-output-to-temp-buffer buffer
+      (switch-to-buffer buffer)
+      (setq
+       ;; Initialize with a minimal interval; we re-scan at least once
+       ;; every 5 minutes to catch any timestamps we may have missed
+       mastodon-tl--timestamp-next-update (time-add (current-time)
+                                                    (seconds-to-time 300)))
+      (funcall update-function json))
+    (mastodon-mode)
+    (with-current-buffer buffer
+      (setq mastodon-tl--buffer-spec
+            `(buffer-name ,buffer-name
+                          endpoint ,endpoint update-function
+                          ,update-function)
+            mastodon-tl--timestamp-update-timer
+            (when mastodon-tl--enable-relative-timestamps
+              (run-at-time mastodon-tl--timestamp-next-update
+                           nil ;; don't repeat
+                           #'mastodon-tl--update-timestamps-callback
+                           (current-buffer)
+                           nil))))
+    buffer))
+
 (provide 'mastodon-tl)
 ;;; mastodon-tl.el ends here
