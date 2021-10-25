@@ -34,7 +34,11 @@
   (declare-function emojify-insert-emoji "emojify"))
 
 (require 'cl-lib)
-(require 'company nil :noerror)
+
+(when (require 'company nil :noerror)
+  (declare-function company-mode-on "company")
+  (declare-function company-begin-backend "company")
+  (declare-function company-grab-symbol "company"))
 
 (defvar mastodon-instance-url)
 (autoload 'mastodon-auth--user-acct "mastodon-auth")
