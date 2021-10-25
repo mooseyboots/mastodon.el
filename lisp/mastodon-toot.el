@@ -731,7 +731,7 @@ REPLY-JSON is the full JSON of the toot being replied to."
         (setq mastodon-toot--content-warning t)
         (setq mastodon-toot--content-warning-from-reply-or-redraft reply-cw)))))
 
-(defun mastodon-toot--update-status-fields (&rest args)
+(defun mastodon-toot--update-status-fields (&rest _args)
   "Update the status fields in the header based on the current state."
   (ignore-errors  ;; called from after-change-functions so let's not leak errors
     (let ((inhibit-read-only t)
