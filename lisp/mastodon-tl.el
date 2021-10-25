@@ -915,23 +915,16 @@ webapp"
         (reblog (cdr (assoc 'reblog json))))
     (if reblog (cdr (assoc 'id reblog)) id)))
 
+
 (defun mastodon-tl--thread ()
-  "Open thread buffer for toot under `point' asynchronously."
+  "Open thread buffer for toot under `point'."
   (interactive)
   (let* ((id (mastodon-tl--as-string (mastodon-tl--toot-id
                                       (mastodon-tl--property 'toot-json))))
-         (toot (mastodon-tl--property 'toot-json))
+         (url (mastodon-http--api (format "statuses/%s/context" id)))
          (buffer (format "*mastodon-thread-%s*" id))
-         (url (mastodon-http--api (format "statuses/%s/context" id))))
-    (mastodon-http--get-json-async url
-                                   'mastodon-tl--thread* id toot buffer)))
-
-(defun mastodon-tl--thread* (context id toot buffer)
-  "Callback for async `mastodon-tl--thread'.
-
-Open thread buffer for TOOT with id ID under `point'asynchronously,
-in new BUFFER.
-CONTEXT is the previous and subsequent toots in the thread."
+         (toot (mastodon-tl--property 'toot-json))
+         (context (mastodon-http--get-json url)))
     (when (member (cdr (assoc 'type toot)) '("reblog" "favourite"))
       (setq toot (cdr (assoc 'status toot))))
     (if (> (+ (length (cdr (assoc 'ancestors context)))
@@ -950,7 +943,7 @@ CONTEXT is the previous and subsequent toots in the thread."
                                     (cdr (assoc 'ancestors context))
                                     `(,toot)
                                     (cdr (assoc 'descendants context))))))
-      (message "No Thread!")));)
+      (message "No Thread!"))))
 
 (defun mastodon-tl--follow-user (user-handle)
   "Query for USER-HANDLE from current status and follow that user."
