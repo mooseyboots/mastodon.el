@@ -1,3 +1,5 @@
+#+OPTIONS: toc:nil
+
 * mastodon.el fork
 
 This is a fork of of the great but seemingly dormant https://github.com/jdenen/mastodon.el.
@@ -24,10 +26,12 @@ It adds the following features:
 | =d=               | delete your toot at point, and reload current timeline                             |
 | =D=               | delete and redraft toot at point, preserving reply/CW/visibility                   |
 | =W=, =M=, =B=         | (un)follow, (un)mute, (un)block author of toot at point                            |
+| =k=               | toggle bookmark of toot at point                                                   |
 |                 | display polls and vote on polls (pretty basic for now)                             |
 |                 | images are links to the full image, can be zoomed/rotated/saved (see image keymap) |
 |                 | images scale properly                                                              |
 |                 | toot visibility (direct, followers only) icon appears in toot bylines              |
+|                 | display a toot's favorites, boosts and replies count in thread view                |
 | Toots:          |                                                                                    |
 |                 | mention booster in replies by default                                              |
 |                 | autocompletion of mentions, via company-mode (must be installed to work)           |
@@ -36,7 +40,7 @@ It adds the following features:
 | =C-c C-n=         | and sensitive media/nsfw flag                                                      |
 | =C-c C-e=         | add emoji (if =emojify= installed)                                                   |
 |                 | replies preserve visibility status/CW of original toot                             |
-|                 | server's maximum toot length shown                                                 |
+|                 | server's maximum toot length shown in toot compose buffer                          |
 | Search:         |                                                                                    |
 | =S=               | search (posts, users, tags) (NB: only posts you have interacted with are searched) |
 |                 |                                                                                    |
@@ -53,7 +57,9 @@ I did this for my own use and to learn more Elisp. Feel free to improve it.
 
 (code taken from https://github.com/alexjgriffith/mastodon-future.el.)
 
-Works for federated, local, and home timelines and for notifications. It's pretty necro, sometimes it goes off the rails, so use at your own risk. Not a super high priority for me, but some people dig it. The command prefix is =mastodon-async--stream=.
+Works for federated, local, and home timelines and for notifications. It's pretty necro, sometimes it goes off the rails, so use at your own risk. Not a super high priority for me, but some people dig it. 
+
+To enable, run =mastodon-async-mode=. Then view a timeline with one of the commands that begin with =mastodon-async--stream=.
 
 ** NB: dependency
 
@@ -80,9 +86,9 @@ I might add a few more features if the ones I added turn out to work ok. Possibl
 - [X] display post visibility status in timelines
 - [X] caching of images / avatars
 - better display of polls
-- display number of boosts/faves in toot byline
+- [X] display number of boosts/faves in toot byline
 - mention all thread participants in replies
-- improve (or even partially disable) async.
+- [X] improve (or even partially disable) async.
 
 It looks like 2-factor auth was never completed in the original repo. It's not a priority for me, auth ain't my thing. If you want to hack on it, its on the develop branch in the original repo.
 
