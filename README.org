@@ -12,6 +12,7 @@ It adds the following features:
 |                 | display relationship (follows you/followed by you) on profiles                     |
 |                 | display toots/follows/followers counts on profiles                                 |
 |                 | links/tags/mentions in profile bios are active links                               |
+|                 | show a lock icon for locked accounts                                               |
 | =R=, =C-c a=, =C-c r= | view/accept/reject follow requests                                                 |
 | =V=               | view your favorited toots                                                          |
 | =K=               | view your bookmarked toots                                                         |
