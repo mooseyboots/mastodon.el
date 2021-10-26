@@ -567,7 +567,7 @@ It adds the items' ids to `mastodon-toot--media-attachment-ids', which is used t
   (mapcar (lambda (attachment)
             (let* ((filename (cdr (assoc :filename attachment)))
                    (caption (cdr (assoc :description attachment)))
-                   (url (concat mastodon-instance-url "/api/v1/media")))
+                   (url (concat mastodon-instance-url "/api/v2/media")))
               (message "Uploading %s..." (file-name-nondirectory filename))
               (mastodon-http--post-media-attachment url filename caption)))
             mastodon-toot--media-attachments))
