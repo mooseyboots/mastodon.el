@@ -784,10 +784,11 @@ REPLY-JSON is the full JSON of the toot being replied to."
     (mastodon-toot-mode t)
     (unless mastodon-toot--max-toot-chars
       (mastodon-toot--get-max-toot-chars))
-    (when mastodon-toot--enable-completion-for-mentions
-      (set (make-local-variable 'company-backends)
-           (add-to-list 'company-backends 'mastodon-toot--mentions-completion))
-      (company-mode-on))
+    (when (require 'company nil :noerror)
+      (when mastodon-toot--enable-completion-for-mentions
+        (set (make-local-variable 'company-backends)
+             (add-to-list 'company-backends 'mastodon-toot--mentions-completion))
+        (company-mode-on)))
     (make-local-variable 'after-change-functions)
     (push #'mastodon-toot--update-status-fields after-change-functions)
     (mastodon-toot--refresh-attachments-display)
