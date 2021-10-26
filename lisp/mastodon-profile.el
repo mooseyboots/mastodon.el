@@ -296,6 +296,7 @@ Returns a list of lists."
          (buffer (concat "*mastodon-" acct "-" endpoint-type  "*"))
          (note (mastodon-profile--account-field account 'note))
          (json (mastodon-http--get-json url))
+         (locked (mastodon-profile--account-field account 'locked))
          (followers-count (mastodon-tl--as-string
                            (mastodon-profile--account-field
                             account 'followers_count)))
@@ -338,8 +339,13 @@ Returns a list of lists."
                       account 'display_name)
                      'face 'mastodon-display-name-face)
          "\n"
-         (propertize acct
+         (propertize (concat "@" acct)
                      'face 'default)
+         (if (equal locked t)
+             (if (fontp (char-displayable-p #10r9993))
+                 " 🔒"
+               " [locked]")
+           "")
          "\n ------------\n"
          (mastodon-tl--render-text note account)
          ;; account here to enable tab-stops in profile note
