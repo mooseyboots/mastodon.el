@@ -406,11 +406,11 @@ By default it is `mastodon-tl--byline-boosted'"
               (funcall author-byline toot)
               (cond ((equal visibility "direct")
                      (if (fontp (char-displayable-p #10r128274))
-                         " 🔒"
+                         " ✉"
                        " [direct]"))
                     ((equal visibility "private")
                      (if (fontp (char-displayable-p #10r9993))
-                         " ✉"
+                         " 🔒"
                        " [followers]")))
               (funcall action-byline toot)
               " "
