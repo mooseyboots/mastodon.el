@@ -34,7 +34,11 @@
   (declare-function emojify-insert-emoji "emojify"))
 
 (require 'cl-lib)
-(require 'company nil :noerror)
+
+(when (require 'company nil :noerror)
+  (declare-function company-mode-on "company")
+  (declare-function company-begin-backend "company")
+  (declare-function company-grab-symbol "company"))
 
 (defvar mastodon-instance-url)
 (autoload 'mastodon-auth--user-acct "mastodon-auth")
@@ -563,7 +567,7 @@ It adds the items' ids to `mastodon-toot--media-attachment-ids', which is used t
   (mapcar (lambda (attachment)
             (let* ((filename (cdr (assoc :filename attachment)))
                    (caption (cdr (assoc :description attachment)))
-                   (url (concat mastodon-instance-url "/api/v1/media")))
+                   (url (concat mastodon-instance-url "/api/v2/media")))
               (message "Uploading %s..." (file-name-nondirectory filename))
               (mastodon-http--post-media-attachment url filename caption)))
             mastodon-toot--media-attachments))
@@ -727,7 +731,7 @@ REPLY-JSON is the full JSON of the toot being replied to."
         (setq mastodon-toot--content-warning t)
         (setq mastodon-toot--content-warning-from-reply-or-redraft reply-cw)))))
 
-(defun mastodon-toot--update-status-fields (&rest args)
+(defun mastodon-toot--update-status-fields (&rest _args)
   "Update the status fields in the header based on the current state."
   (ignore-errors  ;; called from after-change-functions so let's not leak errors
     (let ((inhibit-read-only t)
@@ -780,10 +784,11 @@ REPLY-JSON is the full JSON of the toot being replied to."
     (mastodon-toot-mode t)
     (unless mastodon-toot--max-toot-chars
       (mastodon-toot--get-max-toot-chars))
-    (when mastodon-toot--enable-completion-for-mentions
-      (set (make-local-variable 'company-backends)
-           (add-to-list 'company-backends 'mastodon-toot--mentions-completion))
-      (company-mode-on))
+    (when (require 'company nil :noerror)
+      (when mastodon-toot--enable-completion-for-mentions
+        (set (make-local-variable 'company-backends)
+             (add-to-list 'company-backends 'mastodon-toot--mentions-completion))
+        (company-mode-on)))
     (make-local-variable 'after-change-functions)
     (push #'mastodon-toot--update-status-fields after-change-functions)
     (mastodon-toot--refresh-attachments-display)

@@ -252,7 +252,7 @@ ID is the notification's own id, which is attached as a property."
   "Display NOTIFICATIONS in buffer."
   (interactive)
   (message "Loading your notifications...")
-  (mastodon-tl--init
+  (mastodon-tl--init-sync
    "notifications"
    "notifications"
    'mastodon-notifications--timeline))

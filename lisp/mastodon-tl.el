@@ -406,11 +406,11 @@ By default it is `mastodon-tl--byline-boosted'"
               (funcall author-byline toot)
               (cond ((equal visibility "direct")
                      (if (fontp (char-displayable-p #10r128274))
-                         " 🔒"
+                         " ✉"
                        " [direct]"))
                     ((equal visibility "private")
                      (if (fontp (char-displayable-p #10r9993))
-                         " ✉"
+                         " 🔒"
                        " [followers]")))
               (funcall action-byline toot)
               " "
@@ -721,6 +721,14 @@ takes a single function. By default it is
               (mastodon-tl--byline toot author-byline action-byline))
       'toot-id      (cdr (assoc 'id toot))
       'base-toot-id (mastodon-tl--toot-id toot)
+      'help-echo    (when (and mastodon-tl--buffer-spec
+                               (string-match-p
+                                "context"
+                                (plist-get mastodon-tl--buffer-spec 'endpoint)))
+                      (format "%s faves | %s boosts | %s replies"
+                              (cdr (assoc 'favourites_count toot))
+                              (cdr (assoc 'reblogs_count toot))
+                              (cdr (assoc 'replies_count toot))))
       'toot-json    toot)
      "\n")
     (when mastodon-tl--display-media-p
@@ -907,23 +915,16 @@ webapp"
         (reblog (cdr (assoc 'reblog json))))
     (if reblog (cdr (assoc 'id reblog)) id)))
 
+
 (defun mastodon-tl--thread ()
-  "Open thread buffer for toot under `point' asynchronously."
+  "Open thread buffer for toot under `point'."
   (interactive)
   (let* ((id (mastodon-tl--as-string (mastodon-tl--toot-id
                                       (mastodon-tl--property 'toot-json))))
-         (toot (mastodon-tl--property 'toot-json))
+         (url (mastodon-http--api (format "statuses/%s/context" id)))
          (buffer (format "*mastodon-thread-%s*" id))
-         (url (mastodon-http--api (format "statuses/%s/context" id))))
-    (mastodon-http--get-json-async url
-                                   'mastodon-tl--thread* id toot buffer)))
-
-(defun mastodon-tl--thread* (context id toot buffer)
-  "Callback for async `mastodon-tl--thread'.
-
-Open thread buffer for TOOT with id ID under `point'asynchronously,
-in new BUFFER.
-CONTEXT is the previous and subsequent toots in the thread."
+         (toot (mastodon-tl--property 'toot-json))
+         (context (mastodon-http--get-json url)))
     (when (member (cdr (assoc 'type toot)) '("reblog" "favourite"))
       (setq toot (cdr (assoc 'status toot))))
     (if (> (+ (length (cdr (assoc 'ancestors context)))
@@ -942,7 +943,7 @@ CONTEXT is the previous and subsequent toots in the thread."
                                     (cdr (assoc 'ancestors context))
                                     `(,toot)
                                     (cdr (assoc 'descendants context))))))
-      (message "No Thread!")));)
+      (message "No Thread!"))))
 
 (defun mastodon-tl--follow-user (user-handle)
   "Query for USER-HANDLE from current status and follow that user."
@@ -1313,6 +1314,37 @@ JSON is the data returned from the server."
                          #'mastodon-tl--update-timestamps-callback
                          (current-buffer)
                          nil)))))
+
+(defun mastodon-tl--init-sync (buffer-name endpoint update-function)
+  "Initialize BUFFER-NAME with timeline targeted by ENDPOINT.
+
+UPDATE-FUNCTION is used to recieve more toots.
+Runs synchronously."
+  (let* ((url (mastodon-http--api endpoint))
+         (buffer (concat "*mastodon-" buffer-name "*"))
+         (json (mastodon-http--get-json url)))
+    (with-output-to-temp-buffer buffer
+      (switch-to-buffer buffer)
+      (setq
+       ;; Initialize with a minimal interval; we re-scan at least once
+       ;; every 5 minutes to catch any timestamps we may have missed
+       mastodon-tl--timestamp-next-update (time-add (current-time)
+                                                    (seconds-to-time 300)))
+      (funcall update-function json))
+    (mastodon-mode)
+    (with-current-buffer buffer
+      (setq mastodon-tl--buffer-spec
+            `(buffer-name ,buffer-name
+                          endpoint ,endpoint update-function
+                          ,update-function)
+            mastodon-tl--timestamp-update-timer
+            (when mastodon-tl--enable-relative-timestamps
+              (run-at-time mastodon-tl--timestamp-next-update
+                           nil ;; don't repeat
+                           #'mastodon-tl--update-timestamps-callback
+                           (current-buffer)
+                           nil))))
+    buffer))
 
 (provide 'mastodon-tl)
 ;;; mastodon-tl.el ends here
