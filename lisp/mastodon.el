@@ -77,6 +77,7 @@
 ;; (autoload 'mastodon-async--stream-local "mastodon-async")
 ;; (autoload 'mastodon-async--stream-home "mastodon-async")
 ;; (autoload 'mastodon-async--stream-notifications "mastodon-async")
+;; (autoload 'mastodon-async-mode "mastodon-async")
 (autoload 'mastodon-profile--update-user-profile-note "mastodon-profile")
 (autoload 'mastodon-auth--user-acct "mastodon-auth")
 (autoload 'mastodon-tl--poll-vote "mastodon-http")

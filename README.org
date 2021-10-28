@@ -54,13 +54,13 @@ The minimum Emacs version is now 26.1. But if you are running an older version i
 
 I did this for my own use and to learn more Elisp. Feel free to improve it.
 
-** live-updating timelines
+** live-updating timelines: =mastodon-async-mode=
 
 (code taken from https://github.com/alexjgriffith/mastodon-future.el.)
 
 Works for federated, local, and home timelines and for notifications. It's pretty necro, sometimes it goes off the rails, so use at your own risk. Not a super high priority for me, but some people dig it. 
 
-To enable, run =mastodon-async-mode=. Then view a timeline with one of the commands that begin with =mastodon-async--stream=.
+To enable, it, add =(require 'mastodon-async)= to your =init.el=. Then you can view a timeline with one of the commands that begin with =mastodon-async--stream-=.
 
 ** NB: dependency
 
