@@ -85,7 +85,7 @@ Must be one of \"public\", \"unlisted\", \"private\" (for followers-only), or \"
 
 (defcustom mastodon-toot--attachment-height 80
   "Height of the attached images preview in the toot draft buffer."
-  :group 'mastodon-media
+  :group 'mastodon-toot
   :type 'integer)
 
 (when (require 'company nil :noerror)
