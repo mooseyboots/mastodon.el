@@ -51,6 +51,11 @@
   :group 'mastodon-media
   :type 'integer)
 
+(defcustom mastodon-media--enable-image-caching nil
+  "Whether images should be cached."
+  :group 'mastodon-media
+  :type 'boolean)
+
 (defvar mastodon-media--generic-avatar-data
   (base64-decode-string
    "iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAIAAAD/gAIDAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA
@@ -151,8 +156,9 @@ REGION-LENGTH is the length of the region that should be replaced with the image
                                      (when image-options 'imagemagick)
                                    nil) ; inbuilt scaling in 27.1
                                  t image-options))))
-            (unless (url-is-cached url) ; cache image if not already cached
-              (url-store-in-cache url-buffer))
+            (when mastodon-media--enable-image-caching
+              (unless (url-is-cached url) ; cache if not already cached
+              (url-store-in-cache url-buffer)))
             (with-current-buffer (marker-buffer marker)
               ;; Save narrowing in our buffer
               (let ((inhibit-read-only t))
@@ -191,7 +197,8 @@ REGION-LENGTH is the range from start to propertize."
       (condition-case nil
           ;; catch any errors in url-retrieve so as to not abort
           ;; whatever called us
-          (if (url-is-cached url)
+          (if (and mastodon-media--enable-image-caching
+                   (url-is-cached url))
               ;; if image url is cached, decompress and use it
               (with-current-buffer (url-fetch-from-cache url)
                 (set-buffer-multibyte nil)
