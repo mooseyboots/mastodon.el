@@ -285,15 +285,21 @@ The upload is asynchronous. On succeeding, `mastodon-toot--media-attachment-ids'
                             (mastodon-toot--update-status-fields)))))
             :error (cl-function
                     (lambda (&key error-thrown &allow-other-keys)
-                      (message "%s" (car (last error-thrown)))
-                      (message "%s" (type-of (car (last error-thrown))))
-                      (cond ((= (car (last error-thrown)) 401)
-                             (message "Got error: %s Unauthorized: The access token is invalid" error-thrown))
-                            ((= (car (last error-thrown)) 422)
-                             (message "Got error: %s Unprocessable entity: file or file type is unsupported or invalid" error-thrown))
-                            (t
-                             (message "Got error: %s Shit went south"
-                                      error-thrown))))))))
+                      (cond
+                       ;; handle curl errors first (eg 26, can't read file/path)
+                       ;; because the '=' test below fails for them
+                       ;; they have the form (error . error message 24)
+                       ((not (proper-list-p error-thrown)) ; not dotted list
+			            (message "Got error: %s. Shit went south." (cdr error-thrown)))
+                       ;; handle mastodon api errors
+                       ;; they have the form (error http 401)
+			           ((= (car (last error-thrown)) 401)
+                        (message "Got error: %s Unauthorized: The access token is invalid" error-thrown))
+                       ((= (car (last error-thrown)) 422)
+                        (message "Got error: %s Unprocessable entity: file or file type is unsupported or invalid" error-thrown))
+                       (t
+                        (message "Got error: %s Shit went south"
+                                 error-thrown))))))))
 
 (provide 'mastodon-http)
 ;;; mastodon-http.el ends here
