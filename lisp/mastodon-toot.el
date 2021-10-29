@@ -565,7 +565,8 @@ will be uploaded and attached to the toot upon sending."
 It adds the items' ids to `mastodon-toot--media-attachment-ids', which is used to actually attach them to a toot after uploading."
   (interactive)
   (mapcar (lambda (attachment)
-            (let* ((filename (cdr (assoc :filename attachment)))
+            (let* ((filename (expand-file-name
+                              (cdr (assoc :filename attachment))))
                    (caption (cdr (assoc :description attachment)))
                    (url (concat mastodon-instance-url "/api/v2/media")))
               (message "Uploading %s..." (file-name-nondirectory filename))
