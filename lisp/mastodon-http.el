@@ -256,7 +256,9 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
 ;; TODO: test for curl first?
 (defun mastodon-http--post-media-attachment (url filename caption)
   "Make POST request to upload FILENAME with CAPTION to the server's media URL.
-The upload is asynchronous. On succeeding, `mastodon-toot--media-attachment-ids' is set to the id(s) of the item uploaded, and `mastodon-toot--update-status-fields' is run."
+The upload is asynchronous. On succeeding,
+`mastodon-toot--media-attachment-ids' is set to the id(s) of the
+item uploaded, and `mastodon-toot--update-status-fields' is run."
   (let* ((file (file-name-nondirectory filename))
          (request-backend 'curl))
          ;; (response
@@ -269,14 +271,13 @@ The upload is asynchronous. On succeeding, `mastodon-toot--media-attachment-ids'
             :parser 'json-read
             :headers `(("Authorization" . ,(concat "Bearer "
                                                    (mastodon-auth--access-token))))
-            :sync nil
+            :sync t
             :success (cl-function
                       (lambda (&key data &allow-other-keys)
                         (when data
                           (progn
                             (push (cdr (assoc 'id data))
                                   mastodon-toot--media-attachment-ids) ; add ID to list
-                            (push file mastodon-toot--media-attachment-filenames)
                             (message "%s file %s with id %S and caption '%s' uploaded!"
                                      (capitalize (cdr (assoc 'type data)))
                                      file
@@ -285,15 +286,21 @@ The upload is asynchronous. On succeeding, `mastodon-toot--media-attachment-ids'
                             (mastodon-toot--update-status-fields)))))
             :error (cl-function
                     (lambda (&key error-thrown &allow-other-keys)
-                      (message "%s" (car (last error-thrown)))
-                      (message "%s" (type-of (car (last error-thrown))))
-                      (cond ((= (car (last error-thrown)) 401)
-                             (message "Got error: %s Unauthorized: The access token is invalid" error-thrown))
-                            ((= (car (last error-thrown)) 422)
-                             (message "Got error: %s Unprocessable entity: file or file type is unsupported or invalid" error-thrown))
-                            (t
-                             (message "Got error: %s Shit went south"
-                                      error-thrown))))))))
+                      (cond
+                       ;; handle curl errors first (eg 26, can't read file/path)
+                       ;; because the '=' test below fails for them
+                       ;; they have the form (error . error message 24)
+                       ((not (proper-list-p error-thrown)) ; not dotted list
+			            (message "Got error: %s. Shit went south." (cdr error-thrown)))
+                       ;; handle mastodon api errors
+                       ;; they have the form (error http 401)
+			           ((= (car (last error-thrown)) 401)
+                        (message "Got error: %s Unauthorized: The access token is invalid" error-thrown))
+                       ((= (car (last error-thrown)) 422)
+                        (message "Got error: %s Unprocessable entity: file or file type is unsupported or invalid" error-thrown))
+                       (t
+                        (message "Got error: %s Shit went south"
+                                 error-thrown))))))))
 
 (provide 'mastodon-http)
 ;;; mastodon-http.el ends here
