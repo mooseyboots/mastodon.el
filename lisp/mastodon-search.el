@@ -52,7 +52,7 @@
         (concat "@" (cdr (assoc 'acct account)))))
 
 (defun mastodon-search--search-accounts-query (query)
-  "Prompt for a search QUERY and return accounts.
+  "Prompt for a search QUERY and return accounts synchronously.
 Returns a nested list containing user handle, display name, and URL."
   (interactive "sSearch mastodon for: ")
   (let* ((url (format "%s/api/v1/accounts/search" mastodon-instance-url))

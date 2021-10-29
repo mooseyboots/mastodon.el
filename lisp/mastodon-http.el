@@ -256,7 +256,9 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
 ;; TODO: test for curl first?
 (defun mastodon-http--post-media-attachment (url filename caption)
   "Make POST request to upload FILENAME with CAPTION to the server's media URL.
-The upload is asynchronous. On succeeding, `mastodon-toot--media-attachment-ids' is set to the id(s) of the item uploaded, and `mastodon-toot--update-status-fields' is run."
+The upload is asynchronous. On succeeding,
+`mastodon-toot--media-attachment-ids' is set to the id(s) of the
+item uploaded, and `mastodon-toot--update-status-fields' is run."
   (let* ((file (file-name-nondirectory filename))
          (request-backend 'curl))
          ;; (response
@@ -269,14 +271,13 @@ The upload is asynchronous. On succeeding, `mastodon-toot--media-attachment-ids'
             :parser 'json-read
             :headers `(("Authorization" . ,(concat "Bearer "
                                                    (mastodon-auth--access-token))))
-            :sync nil
+            :sync t
             :success (cl-function
                       (lambda (&key data &allow-other-keys)
                         (when data
                           (progn
                             (push (cdr (assoc 'id data))
                                   mastodon-toot--media-attachment-ids) ; add ID to list
-                            (push file mastodon-toot--media-attachment-filenames)
                             (message "%s file %s with id %S and caption '%s' uploaded!"
                                      (capitalize (cdr (assoc 'type data)))
                                      file

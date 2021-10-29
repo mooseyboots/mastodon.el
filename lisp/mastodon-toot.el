@@ -116,24 +116,16 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
 (make-variable-buffer-local 'mastodon-toot--visibility)
 
 (defvar mastodon-toot--media-attachments nil
-  "A list of the media attachments of the toot being composed .")
+  "A list of the media attachments of the toot being composed.")
 (make-variable-buffer-local 'mastodon-toot--media-attachments)
 
 (defvar mastodon-toot--media-attachment-ids nil
   "A list of any media attachment ids of the toot being composed.")
 (make-variable-buffer-local 'mastodon-toot--media-attachment-ids)
 
-(defvar mastodon-toot--media-attachment-filenames nil
-  "A list of any media attachment filenames of the toot being composed.")
-(make-variable-buffer-local 'mastodon-toot--media-attachment-filenames)
-
 (defvar mastodon-toot--reply-to-id nil
   "Buffer-local variable to hold the id of the toot being replied to.")
 (make-variable-buffer-local 'mastodon-toot--reply-to-id)
-
-(defvar mastodon-toot--media-attachments nil
-  "Buffer-local variable to hold the list of media attachments.")
-(make-variable-buffer-local 'mastodon-toot--media-attachments)
 
 (defvar mastodon-toot--max-toot-chars nil
   "The maximum allowed characters count for a single toot.")
@@ -147,7 +139,6 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
     (define-key map (kbd "C-c C-v") #'mastodon-toot--change-visibility)
     (when (require 'emojify nil :noerror)
       (define-key map (kbd "C-c C-e") #'mastodon-toot--insert-emoji))
-    (define-key map (kbd "C-c C-u") #'mastodon-toot--upload-attached-media)
     (define-key map (kbd "C-c C-a") #'mastodon-toot--attach-media)
     (define-key map (kbd "C-c !") #'mastodon-toot--clear-all-attachments)
     map)
@@ -383,9 +374,11 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (message "Visibility set to %s" visibility))
 
 (defun mastodon-toot--send ()
-  "Kill new-toot buffer/window and POST contents to the Mastodon instance.
-
-If media items have been uploaded with `mastodon-toot--add-media-attachment', attach them to the toot."
+  "POST contents of new-toot buffer to Mastodon instance and kill buffer.
+If media items have been attached with
+`mastodon-toot--attach-media', upload them with
+`mastodon-toot-upload-attached-media' and attach them to the
+toot."
   (interactive)
   (let* ((toot (mastodon-toot--remove-docs))
          (empty-toot-p (and (not mastodon-toot--media-attachments)
@@ -400,25 +393,21 @@ If media items have been uploaded with `mastodon-toot--add-media-attachment', at
                           ("sensitive" . ,(when mastodon-toot--content-nsfw
                                             (symbol-name t)))
                           ("spoiler_text" . ,spoiler)))
-         (args-media
-          (when mastodon-toot--media-attachment-ids
-              (mapcar
-               (lambda (id)
-                 (cons "media_ids[]" id))
-               mastodon-toot--media-attachment-ids)))
-         (args (append args-no-media args-media)))
-    (if (and mastodon-toot--media-attachments
-             (equal mastodon-toot--media-attachment-ids nil))
-        (message "Looks like your uploads are not up: C-c C-u to upload...")
-      (if (> (length toot) (string-to-number mastodon-toot--max-toot-chars))
-          (message "Looks like your toot is longer than that maximum allowed length.")
-        (if empty-toot-p
-            (message "Empty toot. Cowardly refusing to post this.")
-          (let ((response (mastodon-http--post endpoint args nil)))
-            (mastodon-http--triage response
-                                   (lambda ()
-                                     (mastodon-toot--kill)
-                                     (message "Toot toot!")))))))))
+         (args-media (when mastodon-toot--media-attachments
+                       (mastodon-toot--upload-attached-media) ; sync upload so we wait (and pray) till done
+                       (mapcar (lambda (id)
+                                 (cons "media_ids[]" id))
+                               mastodon-toot--media-attachment-ids)))
+         (args (append args-media args-no-media)))
+    (if (> (length toot) (string-to-number mastodon-toot--max-toot-chars))
+        (message "Looks like your toot is longer than that maximum allowed length.")
+      (if empty-toot-p
+          (message "Empty toot. Cowardly refusing to post this.")
+        (let ((response (mastodon-http--post endpoint args nil)))
+          (mastodon-http--triage response
+                                 (lambda ()
+                                   (mastodon-toot--kill)
+                                   (message "Toot toot!"))))))))
 
 (defun mastodon-toot--process-local (acct)
   "Add domain to local ACCT and replace the curent user name with \"\".
@@ -458,7 +447,7 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
 
 (defun mastodon-toot--mentions-company-candidates (prefix)
   "Given a company PREFIX, build a list of candidates.
-The prefix string is tested against both user handles and display names."
+The prefix string can match against both user handles and display names."
   (let (res)
     (dolist (item (mastodon-search--search-accounts-query prefix))
       (when (or (string-prefix-p prefix (cadr item))
@@ -546,6 +535,7 @@ The prefix string is tested against both user handles and display names."
   "Remove all attachments from a toot draft."
   (interactive)
   (setq mastodon-toot--media-attachments nil)
+  (setq mastodon-toot--media-attachment-ids nil)
   (mastodon-toot--refresh-attachments-display)
   (mastodon-toot--update-status-fields))
 
@@ -567,8 +557,9 @@ will be uploaded and attached to the toot upon sending."
 
 (defun mastodon-toot--upload-attached-media ()
   "Actually upload attachments using `mastodon-http--post-media-attachment'.
-It adds the items' ids to `mastodon-toot--media-attachment-ids', which is used to actually attach them to a toot after uploading."
-  (interactive)
+The files to be uploaded are in `mastodon-toot--media-attachments'.
+The items' ids are added to `mastodon-toot--media-attachment-ids',
+which are used to attach them to a toot after uploading."
   (mapcar (lambda (attachment)
             (let* ((filename (expand-file-name
                               (cdr (assoc :filename attachment))))
@@ -576,7 +567,7 @@ It adds the items' ids to `mastodon-toot--media-attachment-ids', which is used t
                    (url (concat mastodon-instance-url "/api/v2/media")))
               (message "Uploading %s..." (file-name-nondirectory filename))
               (mastodon-http--post-media-attachment url filename caption)))
-            mastodon-toot--media-attachments))
+          mastodon-toot--media-attachments))
 
 (defun mastodon-toot--refresh-attachments-display ()
   "Update the display attachment previews in toot draft buffer."
