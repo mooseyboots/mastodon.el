@@ -444,7 +444,7 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
 
 (defun mastodon-toot--mentions-company-candidates (prefix)
   "Given a company PREFIX, build a list of candidates.
-The prefix string is tested against both user handles and display names."
+The prefix string can match against both user handles and display names."
   (let (res)
     (dolist (item (mastodon-search--search-accounts-query prefix))
       (when (or (string-prefix-p prefix (cadr item))
