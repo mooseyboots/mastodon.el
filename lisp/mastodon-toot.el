@@ -146,12 +146,17 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
   "Keymap for `mastodon-toot'.")
 
 (defun mastodon-toot--get-max-toot-chars ()
-  "Fetch max_toot_chars from `mastodon-instance-url'."
-  (let ((instance-json (mastodon-http--get-json
-                        (mastodon-http--api "instance"))))
-    (setq mastodon-toot--max-toot-chars
-          (number-to-string
-          (cdr (assoc 'max_toot_chars instance-json))))))
+  "Fetch max_toot_chars from `mastodon-instance-url' asynchronously."
+  (mastodon-http--get-json-async
+   (mastodon-http--api "instance") 'mastodon-toot--get-max-toot-chars-callback))
+
+(defun mastodon-toot--get-max-toot-chars-callback (json-response)
+  "Set max_toot_chars returned in JSON-RESPONSE."
+  (setq mastodon-toot--max-toot-chars
+        (number-to-string
+         (cdr (assoc 'max_toot_chars json-response))))
+  (with-current-buffer "*new toot*"
+    (mastodon-toot--update-status-fields)))
 
 (defun mastodon-toot--action-success (marker byline-region remove)
   "Insert/remove the text MARKER with 'success face in byline.
