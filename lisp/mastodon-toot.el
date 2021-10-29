@@ -139,7 +139,6 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
     (define-key map (kbd "C-c C-v") #'mastodon-toot--change-visibility)
     (when (require 'emojify nil :noerror)
       (define-key map (kbd "C-c C-e") #'mastodon-toot--insert-emoji))
-    (define-key map (kbd "C-c C-u") #'mastodon-toot--upload-attached-media)
     (define-key map (kbd "C-c C-a") #'mastodon-toot--attach-media)
     (define-key map (kbd "C-c !") #'mastodon-toot--clear-all-attachments)
     map)
@@ -375,7 +374,7 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (message "Visibility set to %s" visibility))
 
 (defun mastodon-toot--send ()
-  "POST contents of the new-toot buffer/window to the Mastodon instance and kill the buffer.
+  "POST contents of new-toot buffer to Mastodon instance and kill buffer.
 If media items have been attached with
 `mastodon-toot--attach-media', upload them with
 `mastodon-toot-upload-attached-media' and attach them to the
@@ -388,19 +387,18 @@ toot."
          (spoiler (when (and (not empty-toot-p)
                              mastodon-toot--content-warning)
                     (read-string "Warning: " mastodon-toot--content-warning-from-reply-or-redraft)))
-         (args `(("status" . ,toot)
-                 ("in_reply_to_id" . ,mastodon-toot--reply-to-id)
-                 ("visibility" . ,mastodon-toot--visibility)
-                 ("sensitive" . ,(when mastodon-toot--content-nsfw
-                                   (symbol-name t)))
-                 ("spoiler_text" . ,spoiler))))
-    (when mastodon-toot--media-attachments
-      (mastodon-toot--upload-attached-media) ; sync upload so we wait (and pray) till done
-      (let* ((args-media (mapcar
-                          (lambda (id)
-                            (cons "media_ids[]" id))
-                          mastodon-toot--media-attachment-ids))
-             (args (append args args-media)))))
+         (args-no-media `(("status" . ,toot)
+                          ("in_reply_to_id" . ,mastodon-toot--reply-to-id)
+                          ("visibility" . ,mastodon-toot--visibility)
+                          ("sensitive" . ,(when mastodon-toot--content-nsfw
+                                            (symbol-name t)))
+                          ("spoiler_text" . ,spoiler)))
+         (args-media (when mastodon-toot--media-attachments
+                       (mastodon-toot--upload-attached-media) ; sync upload so we wait (and pray) till done
+                       (mapcar (lambda (id)
+                                 (cons "media_ids[]" id))
+                               mastodon-toot--media-attachment-ids)))
+         (args (append args-media args-no-media)))
     (if (> (length toot) (string-to-number mastodon-toot--max-toot-chars))
         (message "Looks like your toot is longer than that maximum allowed length.")
       (if empty-toot-p
@@ -562,7 +560,6 @@ will be uploaded and attached to the toot upon sending."
 The files to be uploaded are in `mastodon-toot--media-attachments'.
 The items' ids are added to `mastodon-toot--media-attachment-ids',
 which are used to attach them to a toot after uploading."
-  (interactive)
   (mapcar (lambda (attachment)
             (let* ((filename (expand-file-name
                               (cdr (assoc :filename attachment))))
@@ -570,7 +567,7 @@ which are used to attach them to a toot after uploading."
                    (url (concat mastodon-instance-url "/api/v2/media")))
               (message "Uploading %s..." (file-name-nondirectory filename))
               (mastodon-http--post-media-attachment url filename caption)))
-            mastodon-toot--media-attachments))
+          mastodon-toot--media-attachments))
 
 (defun mastodon-toot--refresh-attachments-display ()
   "Update the display attachment previews in toot draft buffer."
