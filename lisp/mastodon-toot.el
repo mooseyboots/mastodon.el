@@ -116,24 +116,16 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
 (make-variable-buffer-local 'mastodon-toot--visibility)
 
 (defvar mastodon-toot--media-attachments nil
-  "A list of the media attachments of the toot being composed .")
+  "A list of the media attachments of the toot being composed.")
 (make-variable-buffer-local 'mastodon-toot--media-attachments)
 
 (defvar mastodon-toot--media-attachment-ids nil
   "A list of any media attachment ids of the toot being composed.")
 (make-variable-buffer-local 'mastodon-toot--media-attachment-ids)
 
-(defvar mastodon-toot--media-attachment-filenames nil
-  "A list of any media attachment filenames of the toot being composed.")
-(make-variable-buffer-local 'mastodon-toot--media-attachment-filenames)
-
 (defvar mastodon-toot--reply-to-id nil
   "Buffer-local variable to hold the id of the toot being replied to.")
 (make-variable-buffer-local 'mastodon-toot--reply-to-id)
-
-(defvar mastodon-toot--media-attachments nil
-  "Buffer-local variable to hold the list of media attachments.")
-(make-variable-buffer-local 'mastodon-toot--media-attachments)
 
 (defvar mastodon-toot--max-toot-chars nil
   "The maximum allowed characters count for a single toot.")
@@ -378,9 +370,11 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (message "Visibility set to %s" visibility))
 
 (defun mastodon-toot--send ()
-  "Kill new-toot buffer/window and POST contents to the Mastodon instance.
-
-If media items have been uploaded with `mastodon-toot--add-media-attachment', attach them to the toot."
+  "POST contents of the new-toot buffer/window to the Mastodon instance and kill the buffer.
+If media items have been attached with
+`mastodon-toot--attach-media', upload them with
+`mastodon-toot-upload-attached-media' and attach them to the
+toot."
   (interactive)
   (let* ((toot (mastodon-toot--remove-docs))
          (empty-toot-p (and (not mastodon-toot--media-attachments)
@@ -389,31 +383,28 @@ If media items have been uploaded with `mastodon-toot--add-media-attachment', at
          (spoiler (when (and (not empty-toot-p)
                              mastodon-toot--content-warning)
                     (read-string "Warning: " mastodon-toot--content-warning-from-reply-or-redraft)))
-         (args-no-media `(("status" . ,toot)
-                          ("in_reply_to_id" . ,mastodon-toot--reply-to-id)
-                          ("visibility" . ,mastodon-toot--visibility)
-                          ("sensitive" . ,(when mastodon-toot--content-nsfw
-                                            (symbol-name t)))
-                          ("spoiler_text" . ,spoiler)))
-         (args-media
-          (when mastodon-toot--media-attachment-ids
-              (mapcar
-               (lambda (id)
-                 (cons "media_ids[]" id))
-               mastodon-toot--media-attachment-ids)))
-         (args (append args-no-media args-media)))
-    (if (and mastodon-toot--media-attachments
-             (equal mastodon-toot--media-attachment-ids nil))
-        (message "Looks like your uploads are not up: C-c C-u to upload...")
-      (if (> (length toot) (string-to-number mastodon-toot--max-toot-chars))
-          (message "Looks like your toot is longer than that maximum allowed length.")
-        (if empty-toot-p
-            (message "Empty toot. Cowardly refusing to post this.")
-          (let ((response (mastodon-http--post endpoint args nil)))
-            (mastodon-http--triage response
-                                   (lambda ()
-                                     (mastodon-toot--kill)
-                                     (message "Toot toot!")))))))))
+         (args `(("status" . ,toot)
+                 ("in_reply_to_id" . ,mastodon-toot--reply-to-id)
+                 ("visibility" . ,mastodon-toot--visibility)
+                 ("sensitive" . ,(when mastodon-toot--content-nsfw
+                                   (symbol-name t)))
+                 ("spoiler_text" . ,spoiler))))
+    (when mastodon-toot--media-attachments
+      (mastodon-toot--upload-attached-media) ; sync upload so we wait (and pray) till done
+      (let* ((args-media (mapcar
+                          (lambda (id)
+                            (cons "media_ids[]" id))
+                          mastodon-toot--media-attachment-ids))
+             (args (append args args-media)))))
+    (if (> (length toot) (string-to-number mastodon-toot--max-toot-chars))
+        (message "Looks like your toot is longer than that maximum allowed length.")
+      (if empty-toot-p
+          (message "Empty toot. Cowardly refusing to post this.")
+        (let ((response (mastodon-http--post endpoint args nil)))
+          (mastodon-http--triage response
+                                 (lambda ()
+                                   (mastodon-toot--kill)
+                                   (message "Toot toot!"))))))))
 
 (defun mastodon-toot--process-local (acct)
   "Add domain to local ACCT and replace the curent user name with \"\".
@@ -541,6 +532,7 @@ The prefix string is tested against both user handles and display names."
   "Remove all attachments from a toot draft."
   (interactive)
   (setq mastodon-toot--media-attachments nil)
+  (setq mastodon-toot--media-attachment-ids nil)
   (mastodon-toot--refresh-attachments-display)
   (mastodon-toot--update-status-fields))
 
@@ -562,7 +554,9 @@ will be uploaded and attached to the toot upon sending."
 
 (defun mastodon-toot--upload-attached-media ()
   "Actually upload attachments using `mastodon-http--post-media-attachment'.
-It adds the items' ids to `mastodon-toot--media-attachment-ids', which is used to actually attach them to a toot after uploading."
+The files to be uploaded are in `mastodon-toot--media-attachments'.
+The items' ids are added to `mastodon-toot--media-attachment-ids',
+which are used to attach them to a toot after uploading."
   (interactive)
   (mapcar (lambda (attachment)
             (let* ((filename (expand-file-name
