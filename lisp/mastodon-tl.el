@@ -1321,7 +1321,7 @@ JSON is the data returned from the server."
 (defun mastodon-tl--init-sync (buffer-name endpoint update-function)
   "Initialize BUFFER-NAME with timeline targeted by ENDPOINT.
 
-UPDATE-FUNCTION is used to recieve more toots.
+UPDATE-FUNCTION is used to receive more toots.
 Runs synchronously."
   (let* ((url (mastodon-http--api endpoint))
          (buffer (concat "*mastodon-" buffer-name "*"))

@@ -185,7 +185,7 @@
   "Ensure get request format for notifictions is accurate."
   (let ((mastodon-instance-url "https://instance.url"))
     (with-mock
-      (mock (mastodon-http--get-json-async "https://instance.url/api/v1/notifications" 'mastodon-tl--init* "*mastodon-notifications*" "notifications" 'mastodon-notifications--timeline))
+      (mock (mastodon-http--get-json "https://instance.url/api/v1/notifications" ))
       (mastodon-notifications--get))))
 
 (defun mastodon-notifications--test-type (fun sample)

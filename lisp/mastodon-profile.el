@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
 ;; Version: 0.9.1
-;; Package-Requires: ((emacs "26.1") (seq "1.8"))
+;; Package-Requires: ((emacs "26.1") (seq "1.0"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.

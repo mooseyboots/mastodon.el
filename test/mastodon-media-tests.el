@@ -4,7 +4,7 @@
   "Should return text with all expected properties."
   (with-mock
     (mock (image-type-available-p 'imagemagick) => t)
-    (mock (create-image * 'imagemagick t :height 123) => :mock-image)
+    (mock (create-image * (when (version< emacs-version "27.1") 'imagemagick) t :height 123) => :mock-image)
 
     (let* ((mastodon-media--avatar-height 123)
            (result (mastodon-media--get-avatar-rendering "http://example.org/img.png"))
@@ -37,12 +37,15 @@
         (mastodon-media--avatar-height 123))
     (with-mock
       (mock (image-type-available-p 'imagemagick) => t)
-      (mock (create-image * 'imagemagick t :height 123) => '(image foo))
+      (mock (create-image
+             *
+             (when (version< emacs-version "27.1") 'imagemagick)
+             t :height 123) => '(image foo))
       (mock (copy-marker 7) => :my-marker )
       (mock (url-retrieve
              url
              #'mastodon-media--process-image-response
-             '(:my-marker (:height 123) 1))
+             `(:my-marker (:height 123) 1 ,url))
             => :called-as-expected)
 
       (with-temp-buffer
@@ -62,7 +65,7 @@
       (mock (url-retrieve
              url
              #'mastodon-media--process-image-response
-             '(:my-marker () 1))
+             `(:my-marker () 1 ,url))
             => :called-as-expected)
 
       (with-temp-buffer
@@ -82,7 +85,7 @@
       (mock (url-retrieve
              "http://example.org/image.png"
              #'mastodon-media--process-image-response
-             '(:my-marker (:max-height 321) 5))
+             '(:my-marker (:max-height 321) 5 "http://example.org/image.png"))
             => :called-as-expected)
       (with-temp-buffer
         (insert (concat "Start:"
@@ -101,7 +104,7 @@
       (mock (url-retrieve
              "http://example.org/image.png"
              #'mastodon-media--process-image-response
-             '(:my-marker () 5))
+             '(:my-marker () 5 "http://example.org/image.png"))
             => :called-as-expected)
 
       (with-temp-buffer
@@ -117,7 +120,10 @@
         (mastodon-media--avatar-height 123))
     (with-mock
       (mock (image-type-available-p 'imagemagick) => t)
-      (mock (create-image * 'imagemagick t :height 123) => '(image foo))
+      (mock (create-image
+             *
+             (when (version< emacs-version "27.1") 'imagemagick)
+             t :height 123) => '(image foo))
       (stub url-retrieve => (error "url-retrieve failed"))
 
       (with-temp-buffer
@@ -139,9 +145,11 @@
        (insert "start:")
        (setq used-marker (copy-marker (point))
              saved-marker (copy-marker (point)))
-       ;; Mock needed for the preliminary image created in mastodon-media--get-avatar-rendering
+       ;; Mock needed for the preliminary image created in
+       ;; mastodon-media--get-avatar-rendering
        (stub create-image => :fake-image)
-       (insert (mastodon-media--get-avatar-rendering "http://example.org/image.png")
+       (insert (mastodon-media--get-avatar-rendering
+                "http://example.org/image.png.")
                ":end")
        (with-temp-buffer
          (insert "some irrelevant\n"
@@ -150,9 +158,13 @@
                  "fake\nimage\ndata")
          (goto-char (point-min))
 
-         (mock (create-image "fake\nimage\ndata" 'imagemagick t ':image :option) => :fake-image)
+         (mock (create-image
+                "fake\nimage\ndata"
+                (when (version< emacs-version "27.1") 'imagemagick)
+                t ':image :option) => :fake-image)
 
-         (mastodon-media--process-image-response () used-marker '(:image :option) 1)
+         (mastodon-media--process-image-response
+          () used-marker '(:image :option) 1 "http://example.org/image.png")
 
          ;; the used marker has been unset:
          (should (null (marker-position used-marker)))

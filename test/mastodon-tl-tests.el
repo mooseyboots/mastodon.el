@@ -285,7 +285,7 @@ a string or a numeric."
                         (mastodon-tl--byline mastodon-tl-test-base-toot
                                              'mastodon-tl--byline-author
                                              'mastodon-tl--byline-boosted))
-                       "  Account 42 (@acct42@example.space) 2999-99-99 00:11:22
+                       "Account 42 (@acct42@example.space) 2999-99-99 00:11:22
   ------------
 ")))))
 
@@ -395,8 +395,8 @@ a string or a numeric."
                         (mastodon-tl--byline toot
                                              'mastodon-tl--byline-author
                                              'mastodon-tl--byline-boosted))
-                       "  Account 42 (@acct42@example.space)
- Boosted   Account 43 (@acct43@example.space) original time
+                       "Account 42 (@acct42@example.space)
+ Boosted Account 43 (@acct43@example.space) original time
   ------------
 ")))))
 

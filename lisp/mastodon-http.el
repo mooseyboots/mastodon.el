@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
 ;; Version: 0.9.1
-;; Package-Requires: ((emacs "26.1") (request "0.2.0"))
+;; Package-Requires: ((emacs "27.1") (request "0.2.0"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -127,9 +127,17 @@ Pass response buffer to CALLBACK function."
         (url-request-extra-headers
          `(("Authorization" . ,(concat "Bearer "
                                        (mastodon-auth--access-token))))))
-    (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
-        (url-retrieve-synchronously url)
-      (url-retrieve-synchronously url nil nil mastodon-http--timeout))))
+    (mastodon-http--url-retrieve-synchronously url)))
+
+(defun mastodon-http--url-retrieve-synchronously (url)
+  "Retrieve URL asynchronously.
+
+This is a thin abstraction over the system
+`url-retrieve-synchronously`.  Depending on which version of this
+is available we will call it with or without a timeout."
+  (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
+      (url-retrieve-synchronously url)
+    (url-retrieve-synchronously url nil nil mastodon-http--timeout)))
 
 (defun mastodon-http--get-json (url)
   "Make synchronous GET request to URL. Return JSON response."
