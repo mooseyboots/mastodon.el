@@ -30,8 +30,14 @@
 ;;; Code:
 
 (require 'json)
+(require 'url-http)
 
+(autoload 'mastodon-auth--access-token "mastodon-auth")
+(autoload 'mastodon-http--api "mastodon-http")
+(autoload 'mastodon-http--get-json "mastodon-http")
+(autoload 'mastodon-mode "mastodon")
 (autoload 'mastodon-notifications--timeline "mastodon-notifications")
+(autoload 'mastodon-tl--timeline "mastodon-tl")
 
 (defgroup mastodon-async nil
   "An async module for mastodon streams."
@@ -129,7 +135,9 @@
 Then start an async stream at ENDPOINT filtering toots
 using FILTER.
 TIMELINE is a specific target, such as federated or home.
-NAME is the center portion of the buffer name for *mastodon-async-buffer and *mastodon-async-queue."
+NAME is the center portion of the buffer name for
+*mastodon-async-buffer and *mastodon-async-queue."
+  (ignore timeline) ;; TODO: figure out what this is meant to be used for
   (let ((buffer (mastodon-async--start-process
                  endpoint filter name)))
     (with-current-buffer buffer
@@ -238,7 +246,9 @@ Filter the toots using FILTER."
          (async-buffer (mastodon-async--setup-buffer "" (or name stream) endpoint))
          (http-buffer (mastodon-async--get
                        (mastodon-http--api stream)
-                       (lambda (status) (message "HTTP SOURCE CLOSED")))))
+                       (lambda (status)
+                         (ignore status)
+                         (message "HTTP SOURCE CLOSED")))))
     (mastodon-async--setup-http  http-buffer (or name stream))
     (mastodon-async--set-http-buffer async-buffer http-buffer)
     (mastodon-async--set-http-buffer async-queue http-buffer)        

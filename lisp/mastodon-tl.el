@@ -67,7 +67,7 @@
   :group 'mastodon)
 
 (defcustom mastodon-tl--enable-relative-timestamps t
-  "Nonnil to enable showing relative (to the current time) timestamps.
+  "Whether to show relative (to the current time) timestamps.
 
 This will require periodic updates of a timeline buffer to
 keep the timestamps current as time progresses."
@@ -630,7 +630,10 @@ Used for a mouse-click EVENT on a link."
   (mastodon-tl--do-link-action-at-point (posn-point (event-end event))))
 
 (defun mastodon-tl--has-spoiler (toot)
-  "Check if the given TOOT has a spoiler text that should initially be shown only while the main content should be hidden."
+  "Check if the given TOOT has a spoiler text.
+
+Spoiler text should initially be shown only while the main
+content should be hidden."
   (let ((spoiler (mastodon-tl--field 'spoiler_text toot)))
     (and spoiler (> (length spoiler) 0))))
 

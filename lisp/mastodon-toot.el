@@ -43,24 +43,25 @@
 (defvar mastodon-instance-url)
 (autoload 'mastodon-auth--user-acct "mastodon-auth")
 (autoload 'mastodon-http--api "mastodon-http")
-(autoload 'mastodon-http--post "mastodon-http")
-(autoload 'mastodon-http--triage "mastodon-http")
 (autoload 'mastodon-http--delete "mastodon-http")
-(autoload 'mastodon-http--process-json "mastodon-http")
 (autoload 'mastodon-http--get-json "mastodon-http")
+(autoload 'mastodon-http--get-json-async "mastodon-htpp")
+(autoload 'mastodon-http--post "mastodon-http")
+(autoload 'mastodon-http--post-media-attachment "mastodon-http")
+(autoload 'mastodon-http--process-json "mastodon-http")
+(autoload 'mastodon-http--read-file-as-string "mastodon-http")
+(autoload 'mastodon-http--triage "mastodon-http")
+(autoload 'mastodon-search--search-accounts-query "mastodon-search")
 (autoload 'mastodon-tl--as-string "mastodon-tl")
 (autoload 'mastodon-tl--clean-tabs-and-nl "mastodon-tl")
 (autoload 'mastodon-tl--field "mastodon-tl")
 (autoload 'mastodon-tl--find-property-range "mastodon-tl")
+(autoload 'mastodon-tl--find-property-range "mastodon-tl")
 (autoload 'mastodon-tl--goto-next-toot "mastodon-tl")
 (autoload 'mastodon-tl--property "mastodon-tl")
-(autoload 'mastodon-tl--find-property-range "mastodon-tl")
-(autoload 'mastodon-toot "mastodon")
-(autoload 'mastodon-http--post-media-attachment "mastodon-http")
-(autoload 'mastodon-http--read-file-as-string "mastodon-http")
-(autoload 'mastodon-tl--toot-id "mastodon-tl")
 (autoload 'mastodon-tl--reload-timeline-or-profile "mastodon-tl")
-(autoload 'mastodon-search--search-accounts-query "mastodon-search")
+(autoload 'mastodon-tl--toot-id "mastodon-tl")
+(autoload 'mastodon-toot "mastodon")
 
 (defgroup mastodon-toot nil
   "Tooting in Mastodon."
@@ -70,7 +71,8 @@
 (defcustom mastodon-toot--default-visibility "public"
   "The default visibility for new toots.
 
-Must be one of \"public\", \"unlisted\", \"private\" (for followers-only), or \"direct\"."
+Must be one of \"public\", \"unlisted\", \"private\" (for
+followers-only), or \"direct\"."
   :group 'mastodon-toot
   :type '(choice
           (const :tag "public" "public")
@@ -88,14 +90,17 @@ Must be one of \"public\", \"unlisted\", \"private\" (for followers-only), or \"
   :group 'mastodon-toot
   :type 'integer)
 
-(when (require 'company nil :noerror)
-  (defcustom mastodon-toot--enable-completion-for-mentions "following"
-    "Whether to enable company completion for mentions in toot compose buffer."
-      :group 'mastodon-toot
-      :type '(choice
-              (const :tag "off" nil)
-              (const :tag "following only" "following")
-              (const :tag "all users" "all"))))
+(defcustom mastodon-toot--enable-completion-for-mentions (if (require 'company nil :noerror) "following" "off")
+  "Whether to enable company completion for mentions.
+
+Used for completion in toot compose buffer.
+
+This is only used if company mode is installed."
+  :group 'mastodon-toot
+  :type '(choice
+          (const :tag "off" nil)
+          (const :tag "following only" "following")
+          (const :tag "all users" "all")))
 
 (defvar mastodon-toot--content-warning nil
   "A flag whether the toot should be marked with a content warning.")

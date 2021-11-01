@@ -46,12 +46,6 @@
 
 ;; functions for company completion of mentions in mastodon-toot
 
-(defun mastodon-search--get-user-info (account)
-  "Get user handle, display name and account URL from ACCOUNT."
-  (list (cdr (assoc 'display_name account))
-        (concat "@" (cdr (assoc 'acct account)))
-        (cdr (assoc 'url account))))
-
 (defun mastodon-search--search-accounts-query (query)
   "Prompt for a search QUERY and return accounts synchronously.
 Returns a nested list containing user handle, display name, and URL."
@@ -161,7 +155,8 @@ We use this to fetch the complete status from the server."
 (defun mastodon-search--fetch-full-status-from-id (id)
   "Fetch the full status with id ID from the server.
 
-This allows us to access the full account etc. details and to render them properly."
+This allows us to access the full account etc. details and to
+render them properly."
   (let* ((url (concat mastodon-instance-url "/api/v1/statuses/" (mastodon-tl--as-string id)))
         (json (mastodon-http--get-json url)))
     json))

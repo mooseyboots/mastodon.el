@@ -63,7 +63,10 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
 (defun mastodon-auth--generate-token ()
   "Make POST to generate auth token.
 
-If no auth-sources file, runs `mastodon-auth--generate-token-no-storing-credentials'. If auth-sources file exists, runs `mastodon-auth--generate-token-and-store'."
+If no auth-sources file, runs
+`mastodon-auth--generate-token-no-storing-credentials'. If
+auth-sources file exists, runs
+`mastodon-auth--generate-token-and-store'."
   (if (or (null mastodon-auth-source-file)
 	  (string= "" mastodon-auth-source-file))
       (mastodon-auth--generate-token-no-storing-credentials)
@@ -124,9 +127,13 @@ Reads and/or stores secrets in `MASTODON-AUTH-SOURCE-FILE'."
       (json-read-from-string json-string))))
 
 (defun mastodon-auth--access-token ()
-  "If an access token for `mastodon-instance-url' is in `mastodon-auth--token-alist', return it.
+  "Return exiting or generate new access token.
 
-Otherwise, generate a token and pass it to `mastodon-auth--handle-token-reponse'."
+If an access token for `mastodon-instance-url' is in
+`mastodon-auth--token-alist', return it.
+
+Otherwise, generate a token and pass it to
+`mastodon-auth--handle-token-reponse'."
   (if-let ((token (cdr (assoc mastodon-instance-url mastodon-auth--token-alist))))
       token
 

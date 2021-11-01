@@ -29,22 +29,23 @@
 
 ;;; Code:
 
+(autoload 'mastodon-http--api "mastodon-http.el")
+(autoload 'mastodon-http--post "mastodon-http.el")
+(autoload 'mastodon-http--triage "mastodon-http.el")
 (autoload 'mastodon-media--inline-images "mastodon-media.el")
+(autoload 'mastodon-tl--byline "mastodon-tl.el")
 (autoload 'mastodon-tl--byline-author "mastodon-tl.el")
 (autoload 'mastodon-tl--clean-tabs-and-nl "mastodon-tl.el")
 (autoload 'mastodon-tl--content "mastodon-tl.el")
-(autoload 'mastodon-tl--byline "mastodon-tl.el")
-(autoload 'mastodon-tl--toot-id "mastodon-tl.el")
 (autoload 'mastodon-tl--field "mastodon-tl.el")
+(autoload 'mastodon-tl--find-property-range "mastodon-tl.el")
 (autoload 'mastodon-tl--has-spoiler "mastodon-tl.el")
 (autoload 'mastodon-tl--init "mastodon-tl.el")
+(autoload 'mastodon-tl--init-sync "mastodon-tl.el")
 (autoload 'mastodon-tl--insert-status "mastodon-tl.el")
-(autoload 'mastodon-tl--spoiler "mastodon-tl.el")
 (autoload 'mastodon-tl--property "mastodon-tl.el")
-(autoload 'mastodon-tl--find-property-range "mastodon-tl.el")
-(autoload 'mastodon-http--triage "mastodon-http.el")
-(autoload 'mastodon-http--post "mastodon-http.el")
-(autoload 'mastodon-http--api "mastodon-http.el")
+(autoload 'mastodon-tl--spoiler "mastodon-tl.el")
+(autoload 'mastodon-tl--toot-id "mastodon-tl.el")
 (defvar mastodon-tl--display-media-p)
 
 

@@ -32,6 +32,8 @@
 ;; required by the server and client.
 
 ;;; Code:
+(require 'url-cache)
+
 (defvar url-show-status)
 
 (defvar mastodon-tl--shr-image-map-replacement)
@@ -141,7 +143,8 @@ fKRJkmVZjAQwh78A6vCRWJE8K+8AAAAASUVORK5CYII=")
 STATUS-PLIST is the usual plist of status events as per `url-retrieve'.
 IMAGE-OPTIONS are the precomputed options to apply to the image.
 MARKER is the marker to where the response should be visible.
-REGION-LENGTH is the length of the region that should be replaced with the image."
+REGION-LENGTH is the length of the region that should be replaced
+with the image."
   (when (marker-buffer marker) ; only if the buffer hasn't been kill in the meantime
     (let ((url-buffer (current-buffer))
           (is-error-response-p (eq :error (car status-plist))))
