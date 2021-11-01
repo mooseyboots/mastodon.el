@@ -46,10 +46,11 @@
 
 ;; functions for company completion of mentions in mastodon-toot
 
-(defun mastodon-search--get-user-info-no-url (account)
+(defun mastodon-search--get-user-info (account)
   "Get user handle, display name and account URL from ACCOUNT."
   (list (cdr (assoc 'display_name account))
-        (concat "@" (cdr (assoc 'acct account)))))
+        (concat "@" (cdr (assoc 'acct account)))
+        (cdr (assoc 'url account))))
 
 (defun mastodon-search--search-accounts-query (query)
   "Prompt for a search QUERY and return accounts synchronously.
@@ -57,10 +58,10 @@ Returns a nested list containing user handle, display name, and URL."
   (interactive "sSearch mastodon for: ")
   (let* ((url (format "%s/api/v1/accounts/search" mastodon-instance-url))
          ;; (buffer (format "*mastodon-search-%s*" query))
-         (response (if (equal mastodon-toot--enable-completion-for-mentions "followers")
+         (response (if (equal mastodon-toot--enable-completion-for-mentions "following")
                        (mastodon-http--get-search-json url query "following=true")
                      (mastodon-http--get-search-json url query))))
-    (mapcar #'mastodon-search--get-user-info-no-url
+    (mapcar #'mastodon-search--get-user-info
             response)))
 
 ;; functions for mastodon search

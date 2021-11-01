@@ -89,12 +89,12 @@ Must be one of \"public\", \"unlisted\", \"private\" (for followers-only), or \"
   :type 'integer)
 
 (when (require 'company nil :noerror)
-  (defcustom mastodon-toot--enable-completion-for-mentions "followers"
+  (defcustom mastodon-toot--enable-completion-for-mentions "following"
     "Whether to enable company completion for mentions in toot compose buffer."
       :group 'mastodon-toot
       :type '(choice
               (const :tag "off" nil)
-              (const :tag "followers only" "followers")
+              (const :tag "following only" "following")
               (const :tag "all users" "all"))))
 
 (defvar mastodon-toot--content-warning nil
@@ -436,18 +436,18 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
                (reverse (append mentions nil))
                "")))
 
-;; (defun mastodon-toot--mentions-company-meta (candidate)
-;;   (format "meta %s of candidate %s"
-;;           (get-text-property 0 'meta candidate)
-;;           (substring-no-properties candidate)))
+(defun mastodon-toot--mentions-company-meta (candidate)
+  "Format company completion CANDIDATE's meta field."
+  (format " %s"
+          (get-text-property 0 'meta candidate)))
 
 (defun mastodon-toot--mentions-company-annotation (candidate)
-  "Construct a company completion CANDIDATE's annotation for display."
-  (format " %s" (get-text-property 0 'meta candidate)))
+  "Format company completion CANDIDATE's annotation."
+  (format " %s" (get-text-property 0 'annot candidate)))
 
 (defun mastodon-toot--mentions-company-candidates (prefix)
-  "Given a company PREFIX, build a list of candidates.
-The prefix string can match against both user handles and display names."
+  "Given a company PREFIX query, build a list of candidates.
+The prefix can match against both user handles and display names."
   (let (res)
     (dolist (item (mastodon-search--search-accounts-query prefix))
       (when (or (string-prefix-p prefix (cadr item))
@@ -458,8 +458,9 @@ The prefix string can match against both user handles and display names."
 (defun mastodon-toot--mentions-company-make-candidate (candidate)
   "Construct a company completion CANDIDATE for display."
   (let ((display-name (car candidate))
-        (handle (cadr candidate)))
-    (propertize handle 'meta display-name)))
+        (handle (cadr candidate))
+        (url (caddr candidate)))
+    (propertize handle 'annot display-name 'meta url)))
 
 (defun mastodon-toot--mentions-completion (command &optional arg &rest ignored)
   "A company completion backend for toot mentions."
@@ -474,7 +475,8 @@ The prefix string can match against both user handles and display names."
                ;; @ + thing before point
                (concat "@" (company-grab-symbol))))
      (candidates (mastodon-toot--mentions-company-candidates arg))
-     (annotation (mastodon-toot--mentions-company-annotation arg))))
+     (annotation (mastodon-toot--mentions-company-annotation arg))
+     (meta (mastodon-toot--mentions-company-meta arg))))
 
 (defun mastodon-toot--reply ()
   "Reply to toot at `point'."
