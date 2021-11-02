@@ -106,35 +106,28 @@ This is only used if company mode is installed."
           (const :tag "following only" "following")
           (const :tag "all users" "all")))
 
-(defvar mastodon-toot--content-warning nil
+(defvar-local mastodon-toot--content-warning nil
   "A flag whether the toot should be marked with a content warning.")
-(make-variable-buffer-local 'mastodon-toot--content-warning)
 
-(defvar mastodon-toot--content-warning-from-reply-or-redraft nil
+(defvar-local mastodon-toot--content-warning-from-reply-or-redraft nil
   "The content warning of the toot being replied to.")
-(make-variable-buffer-local 'mastodon-toot--content-warning)
 
-(defvar mastodon-toot--content-nsfw nil
+(defvar-local mastodon-toot--content-nsfw nil
   "A flag indicating whether the toot should be marked as NSFW.")
-(make-variable-buffer-local 'mastodon-toot--content-nsfw)
 
-(defvar mastodon-toot--visibility "public"
+(defvar-local mastodon-toot--visibility "public"
   "A string indicating the visibility of the toot being composed.
 
 Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"public\".")
-(make-variable-buffer-local 'mastodon-toot--visibility)
 
-(defvar mastodon-toot--media-attachments nil
+(defvar-local mastodon-toot--media-attachments nil
   "A list of the media attachments of the toot being composed.")
-(make-variable-buffer-local 'mastodon-toot--media-attachments)
 
-(defvar mastodon-toot--media-attachment-ids nil
+(defvar-local mastodon-toot--media-attachment-ids nil
   "A list of any media attachment ids of the toot being composed.")
-(make-variable-buffer-local 'mastodon-toot--media-attachment-ids)
 
-(defvar mastodon-toot--reply-to-id nil
+(defvar-local mastodon-toot--reply-to-id nil
   "Buffer-local variable to hold the id of the toot being replied to.")
-(make-variable-buffer-local 'mastodon-toot--reply-to-id)
 
 (defvar mastodon-toot--max-toot-chars nil
   "The maximum allowed characters count for a single toot.")
@@ -714,9 +707,8 @@ e.g. mastodon-toot--send -> Send."
   "Format a list of keybindings, KBINDS, for display in documentation."
   (mapcar #'mastodon-toot--format-kbind kbinds))
 
-(defvar mastodon-toot--kbinds-pairs nil
+(defvar-local mastodon-toot--kbinds-pairs nil
   "Contains a list of paired toot compose buffer keybindings for inserting.")
-(make-variable-buffer-local 'mastodon-toot--kbinds-pairs)
 
 (defun mastodon-toot--formatted-kbinds-pairs (kbinds-list longest)
   "Return a list of strings each containing two formatted kbinds.

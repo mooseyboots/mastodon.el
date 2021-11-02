@@ -55,17 +55,14 @@
 (defvar mastodon-tl--display-media-p)
 (defvar mastodon-tl--buffer-spec)
 
-(make-variable-buffer-local
- (defvar mastodon-async--queue "" ;;"*mastodon-async-queue*"
-   "The intermediate queue buffer name."))
+(defvar-local mastodon-async--queue "" ;;"*mastodon-async-queue*"
+  "The intermediate queue buffer name.")
 
-(make-variable-buffer-local
- (defvar mastodon-async--buffer "" ;;"*mastodon-async-buffer*"
-   "User facing output buffer name."))
+(defvar-local mastodon-async--buffer "" ;;"*mastodon-async-buffer*"
+   "User facing output buffer name.")
 
-(make-variable-buffer-local
- (defvar mastodon-async--http-buffer "" ;;""
-   "Buffer variable bound to http output."))
+(defvar-local mastodon-async--http-buffer "" ;;""
+   "Buffer variable bound to http output.")
 
 (defun mastodon-async--display-http ()
   "Display the async HTTP input buffer."

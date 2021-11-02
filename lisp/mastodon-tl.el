@@ -82,9 +82,8 @@ By default fixed width fonts are used."
   :type '(boolean :tag "Enable using proportional rather than fixed \
 width fonts when rendering HTML text"))
 
-(defvar mastodon-tl--buffer-spec nil
+(defvar-local mastodon-tl--buffer-spec nil
   "A unique identifier and functions for each Mastodon buffer.")
-(make-variable-buffer-local 'mastodon-tl--buffer-spec)
 
 (defcustom mastodon-tl--show-avatars nil
   "Whether to enable display of user avatars in timelines."
@@ -97,22 +96,19 @@ width fonts when rendering HTML text"))
           ;; (image-transforms-p))
   ;; "A boolean value stating whether to show avatars in timelines.")
 
-(defvar mastodon-tl--update-point nil
+(defvar-local mastodon-tl--update-point nil
   "When updating a mastodon buffer this is where new toots will be inserted.
 
 If nil `(point-min)' is used instead.")
-(make-variable-buffer-local 'mastodon-tl--update-point)
 
 (defvar mastodon-tl--display-media-p t
   "A boolean value stating whether to show media in timelines.")
 
-(defvar mastodon-tl--timestamp-next-update nil
+(defvar-local mastodon-tl--timestamp-next-update nil
   "The timestamp when the buffer should next be scanned to update the timestamps.")
-(make-variable-buffer-local 'mastodon-tl--timestamp-next-update)
 
-(defvar mastodon-tl--timestamp-update-timer nil
+(defvar-local mastodon-tl--timestamp-update-timer nil
   "The timer that, when set will scan the buffer to update the timestamps.")
-(make-variable-buffer-local 'mastodon-tl--timestamp-update-timer)
 
 (defvar mastodon-tl--link-keymap
   (let ((map (make-sparse-keymap)))

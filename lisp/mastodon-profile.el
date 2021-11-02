@@ -62,9 +62,8 @@
 (defvar mastodon-tl--update-point)
 
 
-(defvar mastodon-profile--account nil
+(defvar-local mastodon-profile--account nil
   "The data for the account being described in the current profile buffer.")
-(make-variable-buffer-local 'mastodon-profile--account)
 
 ;; this way you can update it with C-M-x:
 (defvar mastodon-profile-mode-map
