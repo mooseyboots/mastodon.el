@@ -945,8 +945,10 @@ webapp"
                                     (cdr (assoc 'descendants context))))))
       (message "No Thread!"))))
 
-(defun mastodon-tl--follow-user (user-handle)
-  "Query for USER-HANDLE from current status and follow that user."
+(defun mastodon-tl--follow-user (user-handle &optional notify)
+  "Query for USER-HANDLE from current status and follow that user.
+If NOTIFY is \"true\", enable notifications when that user posts.
+If NOTIFY is \"false\", disable notifications when that user posts."
   (interactive
    (list
     (let ((user-handles (mastodon-profile--extract-users-handles
@@ -959,12 +961,22 @@ webapp"
                   user-handle (mastodon-profile--toot-json)))
          (user-id (mastodon-profile--account-field account 'id))
          (name (mastodon-profile--account-field account 'display_name))
-         (url (mastodon-http--api (format "accounts/%s/follow" user-id))))
+         (url (mastodon-http--api
+               (if notify
+                   (format "accounts/%s/follow?notify=%s" user-id notify)
+                 (format "accounts/%s/follow" user-id)))))
     (if account
         (let ((response (mastodon-http--post url nil nil)))
           (mastodon-http--triage response
                                  (lambda ()
-                                   (message "User %s (@%s) followed!" name user-handle))))
+                                   (cond ((string-equal notify "true")
+                                          (message "Receiving notifications for user %s (@%s)!"
+                                                   name user-handle))
+                                         ((string-equal notify "false")
+                                          (message "Not receiving notifications for user %s (@%s)!"
+                                                   name user-handle))
+                                         ((eq notify nil)
+                                          (message "User %s (@%s) followed!" name user-handle))))))
       (message "Cannot find a user with handle %S" user-handle))))
 
 (defun mastodon-tl--unfollow-user (user-handle)
@@ -989,6 +1001,30 @@ webapp"
                                    (lambda ()
                                      (message "User %s (@%s) unfollowed!" name user-handle)))))
       (message "Cannot find a user with handle %S" user-handle))))
+
+(defun mastodon-tl--notify-user-posts (user-handle)
+  "Query for USER-HANDLE from current status and enable notifications when they post."
+  (interactive
+   (list
+    (let ((user-handles (mastodon-profile--extract-users-handles
+                         (mastodon-profile--toot-json))))
+      (completing-read "Receive notifications when user posts: "
+                       user-handles
+                       nil ; predicate
+                       'confirm))))
+  (mastodon-tl--follow-user user-handle "true"))
+
+(defun mastodon-tl--no-notify-user-posts (user-handle)
+  "Query for USER-HANDLE from current status and disable notifications when they post."
+  (interactive
+   (list
+    (let ((user-handles (mastodon-profile--extract-users-handles
+                         (mastodon-profile--toot-json))))
+      (completing-read "Disable notifications when user posts: "
+                       user-handles
+                       nil ; predicate
+                       'confirm))))
+  (mastodon-tl--follow-user user-handle "false"))
 
 (defun mastodon-tl--mute-user (user-handle)
   "Query for USER-HANDLE from current status and mute that user."
