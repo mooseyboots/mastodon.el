@@ -67,15 +67,15 @@
     (string-match "[0-9][0-9][0-9]" status-line)
     (match-string 0 status-line)))
 
-;; (defun mastodon-http--triage (response success)
-;;   "Determine if RESPONSE was successful. Call SUCCESS if successful.
+(defun mastodon-http--url-retrieve-synchronously (url)
+  "Retrieve URL asynchronously.
 
-;; Open RESPONSE buffer if unsuccessful."
-;;   (let ((status (with-current-buffer response
-;;                   (mastodon-http--status))))
-;;     (if (string-prefix-p "2" status)
-;;         (funcall success)
-;;       (switch-to-buffer response))))
+This is a thin abstraction over the system
+`url-retrieve-synchronously`.  Depending on which version of this
+is available we will call it with or without a timeout."
+  (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
+      (url-retrieve-synchronously url)
+    (url-retrieve-synchronously url nil nil mastodon-http--timeout)))
 
 (defun mastodon-http--triage (response success)
   "Determine if RESPONSE was successful. Call SUCCESS if successful.
@@ -115,9 +115,7 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
 	    `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token)))))
 	  headers)))
     (with-temp-buffer
-      (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
-          (url-retrieve-synchronously url)
-        (url-retrieve-synchronously url nil nil mastodon-http--timeout)))))
+      (mastodon-http--url-retrieve-synchronously url))))
 
 (defun mastodon-http--get (url)
   "Make synchronous GET request to URL.
@@ -128,16 +126,6 @@ Pass response buffer to CALLBACK function."
          `(("Authorization" . ,(concat "Bearer "
                                        (mastodon-auth--access-token))))))
     (mastodon-http--url-retrieve-synchronously url)))
-
-(defun mastodon-http--url-retrieve-synchronously (url)
-  "Retrieve URL asynchronously.
-
-This is a thin abstraction over the system
-`url-retrieve-synchronously`.  Depending on which version of this
-is available we will call it with or without a timeout."
-  (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
-      (url-retrieve-synchronously url)
-    (url-retrieve-synchronously url nil nil mastodon-http--timeout)))
 
 (defun mastodon-http--get-json (url)
   "Make synchronous GET request to URL. Return JSON response."
@@ -163,7 +151,7 @@ is available we will call it with or without a timeout."
          `(("Authorization" . ,(concat "Bearer "
                                        (mastodon-auth--access-token))))))
     (with-temp-buffer
-      (url-retrieve-synchronously url))))
+      (mastodon-http--url-retrieve-synchronously url))))
 
 ;; search functions:
 (defun mastodon-http--process-json-search ()
@@ -195,9 +183,7 @@ PARAM is a formatted request parameter, eg 'following=true'."
         (url-request-extra-headers
          `(("Authorization" . ,(concat "Bearer "
                                        (mastodon-auth--access-token))))))
-    (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
-        (url-retrieve-synchronously url)
-      (url-retrieve-synchronously url nil nil mastodon-http--timeout))))
+    (mastodon-http--url-retrieve-synchronously url)))
 
 ;; profile update functions
 
@@ -218,9 +204,7 @@ Pass response buffer to CALLBACK function."
         (url-request-extra-headers
          `(("Authorization" . ,(concat "Bearer "
                                        (mastodon-auth--access-token))))))
-    (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
-        (url-retrieve-synchronously url)
-      (url-retrieve-synchronously url nil nil mastodon-http--timeout))))
+    (mastodon-http--url-retrieve-synchronously url)))
 
  ;; Asynchronous functions
 
