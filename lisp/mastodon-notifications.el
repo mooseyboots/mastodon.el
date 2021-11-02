@@ -80,23 +80,23 @@
     (let* ((toot-json (mastodon-tl--property 'toot-json))
            (f-req-p (string= "follow_request" (cdr (assoc 'type toot-json)))))
       (if f-req-p
-        (let* ((account (cdr (assoc 'account toot-json)))
-               (id (cdr (assoc 'id account)))
-               (handle (cdr (assoc 'acct account)))
-               (name (cdr (assoc 'username account))))
-          (if id
-              (let ((response
-                     (mastodon-http--post
-                      (concat
-                       (mastodon-http--api "follow_requests")
-                       (format "/%s/authorize" id))
-                      nil nil)))
-                (mastodon-http--triage response
-                                       (lambda ()
-                                         (mastodon-notifications--get)
-                                         (message "Follow request of %s (@%s) accepted!"
-                                                  name handle))))
-            (message "No account result at point?")))
+          (let* ((account (cdr (assoc 'account toot-json)))
+                 (id (cdr (assoc 'id account)))
+                 (handle (cdr (assoc 'acct account)))
+                 (name (cdr (assoc 'username account))))
+            (if id
+                (let ((response
+                       (mastodon-http--post
+                        (concat
+                         (mastodon-http--api "follow_requests")
+                         (format "/%s/authorize" id))
+                        nil nil)))
+                  (mastodon-http--triage response
+                                         (lambda ()
+                                           (mastodon-notifications--get)
+                                           (message "Follow request of %s (@%s) accepted!"
+                                                    name handle))))
+              (message "No account result at point?")))
         (message "No follow request at point?")))))
 
 (defun mastodon-notifications--follow-request-reject-notifs ()
@@ -106,23 +106,23 @@
     (let* ((toot-json (mastodon-tl--property 'toot-json))
            (f-req-p (string= "follow_request" (cdr (assoc 'type toot-json)))))
       (if f-req-p
-        (let* ((account (cdr (assoc 'account toot-json)))
-               (id (cdr (assoc 'id account)))
-               (handle (cdr (assoc 'acct account)))
-               (name (cdr (assoc 'username account))))
-          (if id
-              (let ((response
-                     (mastodon-http--post
-                      (concat
-                       (mastodon-http--api "follow_requests")
-                       (format "/%s/reject" id))
-                      nil nil)))
-                (mastodon-http--triage response
-                                       (lambda ()
-                                         (mastodon-notifications--get)
-                                         (message "Follow request of %s (@%s) rejected!"
-                                                  name handle))))
-            (message "No account result at point?")))
+          (let* ((account (cdr (assoc 'account toot-json)))
+                 (id (cdr (assoc 'id account)))
+                 (handle (cdr (assoc 'acct account)))
+                 (name (cdr (assoc 'username account))))
+            (if id
+                (let ((response
+                       (mastodon-http--post
+                        (concat
+                         (mastodon-http--api "follow_requests")
+                         (format "/%s/reject" id))
+                        nil nil)))
+                  (mastodon-http--triage response
+                                         (lambda ()
+                                           (mastodon-notifications--get)
+                                           (message "Follow request of %s (@%s) rejected!"
+                                                    name handle))))
+              (message "No account result at point?")))
         (message "No follow request at point?")))))
 
 (defun mastodon-notifications--mention (note)

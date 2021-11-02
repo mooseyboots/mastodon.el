@@ -59,7 +59,7 @@
    (concat "*mastodon-inspect-toot-"
            (mastodon-tl--as-string (mastodon-tl--property 'toot-id))
            "*")
-  (mastodon-tl--property 'toot-json)))
+   (mastodon-tl--property 'toot-json)))
 
 (defun mastodon-inspect--download-single-toot (toot-id)
   "Download the toot/status represented by TOOT-ID."

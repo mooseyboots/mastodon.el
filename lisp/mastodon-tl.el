@@ -91,10 +91,10 @@ width fonts when rendering HTML text"))
   :type '(boolean :tag "Whether to display user avatars in timelines"))
 
 ;; (defvar mastodon-tl--show-avatars nil
-        ;; (if (version< emacs-version "27.1")
-            ;; (image-type-available-p 'imagemagick)
-          ;; (image-transforms-p))
-  ;; "A boolean value stating whether to show avatars in timelines.")
+;; (if (version< emacs-version "27.1")
+;; (image-type-available-p 'imagemagick)
+;; (image-transforms-p))
+;; "A boolean value stating whether to show avatars in timelines.")
 
 (defvar-local mastodon-tl--update-point nil
   "When updating a mastodon buffer this is where new toots will be inserted.
@@ -463,7 +463,7 @@ START and END are the boundaries of the link in the toot."
          (url-instance (concat "https://"
                                (url-host (url-generic-parse-url url))))
          (maybe-userhandle (if (string= mastodon-instance-url url-instance)
-                               ; if handle is local, then no instance suffix:
+                                        ; if handle is local, then no instance suffix:
                                (buffer-substring-no-properties start end)
                              (mastodon-tl--extract-userhandle-from-url
                               url (buffer-substring-no-properties start end)))))
@@ -652,12 +652,12 @@ message is a link which unhides/hides the main body."
                    (mastodon-tl--render-text spoiler toot))
                   'default))
          (message (concat ;"\n"
-                          " ---------------\n"
-                          " " (mastodon-tl--make-link
-                               (concat "CW: " string)
-                                                      'content-warning)
-                          "\n"
-                          " ---------------\n"))
+                   " ---------------\n"
+                   " " (mastodon-tl--make-link
+                        (concat "CW: " string)
+                        'content-warning)
+                   "\n"
+                   " ---------------\n"))
          (cw (mastodon-tl--set-face message 'mastodon-cw-face)))
     (concat
      cw
@@ -747,10 +747,10 @@ takes a single function. By default it is
     (concat "Poll: \n\n"
             (mapconcat (lambda (option)
                          (progn
-                         (format "Option %s: %s, %s votes.\n"
-                                 (setq option-counter (1+ option-counter))
-                                 (cdr (assoc 'title option))
-                                 (cdr (assoc 'votes_count option)))))
+                           (format "Option %s: %s, %s votes.\n"
+                                   (setq option-counter (1+ option-counter))
+                                   (cdr (assoc 'title option))
+                                   (cdr (assoc 'votes_count option)))))
                        options
                        "\n") "\n")))
 
@@ -764,8 +764,8 @@ takes a single function. By default it is
                      (mastodon-tl--field 'poll toot)))
            (options (mastodon-tl--field 'options poll))
            (options-titles (mapcar (lambda (x)
-                                   (cdr (assoc 'title x)))
-                                 options))
+                                     (cdr (assoc 'title x)))
+                                   options))
            (options-number-seq (number-sequence 1 (length options)))
            (options-numbers (mapcar (lambda(x)
                                       (number-to-string x))
@@ -775,16 +775,16 @@ takes a single function. By default it is
            ;; but also store both as cons cell as cdr, as we need it below
            (candidates (mapcar (lambda (cell)
                                  (cons (format "%s | %s" (car cell) (cdr cell))
-                                        cell))
+                                       cell))
                                options-alist)))
       (if (null (mastodon-tl--field 'poll (mastodon-tl--property 'toot-json)))
           (message "No poll here.")
         ;; var "option" = just the cdr, a cons of option number and desc
         (cdr (assoc
               (completing-read "Poll option to vote for: "
-                         candidates
-                         nil ; (predicate)
-                         t) ; require match
+                               candidates
+                               nil ; (predicate)
+                               t) ; require match
               candidates))))))
   (if (null (mastodon-tl--field 'poll (mastodon-tl--property 'toot-json)))
       (message "No poll here.")
@@ -961,7 +961,7 @@ webapp"
                        nil ; predicate
                        'confirm))))
   (let* ((account (mastodon-profile--lookup-account-in-status
-                  user-handle (mastodon-profile--toot-json)))
+                   user-handle (mastodon-profile--toot-json)))
          (user-id (mastodon-profile--account-field account 'id))
          (name (mastodon-profile--account-field account 'display_name))
          (url (mastodon-http--api (format "accounts/%s/follow" user-id))))
@@ -983,7 +983,7 @@ webapp"
                        nil ; predicate
                        'confirm))))
   (let* ((account (mastodon-profile--lookup-account-in-status
-                  user-handle (mastodon-profile--toot-json)))
+                   user-handle (mastodon-profile--toot-json)))
          (user-id (mastodon-profile--account-field account 'id))
          (name (mastodon-profile--account-field account 'display_name))
          (url (mastodon-http--api (format "accounts/%s/unfollow" user-id))))
@@ -1006,7 +1006,7 @@ webapp"
                        nil ; predicate
                        'confirm))))
   (let* ((account (mastodon-profile--lookup-account-in-status
-                  user-handle (mastodon-profile--toot-json)))
+                   user-handle (mastodon-profile--toot-json)))
          (user-id (mastodon-profile--account-field account 'id))
          (name (mastodon-profile--account-field account 'display_name))
          (url (mastodon-http--api (format "accounts/%s/mute" user-id))))
@@ -1026,7 +1026,7 @@ webapp"
            (mutes-json (mastodon-http--get-json mutes-url))
            (muted-accts (mapcar (lambda (muted)
                                   (cdr (assoc 'acct muted)))
-                                  mutes-json)))
+                                mutes-json)))
       (completing-read "Handle of user to unmute: "
                        muted-accts
                        nil ; predicate
@@ -1055,7 +1055,7 @@ webapp"
                        nil ; predicate
                        'confirm))))
   (let* ((account (mastodon-profile--lookup-account-in-status
-                  user-handle (mastodon-profile--toot-json)))
+                   user-handle (mastodon-profile--toot-json)))
          (user-id (mastodon-profile--account-field account 'id))
          (name (mastodon-profile--account-field account 'display_name))
          (url (mastodon-http--api (format "accounts/%s/block" user-id))))
@@ -1074,7 +1074,7 @@ webapp"
     (let* ((blocks-url (mastodon-http--api (format "blocks")))
            (blocks-json (mastodon-http--get-json blocks-url))
            (blocked-accts (mapcar (lambda (blocked)
-                                  (cdr (assoc 'acct blocked)))
+                                    (cdr (assoc 'acct blocked)))
                                   blocks-json)))
       (completing-read "Handle of user to unblock: "
                        blocked-accts

@@ -184,9 +184,9 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   "Take ACTION on toot at point, then execute CALLBACK."
   (let* ((id (mastodon-tl--property 'base-toot-id))
          (url (mastodon-http--api (concat "statuses/"
-                                         (mastodon-tl--as-string id)
-                                         "/"
-                                         action))))
+                                          (mastodon-tl--as-string id)
+                                          "/"
+                                          action))))
     (let ((response (mastodon-http--post url nil nil)))
       (mastodon-http--triage response callback))))
 
@@ -312,7 +312,7 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
                (with-current-buffer response
                  (let* ((json-response (mastodon-http--process-json))
                         (content (cdr (assoc 'text json-response))))
-                        ;; (media (cdr (assoc 'media_attachments json-response))))
+                   ;; (media (cdr (assoc 'media_attachments json-response))))
                    (mastodon-toot--compose-buffer nil nil)
                    (goto-char (point-max))
                    (insert content)
@@ -338,8 +338,8 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
                      (format "Toot already bookmarked. Remove? ")
                    (format "Bookmark this toot? ")))
          (message (if (equal bookmarked t)
-                       "Bookmark removed!"
-                     "Toot bookmarked!")))
+                      "Bookmark removed!"
+                    "Toot bookmarked!")))
     (when (y-or-n-p prompt)
       (let ((response (mastodon-http--post url nil nil)))
         (mastodon-http--triage response
@@ -496,10 +496,10 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
   "Extract mentions from STATUS and process them into a string."
   (interactive)
   (let* ((boosted (mastodon-tl--field 'reblog status))
-        (mentions
-         (if boosted
-             (cdr (assoc 'mentions (cdr (assoc 'reblog status))))
-           (cdr (assoc 'mentions status)))))
+         (mentions
+          (if boosted
+              (cdr (assoc 'mentions (cdr (assoc 'reblog status))))
+            (cdr (assoc 'mentions status)))))
     (mapconcat (lambda(x) (mastodon-toot--process-local
                            (cdr (assoc 'acct x))))
                ;; reverse does not work on vectors in 24.5
@@ -534,19 +534,19 @@ The prefix can match against both user handles and display names."
 
 (defun mastodon-toot--mentions-completion (command &optional arg &rest ignored)
   "A company completion backend for toot mentions."
-   (interactive (list 'interactive))
-   (cl-case command
-     (interactive (company-begin-backend 'mastodon-toot--mentions-completion))
-     (prefix (when (and (bound-and-true-p mastodon-toot-mode) ; if masto toot minor mode
-                        (save-excursion
-                          (forward-whitespace -1)
-                          (forward-whitespace 1)
-                          (looking-at "@")))
-               ;; @ + thing before point
-               (concat "@" (company-grab-symbol))))
-     (candidates (mastodon-toot--mentions-company-candidates arg))
-     (annotation (mastodon-toot--mentions-company-annotation arg))
-     (meta (mastodon-toot--mentions-company-meta arg))))
+  (interactive (list 'interactive))
+  (cl-case command
+    (interactive (company-begin-backend 'mastodon-toot--mentions-completion))
+    (prefix (when (and (bound-and-true-p mastodon-toot-mode) ; if masto toot minor mode
+                       (save-excursion
+                         (forward-whitespace -1)
+                         (forward-whitespace 1)
+                         (looking-at "@")))
+              ;; @ + thing before point
+              (concat "@" (company-grab-symbol))))
+    (candidates (mastodon-toot--mentions-company-candidates arg))
+    (annotation (mastodon-toot--mentions-company-annotation arg))
+    (meta (mastodon-toot--mentions-company-meta arg))))
 
 (defun mastodon-toot--reply ()
   "Reply to toot at `point'."
@@ -803,38 +803,38 @@ REPLY-JSON is the full JSON of the toot being replied to."
   "Update the status fields in the header based on the current state."
   (ignore-errors  ;; called from after-change-functions so let's not leak errors
     (let ((inhibit-read-only t)
-         (header-region (mastodon-tl--find-property-range 'toot-post-header
+          (header-region (mastodon-tl--find-property-range 'toot-post-header
+                                                           (point-min)))
+          (count-region (mastodon-tl--find-property-range 'toot-post-counter
                                                           (point-min)))
-         (count-region (mastodon-tl--find-property-range 'toot-post-counter
+          (visibility-region (mastodon-tl--find-property-range
+                              'toot-post-visibility (point-min)))
+          (nsfw-region (mastodon-tl--find-property-range 'toot-post-nsfw-flag
                                                          (point-min)))
-         (visibility-region (mastodon-tl--find-property-range
-                             'toot-post-visibility (point-min)))
-         (nsfw-region (mastodon-tl--find-property-range 'toot-post-nsfw-flag
-                                                        (point-min)))
-         (cw-region (mastodon-tl--find-property-range 'toot-post-cw-flag
-                                                      (point-min))))
-     (add-text-properties (car count-region) (cdr count-region)
-                          (list 'display
-                                (format "%s/%s characters"
-                                        (- (point-max) (cdr header-region))
-                                        mastodon-toot--max-toot-chars)))
-     (add-text-properties (car visibility-region) (cdr visibility-region)
-                         (list 'display
-                               (format "Visibility: %s"
-                                       (if (equal
-                                            mastodon-toot--visibility
-                                            "private")
-                                           "followers-only"
-                                         mastodon-toot--visibility))))
-     (add-text-properties (car nsfw-region) (cdr nsfw-region)
-                          (list 'display (if mastodon-toot--content-nsfw
-                                             (if mastodon-toot--media-attachments
-                                                 "NSFW" "NSFW (no effect until attachments added)")
-                                           "")
-                                'face 'mastodon-cw-face))
-     (add-text-properties (car cw-region) (cdr cw-region)
-                          (list 'invisible (not mastodon-toot--content-warning)
-                                'face 'mastodon-cw-face)))))
+          (cw-region (mastodon-tl--find-property-range 'toot-post-cw-flag
+                                                       (point-min))))
+      (add-text-properties (car count-region) (cdr count-region)
+                           (list 'display
+                                 (format "%s/%s characters"
+                                         (- (point-max) (cdr header-region))
+                                         mastodon-toot--max-toot-chars)))
+      (add-text-properties (car visibility-region) (cdr visibility-region)
+                           (list 'display
+                                 (format "Visibility: %s"
+                                         (if (equal
+                                              mastodon-toot--visibility
+                                              "private")
+                                             "followers-only"
+                                           mastodon-toot--visibility))))
+      (add-text-properties (car nsfw-region) (cdr nsfw-region)
+                           (list 'display (if mastodon-toot--content-nsfw
+                                              (if mastodon-toot--media-attachments
+                                                  "NSFW" "NSFW (no effect until attachments added)")
+                                            "")
+                                 'face 'mastodon-cw-face))
+      (add-text-properties (car cw-region) (cdr cw-region)
+                           (list 'invisible (not mastodon-toot--content-warning)
+                                 'face 'mastodon-cw-face)))))
 
 (defun mastodon-toot--compose-buffer (reply-to-user reply-to-id &optional reply-json)
   "Create a new buffer to capture text for a new toot.

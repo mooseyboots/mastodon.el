@@ -80,7 +80,7 @@ Returns a nested list containing user handle, display name, and URL."
          (tags-list (mapcar #'mastodon-search--get-hashtag-info
                             tags))
          ;; (status-list (mapcar #'mastodon-search--get-status-info
-                              ;; statuses))
+         ;; statuses))
          (status-ids-list (mapcar 'mastodon-search--get-id-from-status
                                   statuses))
          (toots-list-json (mapcar #'mastodon-search--fetch-full-status-from-id
@@ -97,42 +97,42 @@ Returns a nested list containing user handle, display name, and URL."
                          " ------------\n\n")
                  'success))
         (mapc (lambda (el)
-              (insert (propertize (car el) 'face 'mastodon-display-name-face)
-                      " : \n : "
-                      (propertize (concat "@" (car (cdr el)))
-                                  'face 'mastodon-handle-face
-                                  'mouse-face 'highlight
-		                  'mastodon-tab-stop 'user-handle
-		                  'keymap mastodon-tl--link-keymap
-                                  'mastodon-handle (concat "@" (car (cdr el)))
-		                  'help-echo (concat "Browse user profile of @" (car (cdr el))))
-                      " : \n"
-                      "\n"))
-            user-ids)
-      ;; hashtag results:
-      (insert (mastodon-tl--set-face
-               (concat "\n ------------\n"
-                       " HASHTAGS\n"
-                       " ------------\n\n")
-               'success))
-      (mapc (lambda (el)
-              (insert " : #"
-                      (propertize (car el)
-                                  'mouse-face 'highlight
-                                  'mastodon-tag (car el)
-                                  'mastodon-tab-stop 'hashtag
-                                  'help-echo (concat "Browse tag #" (car el))
-                                  'keymap mastodon-tl--link-keymap)
-                      " : \n\n"))
-            tags-list)
-      ;; status results:
-      (insert (mastodon-tl--set-face
-               (concat "\n ------------\n"
-                       " STATUSES\n"
-                       " ------------\n")
-               'success))
-      (mapc 'mastodon-tl--toot toots-list-json)
-      (goto-char (point-min))))))
+                (insert (propertize (car el) 'face 'mastodon-display-name-face)
+                        " : \n : "
+                        (propertize (concat "@" (car (cdr el)))
+                                    'face 'mastodon-handle-face
+                                    'mouse-face 'highlight
+		                    'mastodon-tab-stop 'user-handle
+		                    'keymap mastodon-tl--link-keymap
+                                    'mastodon-handle (concat "@" (car (cdr el)))
+		                    'help-echo (concat "Browse user profile of @" (car (cdr el))))
+                        " : \n"
+                        "\n"))
+              user-ids)
+        ;; hashtag results:
+        (insert (mastodon-tl--set-face
+                 (concat "\n ------------\n"
+                         " HASHTAGS\n"
+                         " ------------\n\n")
+                 'success))
+        (mapc (lambda (el)
+                (insert " : #"
+                        (propertize (car el)
+                                    'mouse-face 'highlight
+                                    'mastodon-tag (car el)
+                                    'mastodon-tab-stop 'hashtag
+                                    'help-echo (concat "Browse tag #" (car el))
+                                    'keymap mastodon-tl--link-keymap)
+                        " : \n\n"))
+              tags-list)
+        ;; status results:
+        (insert (mastodon-tl--set-face
+                 (concat "\n ------------\n"
+                         " STATUSES\n"
+                         " ------------\n")
+                 'success))
+        (mapc 'mastodon-tl--toot toots-list-json)
+        (goto-char (point-min))))))
 
 (defun mastodon-search--get-user-info (account)
   "Get user handle, display name and account URL from ACCOUNT."
@@ -153,7 +153,7 @@ Returns a nested list containing user handle, display name, and URL."
         (cdr (assoc 'content status))))
 
 (defun mastodon-search--get-id-from-status (status)
-    "Fetch the id from a STATUS returned by a search call to the server.
+  "Fetch the id from a STATUS returned by a search call to the server.
 
 We use this to fetch the complete status from the server."
   (cdr (assoc 'id status)))
@@ -164,7 +164,7 @@ We use this to fetch the complete status from the server."
 This allows us to access the full account etc. details and to
 render them properly."
   (let* ((url (concat mastodon-instance-url "/api/v1/statuses/" (mastodon-tl--as-string id)))
-        (json (mastodon-http--get-json url)))
+         (json (mastodon-http--get-json url)))
     json))
 
 (provide 'mastodon-search)

@@ -153,8 +153,8 @@ is available we will call it with or without a timeout."
           (buffer-substring-no-properties (point) (point-max))
           'utf-8)))
     (kill-buffer)
-    (unless (or (string-equal "" json-string) (null json-string)))
-        (json-read-from-string json-string)))
+    (unless (or (string-equal "" json-string) (null json-string))
+      (json-read-from-string json-string))))
 
 (defun mastodon-http--delete (url)
   "Make DELETE request to URL."
@@ -256,8 +256,8 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
                       args
                       "&")))
         (url-request-extra-headers
-	     (append `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token))))
-	             headers)))
+	 (append `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token))))
+	         headers)))
     (with-temp-buffer
       (url-retrieve url callback cbargs))))
 
@@ -269,46 +269,45 @@ The upload is asynchronous. On succeeding,
 item uploaded, and `mastodon-toot--update-status-fields' is run."
   (let* ((file (file-name-nondirectory filename))
          (request-backend 'curl))
-         ;; (response
-         (request
-            url
-            :type "POST"
-            :params `(("description" . ,caption))
-            :files `(("file" . (,file :file ,filename
-                                      :mime-type "multipart/form-data")))
-            :parser 'json-read
-            :headers `(("Authorization" . ,(concat "Bearer "
-                                                   (mastodon-auth--access-token))))
-            :sync t
-            :success (cl-function
-                      (lambda (&key data &allow-other-keys)
-                        (when data
-                          (progn
-                            (push (cdr (assoc 'id data))
-                                  mastodon-toot--media-attachment-ids) ; add ID to list
-                            (message "%s file %s with id %S and caption '%s' uploaded!"
-                                     (capitalize (cdr (assoc 'type data)))
-                                     file
-                                     (cdr (assoc 'id data))
-                                     (cdr (assoc 'description data)))
-                            (mastodon-toot--update-status-fields)))))
-            :error (cl-function
-                    (lambda (&key error-thrown &allow-other-keys)
-                      (cond
-                       ;; handle curl errors first (eg 26, can't read file/path)
-                       ;; because the '=' test below fails for them
-                       ;; they have the form (error . error message 24)
-                       ((not (proper-list-p error-thrown)) ; not dotted list
-			            (message "Got error: %s. Shit went south." (cdr error-thrown)))
-                       ;; handle mastodon api errors
-                       ;; they have the form (error http 401)
-			           ((= (car (last error-thrown)) 401)
-                        (message "Got error: %s Unauthorized: The access token is invalid" error-thrown))
-                       ((= (car (last error-thrown)) 422)
-                        (message "Got error: %s Unprocessable entity: file or file type is unsupported or invalid" error-thrown))
-                       (t
-                        (message "Got error: %s Shit went south"
-                                 error-thrown))))))))
+    (request
+     url
+     :type "POST"
+     :params `(("description" . ,caption))
+     :files `(("file" . (,file :file ,filename
+                               :mime-type "multipart/form-data")))
+     :parser 'json-read
+     :headers `(("Authorization" . ,(concat "Bearer "
+                                            (mastodon-auth--access-token))))
+     :sync t
+     :success (cl-function
+               (lambda (&key data &allow-other-keys)
+                 (when data
+                   (progn
+                     (push (cdr (assoc 'id data))
+                           mastodon-toot--media-attachment-ids) ; add ID to list
+                     (message "%s file %s with id %S and caption '%s' uploaded!"
+                              (capitalize (cdr (assoc 'type data)))
+                              file
+                              (cdr (assoc 'id data))
+                              (cdr (assoc 'description data)))
+                     (mastodon-toot--update-status-fields)))))
+     :error (cl-function
+             (lambda (&key error-thrown &allow-other-keys)
+               (cond
+                ;; handle curl errors first (eg 26, can't read file/path)
+                ;; because the '=' test below fails for them
+                ;; they have the form (error . error message 24)
+                ((not (proper-list-p error-thrown)) ; not dotted list
+		 (message "Got error: %s. Shit went south." (cdr error-thrown)))
+                ;; handle mastodon api errors
+                ;; they have the form (error http 401)
+		((= (car (last error-thrown)) 401)
+                 (message "Got error: %s Unauthorized: The access token is invalid" error-thrown))
+                ((= (car (last error-thrown)) 422)
+                 (message "Got error: %s Unprocessable entity: file or file type is unsupported or invalid" error-thrown))
+                (t
+                 (message "Got error: %s Shit went south"
+                          error-thrown))))))))
 
 (provide 'mastodon-http)
 ;;; mastodon-http.el ends here

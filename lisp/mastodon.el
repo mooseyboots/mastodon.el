@@ -204,8 +204,8 @@ Use. e.g. \"%c\" for your locale's date and time format."
                     "favourites"
                     "search"))
          (buffer (cl-some (lambda (el)
-                           (get-buffer (concat "*mastodon-" el "*")))
-                         tls))) ; return first buff that exists
+                            (get-buffer (concat "*mastodon-" el "*")))
+                          tls))) ; return first buff that exists
     (if buffer
         (switch-to-buffer buffer)
       (mastodon-tl--get-home-timeline)

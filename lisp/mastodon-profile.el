@@ -256,20 +256,20 @@ Returns a list of lists."
   (let* ((car-fields (mapcar 'car fields))
          ;; (cdr-fields (mapcar 'cadr fields))
          ;; (cdr-fields-rendered
-          ;; (list
-           ;; (mapcar (lambda (x)
-                     ;; (mastodon-tl--render-text x nil))
-                   ;; cdr-fields)))
+         ;; (list
+         ;; (mapcar (lambda (x)
+         ;; (mastodon-tl--render-text x nil))
+         ;; cdr-fields)))
          (left-width (car (sort (mapcar 'length car-fields) '>))))
-         ;; (right-width (car (sort (mapcar 'length cdr-fields) '>))))
+    ;; (right-width (car (sort (mapcar 'length cdr-fields) '>))))
     (mapconcat (lambda (field)
                  (mastodon-tl--render-text
                   (concat
                    (format "_ %s " (car field))
                    (make-string (- (+ 1 left-width) (length (car field))) ?_)
                    (format " :: %s" (cadr field)))
-                   ;; (make-string (- (+ 1 right-width) (length (cdr field))) ?_)
-                   ;; " |")
+                  ;; (make-string (- (+ 1 right-width) (length (cdr field))) ?_)
+                  ;; " |")
                   field)) ; nil)) ; hack to make links tabstops
                fields "")))
 
@@ -307,7 +307,7 @@ Returns a list of lists."
                         account 'statuses_count)))
          (relationships (mastodon-profile--relationships-get id))
          (followed-by-you (cdr (assoc 'following
-                                  (aref relationships 0))))
+                                      (aref relationships 0))))
          (follows-you (cdr (assoc 'followed_by
                                   (aref relationships 0))))
          (followsp (or (equal follows-you 't) (equal followed-by-you 't)))
@@ -327,9 +327,9 @@ Returns a list of lists."
              (is-followers (string= endpoint-type "followers"))
              (is-following (string= endpoint-type "following"))
              (endpoint-name (cond
-                              (is-statuses "     TOOTS   ")
-                              (is-followers "  FOLLOWERS  ")
-                              (is-following "  FOLLOWING  "))))
+                             (is-statuses "     TOOTS   ")
+                             (is-followers "  FOLLOWERS  ")
+                             (is-following "  FOLLOWING  "))))
         (insert
          "\n"
          (mastodon-profile--image-from-account account)
@@ -382,7 +382,7 @@ Returns a list of lists."
           'success))
         (setq mastodon-tl--update-point (point))
         (mastodon-media--inline-images (point-min) (point))
-         ;; insert pinned toots first
+        ;; insert pinned toots first
         (when (and pinned (equal endpoint-type "statuses"))
           (mastodon-profile--insert-statuses-pinned pinned)
           (setq mastodon-tl--update-point (point))) ;updates to follow pinned toots
