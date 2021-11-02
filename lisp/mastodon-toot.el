@@ -155,7 +155,7 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
   "Set max_toot_chars returned in JSON-RESPONSE and display in new toot buffer."
   (setq mastodon-toot--max-toot-chars
         (number-to-string
-         (cdr (assoc 'max_toot_chars json-response))))
+         (alist-get 'max_toot_chars json-response)))
   (with-current-buffer "*new toot*"
     (mastodon-toot--update-status-fields)))
 
@@ -246,11 +246,11 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (interactive)
   (let* ((toot (mastodon-tl--property 'toot-json))
          (pinnable-p (and
-                      (not (cdr (assoc 'reblog toot)))
-                      (equal (cdr (assoc 'acct
-                                         (cdr (assoc 'account toot))))
+                      (not (alist-get 'reblog toot))
+                      (equal (alist-get 'acct
+                                        (alist-get 'account toot))
                              (mastodon-auth--user-acct))))
-         (pinned-p (equal (cdr (assoc 'pinned toot)) t))
+         (pinned-p (equal (alist-get 'pinned toot) t))
          (action (if pinned-p "unpin" "pin"))
          (msg (if pinned-p "unpinned" "pinned"))
          (msg-y-or-n (if pinned-p "Unpin" "Pin")))
@@ -266,8 +266,8 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (interactive)
   (let* ((toot (mastodon-tl--property 'toot-json))
          (url (if (mastodon-tl--field 'reblog toot)
-                  (cdr (assoc 'url (cdr (assoc 'reblog toot))))
-                (cdr (assoc 'url toot)))))
+                  (alist-get 'url (alist-get 'reblog toot))
+                (alist-get 'url toot))))
     (kill-new url)
     (message "Toot URL copied to the clipboard.")))
 
@@ -277,9 +277,9 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (let* ((toot (mastodon-tl--property 'toot-json))
          (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
          (url (mastodon-http--api (format "statuses/%s" id))))
-    (if (or (cdr (assoc 'reblog toot))
-            (not (equal (cdr (assoc 'acct
-                                    (cdr (assoc 'account toot))))
+    (if (or (alist-get 'reblog toot)
+            (not (equal (alist-get 'acct
+                                   (alist-get 'account toot))
                         (mastodon-auth--user-acct))))
         (message "You can only delete your own toots.")
       (if (y-or-n-p (format "Delete this toot? "))
@@ -296,12 +296,12 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (let* ((toot (mastodon-tl--property 'toot-json))
          (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
          (url (mastodon-http--api (format "statuses/%s" id)))
-         (toot-cw (cdr (assoc 'spoiler_text toot)))
-         (toot-visibility (cdr (assoc 'visibility toot)))
-         (reply-id (cdr (assoc 'in_reply_to_id toot))))
-    (if (or (cdr (assoc 'reblog toot))
-            (not (equal (cdr (assoc 'acct
-                                    (cdr (assoc 'account toot))))
+         (toot-cw (alist-get 'spoiler_text toot))
+         (toot-visibility (alist-get 'visibility toot))
+         (reply-id (alist-get 'in_reply_to_id toot)))
+    (if (or (alist-get 'reblog toot)
+            (not (equal (alist-get 'acct
+                                   (alist-get 'account toot))
                         (mastodon-auth--user-acct))))
         (message "You can only delete and redraft your own toots.")
       (if (y-or-n-p (format "Delete and redraft this toot? "))
@@ -311,8 +311,8 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
              (lambda ()
                (with-current-buffer response
                  (let* ((json-response (mastodon-http--process-json))
-                        (content (cdr (assoc 'text json-response))))
-                   ;; (media (cdr (assoc 'media_attachments json-response))))
+                        (content (alist-get 'text json-response)))
+                   ;; (media (alist-get 'media_attachments json-response)))
                    (mastodon-toot--compose-buffer nil nil)
                    (goto-char (point-max))
                    (insert content)
@@ -330,7 +330,7 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (interactive)
   (let* ((toot (mastodon-tl--property 'toot-json))
          (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
-         (bookmarked (cdr (assoc 'bookmarked toot)))
+         (bookmarked (alist-get 'bookmarked toot))
          (url (mastodon-http--api (if (equal bookmarked t)
                                       (format "statuses/%s/unbookmark" id)
                                     (format "statuses/%s/bookmark" id))))
@@ -498,10 +498,10 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
   (let* ((boosted (mastodon-tl--field 'reblog status))
          (mentions
           (if boosted
-              (cdr (assoc 'mentions (cdr (assoc 'reblog status))))
-            (cdr (assoc 'mentions status)))))
+              (alist-get 'mentions (alist-get 'reblog status))
+            (alist-get 'mentions status))))
     (mapconcat (lambda(x) (mastodon-toot--process-local
-                           (cdr (assoc 'acct x))))
+                           (alist-get 'acct x)))
                ;; reverse does not work on vectors in 24.5
                (reverse (append mentions nil))
                "")))
@@ -554,12 +554,12 @@ The prefix can match against both user handles and display names."
   (let* ((toot (mastodon-tl--property 'toot-json))
          (id (mastodon-tl--as-string (mastodon-tl--field 'id toot)))
          (account (mastodon-tl--field 'account toot))
-         (user (cdr (assoc 'acct account)))
+         (user (alist-get 'acct account))
          (mentions (mastodon-toot--mentions toot))
          (boosted (mastodon-tl--field 'reblog toot))
          (booster (when boosted
-                    (cdr (assoc 'acct
-                                (cdr (assoc 'account toot)))))))
+                    (alist-get 'acct
+                               (alist-get 'account toot)))))
     (mastodon-toot (when user
                      (if booster
                          (if (and
@@ -634,8 +634,8 @@ The items' ids are added to `mastodon-toot--media-attachment-ids',
 which are used to attach them to a toot after uploading."
   (mapcar (lambda (attachment)
             (let* ((filename (expand-file-name
-                              (cdr (assoc :filename attachment))))
-                   (caption (cdr (assoc :description attachment)))
+                              (alist-get :filename attachment)))
+                   (caption (alist-get :description attachment))
                    (url (concat mastodon-instance-url "/api/v2/media")))
               (message "Uploading %s..." (file-name-nondirectory filename))
               (mastodon-http--post-media-attachment url filename caption)))
@@ -659,14 +659,14 @@ which are used to attach them to a toot after uploading."
                                      (image-transforms-p))
                              `(:height ,mastodon-toot--attachment-height))))
         (mapcan (lambda (attachment)
-                  (let* ((data (cdr (assoc :contents attachment)))
+                  (let* ((data (alist-get :contents attachment))
                          (image (apply #'create-image data
                                        (if (version< emacs-version "27.1")
                                            (when image-options 'imagemagick)
                                          nil) ; inbuilt scaling in 27.1
                                        t image-options))
-                         (type (cdr (assoc :content-type attachment)))
-                         (description (cdr (assoc :description attachment))))
+                         (type (alist-get :content-type attachment))
+                         (description (alist-get :description attachment)))
                     (setq counter (1+ counter))
                     (list (format "\n    %d: " counter)
                           image
@@ -787,8 +787,8 @@ on the status of NSFW, content warning flags, media attachments, etc."
   "If REPLY-TO-USER is provided, inject their handle into the message.
 If REPLY-TO-ID is provided, set `mastodon-toot--reply-to-id'.
 REPLY-JSON is the full JSON of the toot being replied to."
-  (let ((reply-visibility (cdr (assoc 'visibility reply-json)))
-        (reply-cw (cdr (assoc 'spoiler_text reply-json))))
+  (let ((reply-visibility (alist-get 'visibility reply-json))
+        (reply-cw (alist-get 'spoiler_text reply-json)))
     (when reply-to-user
       (insert (format "%s " reply-to-user))
       (setq mastodon-toot--reply-to-id reply-to-id)

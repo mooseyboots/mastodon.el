@@ -163,9 +163,9 @@ extra keybindings."
   (interactive)
   (if (mastodon-tl--find-property-range 'toot-json (point))
       (let* ((acct-json (mastodon-profile--toot-json))
-             (id (cdr (assoc 'id acct-json)))
-             (handle (cdr (assoc 'acct acct-json)))
-             (name (cdr (assoc 'username acct-json))))
+             (id (alist-get 'id acct-json))
+             (handle (alist-get 'acct acct-json))
+             (name (alist-get 'username acct-json)))
         (if id
             (let ((response
                    (mastodon-http--post
@@ -185,9 +185,9 @@ extra keybindings."
   (interactive)
   (if (mastodon-tl--find-property-range 'toot-json (point))
       (let* ((acct-json (mastodon-profile--toot-json))
-             (id (cdr (assoc 'id acct-json)))
-             (handle (cdr (assoc 'acct acct-json)))
-             (name (cdr (assoc 'username acct-json))))
+             (id (alist-get 'id acct-json))
+             (handle (alist-get 'acct acct-json))
+             (name (alist-get 'username acct-json)))
         (if id
             (let ((response
                    (mastodon-http--post
@@ -209,8 +209,8 @@ extra keybindings."
                       "/api/v1/accounts/update_credentials"))
          ;; (buffer (mastodon-http--patch url))
          (json (mastodon-http--patch-json url))
-         (source (cdr (assoc 'source json)))
-         (note (cdr (assoc 'note source)))
+         (source (alist-get 'source json))
+         (note (alist-get 'note source))
          (buffer (get-buffer-create "*mastodon-update-profile*"))
          (inhibit-read-only t))
     (switch-to-buffer-other-window buffer)
@@ -247,8 +247,8 @@ Returns a list of lists."
       (mapcar
        (lambda (el)
          (list
-          (cdr (assoc 'name el))
-          (cdr (assoc 'value el))))
+          (alist-get 'name el)
+          (alist-get 'value el)))
        fields))))
 
 (defun mastodon-profile--fields-insert (fields)
@@ -306,10 +306,10 @@ Returns a list of lists."
                        (mastodon-profile--account-field
                         account 'statuses_count)))
          (relationships (mastodon-profile--relationships-get id))
-         (followed-by-you (cdr (assoc 'following
-                                      (aref relationships 0))))
-         (follows-you (cdr (assoc 'followed_by
-                                  (aref relationships 0))))
+         (followed-by-you (alist-get 'following
+                                     (aref relationships 0)))
+         (follows-you (alist-get 'followed_by
+                                 (aref relationships 0)))
          (followsp (or (equal follows-you 't) (equal followed-by-you 't)))
          (fields (mastodon-profile--fields-get account))
          (pinned (mastodon-profile--get-statuses-pinned account)))
@@ -396,11 +396,11 @@ Returns a list of lists."
 If toot is a boost, opens the profile of the booster."
   (interactive)
   (mastodon-profile--make-author-buffer
-   (cdr (assoc 'account (mastodon-profile--toot-json)))))
+   (alist-get 'account (mastodon-profile--toot-json))))
 
 (defun mastodon-profile--image-from-account (status)
   "Generate an image from a STATUS."
-  (let ((url (cdr (assoc 'avatar_static status))))
+  (let ((url (alist-get 'avatar_static status)))
     (unless (equal url "/avatars/original/missing.png")
       (mastodon-media--get-media-link-rendering url))))
 
@@ -443,12 +443,12 @@ FIELD is used to identify regions under 'account"
                       (propertize
                        (mastodon-tl--byline-author `((account . ,toot)))
                        'byline  't
-                       'toot-id (cdr (assoc 'id toot))
+                       'toot-id (alist-get 'id toot)
                        'base-toot-id (mastodon-tl--toot-id toot)
                        'toot-json toot))
               (mastodon-media--inline-images start-pos (point))
               (insert "\n"
-                      (mastodon-tl--render-text (cdr (assoc 'note toot)) nil)
+                      (mastodon-tl--render-text (alist-get 'note toot) nil)
                       "\n")))
           tootv)))
 
@@ -461,7 +461,7 @@ If the handle does not match a search return then retun NIL."
                    handle))
          (matching-account
           (seq-remove
-           (lambda(x) (not (string= (cdr (assoc 'acct x)) handle)))
+           (lambda(x) (not (string= (alist-get 'acct x) handle)))
            (mastodon-http--get-json
             (mastodon-http--api (format "accounts/search?q=%s" handle))))))
     (when (equal 1 (length matching-account))
@@ -477,35 +477,35 @@ If the handle does not match a search return then retun NIL."
 
 These include the author, author of reblogged entries and any user mentioned."
   (when status
-    (let ((this-account (cdr (assoc 'account status)))
-	  (mentions (cdr (assoc 'mentions status)))
-	  (reblog (cdr (assoc 'reblog status))))
+    (let ((this-account (alist-get 'account status))
+	  (mentions (alist-get 'mentions status))
+	  (reblog (alist-get 'reblog status)))
       (seq-filter
        'stringp
        (seq-uniq
         (seq-concatenate
          'list
-         (list (cdr (assoc 'acct this-account)))
+         (list (alist-get 'acct this-account))
          (mastodon-profile--extract-users-handles reblog)
          (mapcar (lambda (mention)
-                   (cdr (assoc 'acct mention)))
+                   (alist-get 'acct mention))
                  mentions)))))))
 
 (defun mastodon-profile--lookup-account-in-status (handle status)
   "Return account for HANDLE using hints in STATUS if possible."
-  (let* ((this-account (cdr (assoc 'account status)))
-         (reblog-account (cdr (assoc 'account (cdr (assoc 'reblog status)))))
+  (let* ((this-account (alist-get 'account status))
+         (reblog-account (alist-get 'account (alist-get 'reblog status)))
          (mention-id (seq-some
                       (lambda (mention)
                         (when (string= handle
-                                       (cdr (assoc 'acct mention)))
-                          (cdr (assoc 'id mention))))
-                      (cdr (assoc 'mentions status)))))
+                                       (alist-get 'acct mention))
+                          (alist-get 'id mention)))
+                      (alist-get 'mentions status))))
     (cond ((string= handle
-                    (cdr (assoc 'acct this-account)))
+                    (alist-get 'acct this-account))
            this-account)
           ((string= handle
-                    (cdr (assoc 'acct reblog-account)))
+                    (alist-get 'acct reblog-account))
            reblog-account)
           (mention-id
            (mastodon-profile--account-from-id mention-id))

@@ -158,11 +158,11 @@ Handle any errors from the server."
 
 (defun mastodon-auth--get-account-name ()
   "Request user credentials and return an account name."
-  (cdr (assoc
-        'acct
-        (mastodon-http--get-json
-         (mastodon-http--api
-          "accounts/verify_credentials")))))
+  (alist-get
+   'acct
+   (mastodon-http--get-json
+    (mastodon-http--api
+     "accounts/verify_credentials"))))
 
 (defun mastodon-auth--user-acct ()
   "Return a mastodon user acct name."

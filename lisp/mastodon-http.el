@@ -88,7 +88,7 @@ Message status and JSON error from RESPONSE if unsuccessful."
       (progn
         (switch-to-buffer response)
         (let ((json-response (mastodon-http--process-json)))
-          (message "Error %s: %s" status (cdr (assoc 'error json-response))))))))
+          (message "Error %s: %s" status (alist-get 'error json-response)))))))
 
 (defun mastodon-http--read-file-as-string (filename)
   "Read a file FILENAME as a string. Used to generate image preview."
@@ -267,13 +267,13 @@ item uploaded, and `mastodon-toot--update-status-fields' is run."
                (lambda (&key data &allow-other-keys)
                  (when data
                    (progn
-                     (push (cdr (assoc 'id data))
+                     (push (alist-get 'id data)
                            mastodon-toot--media-attachment-ids) ; add ID to list
                      (message "%s file %s with id %S and caption '%s' uploaded!"
-                              (capitalize (cdr (assoc 'type data)))
+                              (capitalize (alist-get 'type data))
                               file
-                              (cdr (assoc 'id data))
-                              (cdr (assoc 'description data)))
+                              (alist-get 'id data)
+                              (alist-get 'description data))
                      (mastodon-toot--update-status-fields)))))
      :error (cl-function
              (lambda (&key error-thrown &allow-other-keys)

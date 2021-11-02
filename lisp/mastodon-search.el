@@ -72,9 +72,9 @@ Returns a nested list containing user handle, display name, and URL."
   (let* ((url (format "%s/api/v2/search" mastodon-instance-url))
          (buffer (format "*mastodon-search-%s*" query))
          (response (mastodon-http--get-search-json url query))
-         (accts (cdr (assoc 'accounts response)))
-         (tags (cdr (assoc 'hashtags response)))
-         (statuses (cdr (assoc 'statuses response)))
+         (accts (alist-get 'accounts response))
+         (tags (alist-get 'hashtags response))
+         (statuses (alist-get 'statuses response))
          (user-ids (mapcar #'mastodon-search--get-user-info
                            accts)) ; returns a list of three-item lists
          (tags-list (mapcar #'mastodon-search--get-hashtag-info
@@ -136,27 +136,27 @@ Returns a nested list containing user handle, display name, and URL."
 
 (defun mastodon-search--get-user-info (account)
   "Get user handle, display name and account URL from ACCOUNT."
-  (list (cdr (assoc 'display_name account))
-        (cdr (assoc 'acct account))
-        (cdr (assoc 'url account))))
+  (list (alist-get 'display_name account)
+        (alist-get 'acct account)
+        (alist-get 'url account)))
 
 (defun mastodon-search--get-hashtag-info (tag)
   "Get hashtag name and URL from TAG."
-  (list (cdr (assoc 'name tag))
-        (cdr (assoc 'url tag))))
+  (list (alist-get 'name tag)
+        (alist-get 'url tag)))
 
 (defun mastodon-search--get-status-info (status)
   "Get ID, timestamp, content, and spoiler from STATUS."
-  (list (cdr (assoc 'id status))
-        (cdr (assoc 'created_at status))
-        (cdr (assoc 'spoiler_text status))
-        (cdr (assoc 'content status))))
+  (list (alist-get 'id status)
+        (alist-get 'created_at status)
+        (alist-get 'spoiler_text status)
+        (alist-get 'content status)))
 
 (defun mastodon-search--get-id-from-status (status)
   "Fetch the id from a STATUS returned by a search call to the server.
 
 We use this to fetch the complete status from the server."
-  (cdr (assoc 'id status)))
+  (alist-get 'id status))
 
 (defun mastodon-search--fetch-full-status-from-id (id)
   "Fetch the full status with id ID from the server.

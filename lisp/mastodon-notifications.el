@@ -78,12 +78,12 @@
   (interactive)
   (when (mastodon-tl--find-property-range 'toot-json (point))
     (let* ((toot-json (mastodon-tl--property 'toot-json))
-           (f-req-p (string= "follow_request" (cdr (assoc 'type toot-json)))))
+           (f-req-p (string= "follow_request" (alist-get 'type toot-json))))
       (if f-req-p
-          (let* ((account (cdr (assoc 'account toot-json)))
-                 (id (cdr (assoc 'id account)))
-                 (handle (cdr (assoc 'acct account)))
-                 (name (cdr (assoc 'username account))))
+          (let* ((account (alist-get 'account toot-json))
+                 (id (alist-get 'id account))
+                 (handle (alist-get 'acct account))
+                 (name (alist-get 'username account)))
             (if id
                 (let ((response
                        (mastodon-http--post
@@ -104,12 +104,12 @@
   (interactive)
   (when (mastodon-tl--find-property-range 'toot-json (point))
     (let* ((toot-json (mastodon-tl--property 'toot-json))
-           (f-req-p (string= "follow_request" (cdr (assoc 'type toot-json)))))
+           (f-req-p (string= "follow_request" (alist-get 'type toot-json))))
       (if f-req-p
-          (let* ((account (cdr (assoc 'account toot-json)))
-                 (id (cdr (assoc 'id account)))
-                 (handle (cdr (assoc 'acct account)))
-                 (name (cdr (assoc 'username account))))
+          (let* ((account (alist-get 'account toot-json))
+                 (id (alist-get 'id account))
+                 (handle (alist-get 'acct account))
+                 (name (alist-get 'username account)))
             (if id
                 (let ((response
                        (mastodon-http--post
@@ -127,7 +127,7 @@
 
 (defun mastodon-notifications--mention (note)
   "Format for a `mention' NOTE."
-  (let ((id (cdr (assoc 'id note)))
+  (let ((id (alist-get 'id note))
         (status (mastodon-tl--field 'status note)))
     (mastodon-notifications--insert-status
      status
@@ -156,8 +156,8 @@
 
 (defun mastodon-notifications--follow-request (note)
   "Format for a `follow-request' NOTE."
-  (let ((id (cdr (assoc 'id note)))
-        (follower (cdr (assoc 'username (cdr (assoc 'account note))))))
+  (let ((id (alist-get 'id note))
+        (follower (alist-get 'username (alist-get 'account note))))
     (mastodon-notifications--insert-status
      (cons '(reblog (id . nil)) note)
      (propertize (format "You have a follow request from... %s" follower)
@@ -170,7 +170,7 @@
 
 (defun mastodon-notifications--favourite (note)
   "Format for a `favourite' NOTE."
-  (let ((id (cdr (assoc 'id note)))
+  (let ((id (alist-get 'id note))
         (status (mastodon-tl--field 'status note)))
     (mastodon-notifications--insert-status
      status
@@ -188,7 +188,7 @@
 
 (defun mastodon-notifications--reblog (note)
   "Format for a `boost' NOTE."
-  (let ((id (cdr (assoc 'id note)))
+  (let ((id (alist-get 'id note))
         (status (mastodon-tl--field 'status note)))
     (mastodon-notifications--insert-status
      status

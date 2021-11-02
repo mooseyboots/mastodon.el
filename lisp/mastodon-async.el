@@ -305,7 +305,7 @@ Filter the toots using FILTER."
   "Test JSON to see if account is local."
   (not (string-match-p
         "@"
-        (cdr (assoc 'acct (cdr (assoc 'account json)))))))
+        (alist-get 'acct (alist-get 'account json)))))
 
 (defun mastodon-async--output-toot (toot)
   "Process TOOT and prepend it to the async user-facing buffer."
