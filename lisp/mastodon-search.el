@@ -46,6 +46,12 @@
 
 ;; functions for company completion of mentions in mastodon-toot
 
+(defun mastodon-search--get-user-info-@ (account)
+  "Get user handle, display name and account URL from ACCOUNT."
+  (list (cdr (assoc 'display_name account))
+        (concat "@" (cdr (assoc 'acct account)))
+        (cdr (assoc 'url account))))
+
 (defun mastodon-search--search-accounts-query (query)
   "Prompt for a search QUERY and return accounts synchronously.
 Returns a nested list containing user handle, display name, and URL."
@@ -55,7 +61,7 @@ Returns a nested list containing user handle, display name, and URL."
          (response (if (equal mastodon-toot--enable-completion-for-mentions "following")
                        (mastodon-http--get-search-json url query "following=true")
                      (mastodon-http--get-search-json url query))))
-    (mapcar #'mastodon-search--get-user-info
+    (mapcar #'mastodon-search--get-user-info-@
             response)))
 
 ;; functions for mastodon search
