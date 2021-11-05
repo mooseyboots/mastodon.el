@@ -205,9 +205,10 @@ ENPOINT is the endpoint for the stream and timeline."
                              mastodon-instance-url "*"))
         ;; if user stream, we need "timelines/home" not "timelines/user"
         ;; if notifs, we need "notifications" not "timelines/notifications"
-        (endpoint (if (equal name "notifications") "notifications"
-                    (if (equal name "home") "timelines/home"
-                      (format "timelines/%s" endpoint)))))
+        (endpoint (cond
+                   ((equal name "notifications") "notifications")
+                   ((equal name "home") "timelines/home")
+                   (t (format "timelines/%s" endpoint)))))
     (mastodon-async--set-local-variables buffer-name http-buffer
                                          buffer-name queue-name)
     ;; Similar to timeline init. 

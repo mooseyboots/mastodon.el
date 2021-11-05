@@ -349,12 +349,11 @@ Returns a list of lists."
          (mastodon-tl--render-text note account)
          ;; account here to enable tab-stops in profile note
          (if fields
-             (progn
-               (concat "\n"
-                       (mastodon-tl--set-face
-                        (mastodon-profile--fields-insert fields)
-                        'success)
-                       "\n"))
+             (concat "\n"
+                     (mastodon-tl--set-face
+                      (mastodon-profile--fields-insert fields)
+                      'success)
+                     "\n")
            "")
          ;; insert counts
          (mastodon-tl--set-face

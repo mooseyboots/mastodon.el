@@ -136,7 +136,6 @@ Otherwise, generate a token and pass it to
 `mastodon-auth--handle-token-reponse'."
   (if-let ((token (cdr (assoc mastodon-instance-url mastodon-auth--token-alist))))
       token
-
     (mastodon-auth--handle-token-response (mastodon-auth--get-token))))
 
 (defun mastodon-auth--handle-token-response (response)

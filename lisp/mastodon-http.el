@@ -85,10 +85,9 @@ Message status and JSON error from RESPONSE if unsuccessful."
                   (mastodon-http--status))))
     (if (string-prefix-p "2" status)
         (funcall success)
-      (progn
-        (switch-to-buffer response)
-        (let ((json-response (mastodon-http--process-json)))
-          (message "Error %s: %s" status (alist-get 'error json-response)))))))
+      (switch-to-buffer response)
+      (let ((json-response (mastodon-http--process-json)))
+        (message "Error %s: %s" status (alist-get 'error json-response))))))
 
 (defun mastodon-http--read-file-as-string (filename)
   "Read a file FILENAME as a string. Used to generate image preview."
@@ -266,15 +265,14 @@ item uploaded, and `mastodon-toot--update-status-fields' is run."
      :success (cl-function
                (lambda (&key data &allow-other-keys)
                  (when data
-                   (progn
-                     (push (alist-get 'id data)
-                           mastodon-toot--media-attachment-ids) ; add ID to list
-                     (message "%s file %s with id %S and caption '%s' uploaded!"
-                              (capitalize (alist-get 'type data))
-                              file
-                              (alist-get 'id data)
-                              (alist-get 'description data))
-                     (mastodon-toot--update-status-fields)))))
+                   (push (alist-get 'id data)
+                         mastodon-toot--media-attachment-ids) ; add ID to list
+                   (message "%s file %s with id %S and caption '%s' uploaded!"
+                            (capitalize (alist-get 'type data))
+                            file
+                            (alist-get 'id data)
+                            (alist-get 'description data))
+                   (mastodon-toot--update-status-fields))))
      :error (cl-function
              (lambda (&key error-thrown &allow-other-keys)
                (cond
