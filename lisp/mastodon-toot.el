@@ -366,23 +366,25 @@ To use the downloaded emoji, run `mastodon-toot--enable-custom-emoji'."
   (interactive)
   (let ((custom-emoji (mastodon-http--get-json
                        (mastodon-http--api "custom_emojis")))
-        (mastodon-custom-emoji-dir (concat (expand-file-name
-                                            emojify-emojis-dir)
-                                           "/mastodon-custom-emojis/")))
-    (if (not (file-exists-p emojify-emojis-dir))
+        (mastodon-custom-emoji-dir (file-name-as-directory
+                                    (concat (file-name-as-directory
+                                             (expand-file-name
+                                              emojify-emojis-dir))
+                                            "mastodon-custom-emojis"))))
+    (if (not (file-directory-p emojify-emojis-dir))
         (message "Looks like you need to set up emojify first.")
       (progn
         (unless (file-directory-p mastodon-custom-emoji-dir)
           (make-directory mastodon-custom-emoji-dir nil)) ; no add parent
         (mapc (lambda (x)
-                  (url-copy-file (alist-get 'url x)
-                                 (concat
-                                  mastodon-custom-emoji-dir
-                                  (alist-get 'shortcode x)
-                                  "."
-                                  (file-name-extension (alist-get 'url x)))
-                                 t))
-                custom-emoji)
+                (url-copy-file (alist-get 'url x)
+                               (concat
+                                mastodon-custom-emoji-dir
+                                (alist-get 'shortcode x)
+                                "."
+                                (file-name-extension (alist-get 'url x)))
+                               t))
+              custom-emoji)
         (message "Custom emoji for %s downloaded to %s"
                  mastodon-instance-url
                  mastodon-custom-emoji-dir)))))
