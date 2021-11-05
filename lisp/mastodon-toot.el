@@ -31,7 +31,10 @@
 
 
 (when (require 'emojify nil :noerror)
-  (declare-function emojify-insert-emoji "emojify"))
+  (declare-function emojify-insert-emoji "emojify")
+  (declare-function emojify-set-emoji-data "emojify")
+  (defvar emojify-emojis-dir)
+  (defvar emojify-user-emojis))
 
 (require 'cl-lib)
 
@@ -362,6 +365,74 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
 (defalias 'mastodon-toot--insert-emoji
   'emojify-insert-emoji
   "Prompt to insert an emoji.")
+
+(defun mastodon-toot--download-custom-emoji ()
+  "Download `mastodon-instance-url's custom emoji.
+Emoji images are stored in a subdir of `emojify-emojis-dir'.
+To use the downloaded emoji, run `mastodon-toot--enable-custom-emoji'."
+  (interactive)
+  (let ((custom-emoji (mastodon-http--get-json
+                       (mastodon-http--api "custom_emojis")))
+        (mastodon-custom-emoji-dir (concat (expand-file-name
+                                            emojify-emojis-dir)
+                                           "/mastodon-custom-emojis/")))
+    (if (not (file-exists-p emojify-emojis-dir))
+        (message "Looks like you need to set up emojify first.")
+      (progn
+        (unless (file-directory-p mastodon-custom-emoji-dir)
+          (make-directory mastodon-custom-emoji-dir nil)) ; no add parent
+        (mapc (lambda (x)
+                  (url-copy-file (alist-get 'url x)
+                                 (concat
+                                  mastodon-custom-emoji-dir
+                                  (alist-get 'shortcode x)
+                                  "."
+                                  (file-name-extension (alist-get 'url x)))
+                                 t))
+                custom-emoji)
+        (message "Custom emoji for %s downloaded to %s"
+                 mastodon-instance-url
+                 mastodon-custom-emoji-dir)))))
+
+(defun mastodon-toot--collect-custom-emoji ()
+  "Return a list of `mastodon-instance-url's custom emoji.
+The list is formatted for `emojify-user-emojis', which see."
+  (let* ((mastodon-custom-emojis-dir (concat (expand-file-name
+                                              emojify-emojis-dir)
+                                             "/mastodon-custom-emojis/"))
+         (custom-emoji-files (directory-files mastodon-custom-emojis-dir
+                                              nil ; not full path
+                                              "^[^.]")) ; no dot files
+         (mastodon-emojify-user-emojis))
+    (mapc (lambda (x)
+            (push
+             `(,(concat ":"
+                        (file-name-base x)
+                        ":") . (("name" . ,(file-name-base x))
+                        ("image" . ,(concat mastodon-custom-emojis-dir x))
+                        ("style" . "github")))
+             mastodon-emojify-user-emojis))
+          custom-emoji-files)
+    (reverse mastodon-emojify-user-emojis)))
+
+(defun mastodon-toot--enable-custom-emoji ()
+  "Add `mastodon-instance-url's custom emoji to `emojify'.
+Custom emoji must first be downloaded with
+`mastodon-toot--download-custom-emoji'. Custom emoji are appended
+to `emojify-user-emojis', and the emoji data is updated."
+  (interactive)
+  (unless (file-exists-p (concat (expand-file-name
+                                  emojify-emojis-dir)
+                                 "/mastodon-custom-emojis/"))
+    (when (y-or-n-p "Looks like you haven't downloaded your instance's custom emoji yet. Download now? ")
+      (mastodon-toot--download-custom-emoji)))
+  (setq emojify-user-emojis
+        (append (mastodon-toot--collect-custom-emoji)
+                emojify-user-emojis))
+  ;; if already loaded, reload
+  (when (featurep 'emojify)
+    (emojify-set-emoji-data)))
+
 
 (defun mastodon-toot--remove-docs ()
   "Get the body of a toot from the current compose buffer."
