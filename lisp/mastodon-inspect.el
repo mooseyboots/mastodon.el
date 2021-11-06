@@ -30,11 +30,14 @@
 ;;; Code:
 (autoload 'mastodon-http--api "mastodon-http")
 (autoload 'mastodon-http--get-json "mastodon-http")
+(autoload 'mastodon-http--get-search-json "mastodon-http")
 (autoload 'mastodon-media--inline-images "mastodon-media")
 (autoload 'mastodon-mode "mastodon")
 (autoload 'mastodon-tl--as-string "mastodon-tl")
 (autoload 'mastodon-tl--property "mastodon-tl")
 (autoload 'mastodon-tl--toot "mastodon-tl")
+
+(defvar mastodon-instance-url)
 
 (defgroup mastodon-inspect nil
   "Tools to help inspect toots."
@@ -59,7 +62,7 @@
    (concat "*mastodon-inspect-toot-"
            (mastodon-tl--as-string (mastodon-tl--property 'toot-id))
            "*")
-  (mastodon-tl--property 'toot-json)))
+   (mastodon-tl--property 'toot-json)))
 
 (defun mastodon-inspect--download-single-toot (toot-id)
   "Download the toot/status represented by TOOT-ID."

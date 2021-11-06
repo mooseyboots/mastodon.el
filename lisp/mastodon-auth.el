@@ -136,7 +136,6 @@ Otherwise, generate a token and pass it to
 `mastodon-auth--handle-token-reponse'."
   (if-let ((token (cdr (assoc mastodon-instance-url mastodon-auth--token-alist))))
       token
-
     (mastodon-auth--handle-token-response (mastodon-auth--get-token))))
 
 (defun mastodon-auth--handle-token-response (response)
@@ -158,11 +157,11 @@ Handle any errors from the server."
 
 (defun mastodon-auth--get-account-name ()
   "Request user credentials and return an account name."
-  (cdr (assoc
-        'acct
-        (mastodon-http--get-json
-         (mastodon-http--api
-          "accounts/verify_credentials")))))
+  (alist-get
+   'acct
+   (mastodon-http--get-json
+    (mastodon-http--api
+     "accounts/verify_credentials"))))
 
 (defun mastodon-auth--user-acct ()
   "Return a mastodon user acct name."

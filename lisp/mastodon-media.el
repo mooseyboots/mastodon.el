@@ -161,7 +161,7 @@ with the image."
                                  t image-options))))
             (when mastodon-media--enable-image-caching
               (unless (url-is-cached url) ; cache if not already cached
-              (url-store-in-cache url-buffer)))
+                (url-store-in-cache url-buffer)))
             (with-current-buffer (marker-buffer marker)
               ;; Save narrowing in our buffer
               (let ((inhibit-read-only t))
@@ -239,7 +239,7 @@ found."
          ;; Avatars are just one character in the buffer
          ((eq media-type 'avatar)
           (list next-pos (+ next-pos 1) 'avatar))
-        ;; Media links are 5 character ("[img]")
+         ;; Media links are 5 character ("[img]")
          ((eq media-type 'media-link)
           (list next-pos (+ next-pos 5) 'media-link)))))))
 

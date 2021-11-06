@@ -106,35 +106,28 @@ This is only used if company mode is installed."
           (const :tag "following only" "following")
           (const :tag "all users" "all")))
 
-(defvar mastodon-toot--content-warning nil
+(defvar-local mastodon-toot--content-warning nil
   "A flag whether the toot should be marked with a content warning.")
-(make-variable-buffer-local 'mastodon-toot--content-warning)
 
-(defvar mastodon-toot--content-warning-from-reply-or-redraft nil
+(defvar-local mastodon-toot--content-warning-from-reply-or-redraft nil
   "The content warning of the toot being replied to.")
-(make-variable-buffer-local 'mastodon-toot--content-warning)
 
-(defvar mastodon-toot--content-nsfw nil
+(defvar-local mastodon-toot--content-nsfw nil
   "A flag indicating whether the toot should be marked as NSFW.")
-(make-variable-buffer-local 'mastodon-toot--content-nsfw)
 
-(defvar mastodon-toot--visibility "public"
+(defvar-local mastodon-toot--visibility "public"
   "A string indicating the visibility of the toot being composed.
 
 Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"public\".")
-(make-variable-buffer-local 'mastodon-toot--visibility)
 
-(defvar mastodon-toot--media-attachments nil
+(defvar-local mastodon-toot--media-attachments nil
   "A list of the media attachments of the toot being composed.")
-(make-variable-buffer-local 'mastodon-toot--media-attachments)
 
-(defvar mastodon-toot--media-attachment-ids nil
+(defvar-local mastodon-toot--media-attachment-ids nil
   "A list of any media attachment ids of the toot being composed.")
-(make-variable-buffer-local 'mastodon-toot--media-attachment-ids)
 
-(defvar mastodon-toot--reply-to-id nil
+(defvar-local mastodon-toot--reply-to-id nil
   "Buffer-local variable to hold the id of the toot being replied to.")
-(make-variable-buffer-local 'mastodon-toot--reply-to-id)
 
 (defvar mastodon-toot--max-toot-chars nil
   "The maximum allowed characters count for a single toot.")
@@ -162,7 +155,7 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
   "Set max_toot_chars returned in JSON-RESPONSE and display in new toot buffer."
   (setq mastodon-toot--max-toot-chars
         (number-to-string
-         (cdr (assoc 'max_toot_chars json-response))))
+         (alist-get 'max_toot_chars json-response)))
   (with-current-buffer "*new toot*"
     (mastodon-toot--update-status-fields)))
 
@@ -191,9 +184,9 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   "Take ACTION on toot at point, then execute CALLBACK."
   (let* ((id (mastodon-tl--property 'base-toot-id))
          (url (mastodon-http--api (concat "statuses/"
-                                         (mastodon-tl--as-string id)
-                                         "/"
-                                         action))))
+                                          (mastodon-tl--as-string id)
+                                          "/"
+                                          action))))
     (let ((response (mastodon-http--post url nil nil)))
       (mastodon-http--triage response callback))))
 
@@ -253,11 +246,11 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (interactive)
   (let* ((toot (mastodon-tl--property 'toot-json))
          (pinnable-p (and
-                      (not (cdr (assoc 'reblog toot)))
-                      (equal (cdr (assoc 'acct
-                                         (cdr (assoc 'account toot))))
+                      (not (alist-get 'reblog toot))
+                      (equal (alist-get 'acct
+                                        (alist-get 'account toot))
                              (mastodon-auth--user-acct))))
-         (pinned-p (equal (cdr (assoc 'pinned toot)) t))
+         (pinned-p (equal (alist-get 'pinned toot) t))
          (action (if pinned-p "unpin" "pin"))
          (msg (if pinned-p "unpinned" "pinned"))
          (msg-y-or-n (if pinned-p "Unpin" "Pin")))
@@ -273,8 +266,8 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (interactive)
   (let* ((toot (mastodon-tl--property 'toot-json))
          (url (if (mastodon-tl--field 'reblog toot)
-                  (cdr (assoc 'url (cdr (assoc 'reblog toot))))
-                (cdr (assoc 'url toot)))))
+                  (alist-get 'url (alist-get 'reblog toot))
+                (alist-get 'url toot))))
     (kill-new url)
     (message "Toot URL copied to the clipboard.")))
 
@@ -284,9 +277,9 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (let* ((toot (mastodon-tl--property 'toot-json))
          (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
          (url (mastodon-http--api (format "statuses/%s" id))))
-    (if (or (cdr (assoc 'reblog toot))
-            (not (equal (cdr (assoc 'acct
-                                    (cdr (assoc 'account toot))))
+    (if (or (alist-get 'reblog toot)
+            (not (equal (alist-get 'acct
+                                   (alist-get 'account toot))
                         (mastodon-auth--user-acct))))
         (message "You can only delete your own toots.")
       (if (y-or-n-p (format "Delete this toot? "))
@@ -303,12 +296,12 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (let* ((toot (mastodon-tl--property 'toot-json))
          (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
          (url (mastodon-http--api (format "statuses/%s" id)))
-         (toot-cw (cdr (assoc 'spoiler_text toot)))
-         (toot-visibility (cdr (assoc 'visibility toot)))
-         (reply-id (cdr (assoc 'in_reply_to_id toot))))
-    (if (or (cdr (assoc 'reblog toot))
-            (not (equal (cdr (assoc 'acct
-                                    (cdr (assoc 'account toot))))
+         (toot-cw (alist-get 'spoiler_text toot))
+         (toot-visibility (alist-get 'visibility toot))
+         (reply-id (alist-get 'in_reply_to_id toot)))
+    (if (or (alist-get 'reblog toot)
+            (not (equal (alist-get 'acct
+                                   (alist-get 'account toot))
                         (mastodon-auth--user-acct))))
         (message "You can only delete and redraft your own toots.")
       (if (y-or-n-p (format "Delete and redraft this toot? "))
@@ -318,8 +311,8 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
              (lambda ()
                (with-current-buffer response
                  (let* ((json-response (mastodon-http--process-json))
-                        (content (cdr (assoc 'text json-response))))
-                        ;; (media (cdr (assoc 'media_attachments json-response))))
+                        (content (alist-get 'text json-response)))
+                   ;; (media (alist-get 'media_attachments json-response)))
                    (mastodon-toot--compose-buffer nil nil)
                    (goto-char (point-max))
                    (insert content)
@@ -337,7 +330,7 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (interactive)
   (let* ((toot (mastodon-tl--property 'toot-json))
          (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
-         (bookmarked (cdr (assoc 'bookmarked toot)))
+         (bookmarked (alist-get 'bookmarked toot))
          (url (mastodon-http--api (if (equal bookmarked t)
                                       (format "statuses/%s/unbookmark" id)
                                     (format "statuses/%s/bookmark" id))))
@@ -345,8 +338,8 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
                      (format "Toot already bookmarked. Remove? ")
                    (format "Bookmark this toot? ")))
          (message (if (equal bookmarked t)
-                       "Bookmark removed!"
-                     "Toot bookmarked!")))
+                      "Bookmark removed!"
+                    "Toot bookmarked!")))
     (when (y-or-n-p prompt)
       (let ((response (mastodon-http--post url nil nil)))
         (mastodon-http--triage response
@@ -373,26 +366,27 @@ To use the downloaded emoji, run `mastodon-toot--enable-custom-emoji'."
   (interactive)
   (let ((custom-emoji (mastodon-http--get-json
                        (mastodon-http--api "custom_emojis")))
-        (mastodon-custom-emoji-dir (concat (expand-file-name
-                                            emojify-emojis-dir)
-                                           "/mastodon-custom-emojis/")))
-    (if (not (file-exists-p emojify-emojis-dir))
+        (mastodon-custom-emoji-dir (file-name-as-directory
+                                    (concat (file-name-as-directory
+                                             (expand-file-name
+                                              emojify-emojis-dir))
+                                            "mastodon-custom-emojis"))))
+    (if (not (file-directory-p emojify-emojis-dir))
         (message "Looks like you need to set up emojify first.")
-      (progn
-        (unless (file-directory-p mastodon-custom-emoji-dir)
-          (make-directory mastodon-custom-emoji-dir nil)) ; no add parent
-        (mapc (lambda (x)
-                  (url-copy-file (alist-get 'url x)
-                                 (concat
-                                  mastodon-custom-emoji-dir
-                                  (alist-get 'shortcode x)
-                                  "."
-                                  (file-name-extension (alist-get 'url x)))
-                                 t))
-                custom-emoji)
-        (message "Custom emoji for %s downloaded to %s"
-                 mastodon-instance-url
-                 mastodon-custom-emoji-dir)))))
+      (unless (file-directory-p mastodon-custom-emoji-dir)
+        (make-directory mastodon-custom-emoji-dir nil)) ; no add parent
+      (mapc (lambda (x)
+              (url-copy-file (alist-get 'url x)
+                             (concat
+                              mastodon-custom-emoji-dir
+                              (alist-get 'shortcode x)
+                              "."
+                              (file-name-extension (alist-get 'url x)))
+                             t))
+            custom-emoji)
+      (message "Custom emoji for %s downloaded to %s"
+               mastodon-instance-url
+               mastodon-custom-emoji-dir))))
 
 (defun mastodon-toot--collect-custom-emoji ()
   "Return a list of `mastodon-instance-url's custom emoji.
@@ -503,12 +497,12 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
   "Extract mentions from STATUS and process them into a string."
   (interactive)
   (let* ((boosted (mastodon-tl--field 'reblog status))
-        (mentions
-         (if boosted
-             (cdr (assoc 'mentions (cdr (assoc 'reblog status))))
-           (cdr (assoc 'mentions status)))))
+         (mentions
+          (if boosted
+              (alist-get 'mentions (alist-get 'reblog status))
+            (alist-get 'mentions status))))
     (mapconcat (lambda(x) (mastodon-toot--process-local
-                           (cdr (assoc 'acct x))))
+                           (alist-get 'acct x)))
                ;; reverse does not work on vectors in 24.5
                (reverse (append mentions nil))
                "")))
@@ -541,19 +535,19 @@ The prefix can match against both user handles and display names."
 
 (defun mastodon-toot--mentions-completion (command &optional arg &rest ignored)
   "A company completion backend for toot mentions."
-   (interactive (list 'interactive))
-   (cl-case command
-     (interactive (company-begin-backend 'mastodon-toot--mentions-completion))
-     (prefix (when (and (bound-and-true-p mastodon-toot-mode) ; if masto toot minor mode
-                        (save-excursion
-                          (forward-whitespace -1)
-                          (forward-whitespace 1)
-                          (looking-at "@")))
-               ;; @ + thing before point
-               (concat "@" (company-grab-symbol))))
-     (candidates (mastodon-toot--mentions-company-candidates arg))
-     (annotation (mastodon-toot--mentions-company-annotation arg))
-     (meta (mastodon-toot--mentions-company-meta arg))))
+  (interactive (list 'interactive))
+  (cl-case command
+    (interactive (company-begin-backend 'mastodon-toot--mentions-completion))
+    (prefix (when (and (bound-and-true-p mastodon-toot-mode) ; if masto toot minor mode
+                       (save-excursion
+                         (forward-whitespace -1)
+                         (forward-whitespace 1)
+                         (looking-at "@")))
+              ;; @ + thing before point
+              (concat "@" (company-grab-symbol))))
+    (candidates (mastodon-toot--mentions-company-candidates arg))
+    (annotation (mastodon-toot--mentions-company-annotation arg))
+    (meta (mastodon-toot--mentions-company-meta arg))))
 
 (defun mastodon-toot--reply ()
   "Reply to toot at `point'."
@@ -561,12 +555,12 @@ The prefix can match against both user handles and display names."
   (let* ((toot (mastodon-tl--property 'toot-json))
          (id (mastodon-tl--as-string (mastodon-tl--field 'id toot)))
          (account (mastodon-tl--field 'account toot))
-         (user (cdr (assoc 'acct account)))
+         (user (alist-get 'acct account))
          (mentions (mastodon-toot--mentions toot))
          (boosted (mastodon-tl--field 'reblog toot))
          (booster (when boosted
-                    (cdr (assoc 'acct
-                                (cdr (assoc 'account toot)))))))
+                    (alist-get 'acct
+                               (alist-get 'account toot)))))
     (mastodon-toot (when user
                      (if booster
                          (if (and
@@ -641,8 +635,8 @@ The items' ids are added to `mastodon-toot--media-attachment-ids',
 which are used to attach them to a toot after uploading."
   (mapcar (lambda (attachment)
             (let* ((filename (expand-file-name
-                              (cdr (assoc :filename attachment))))
-                   (caption (cdr (assoc :description attachment)))
+                              (alist-get :filename attachment)))
+                   (caption (alist-get :description attachment))
                    (url (concat mastodon-instance-url "/api/v2/media")))
               (message "Uploading %s..." (file-name-nondirectory filename))
               (mastodon-http--post-media-attachment url filename caption)))
@@ -666,14 +660,14 @@ which are used to attach them to a toot after uploading."
                                      (image-transforms-p))
                              `(:height ,mastodon-toot--attachment-height))))
         (mapcan (lambda (attachment)
-                  (let* ((data (cdr (assoc :contents attachment)))
+                  (let* ((data (alist-get :contents attachment))
                          (image (apply #'create-image data
                                        (if (version< emacs-version "27.1")
                                            (when image-options 'imagemagick)
                                          nil) ; inbuilt scaling in 27.1
                                        t image-options))
-                         (type (cdr (assoc :content-type attachment)))
-                         (description (cdr (assoc :description attachment))))
+                         (type (alist-get :content-type attachment))
+                         (description (alist-get :description attachment)))
                     (setq counter (1+ counter))
                     (list (format "\n    %d: " counter)
                           image
@@ -714,9 +708,8 @@ e.g. mastodon-toot--send -> Send."
   "Format a list of keybindings, KBINDS, for display in documentation."
   (mapcar #'mastodon-toot--format-kbind kbinds))
 
-(defvar mastodon-toot--kbinds-pairs nil
+(defvar-local mastodon-toot--kbinds-pairs nil
   "Contains a list of paired toot compose buffer keybindings for inserting.")
-(make-variable-buffer-local 'mastodon-toot--kbinds-pairs)
 
 (defun mastodon-toot--formatted-kbinds-pairs (kbinds-list longest)
   "Return a list of strings each containing two formatted kbinds.
@@ -795,8 +788,8 @@ on the status of NSFW, content warning flags, media attachments, etc."
   "If REPLY-TO-USER is provided, inject their handle into the message.
 If REPLY-TO-ID is provided, set `mastodon-toot--reply-to-id'.
 REPLY-JSON is the full JSON of the toot being replied to."
-  (let ((reply-visibility (cdr (assoc 'visibility reply-json)))
-        (reply-cw (cdr (assoc 'spoiler_text reply-json))))
+  (let ((reply-visibility (alist-get 'visibility reply-json))
+        (reply-cw (alist-get 'spoiler_text reply-json)))
     (when reply-to-user
       (insert (format "%s " reply-to-user))
       (setq mastodon-toot--reply-to-id reply-to-id)
@@ -811,38 +804,38 @@ REPLY-JSON is the full JSON of the toot being replied to."
   "Update the status fields in the header based on the current state."
   (ignore-errors  ;; called from after-change-functions so let's not leak errors
     (let ((inhibit-read-only t)
-         (header-region (mastodon-tl--find-property-range 'toot-post-header
+          (header-region (mastodon-tl--find-property-range 'toot-post-header
+                                                           (point-min)))
+          (count-region (mastodon-tl--find-property-range 'toot-post-counter
                                                           (point-min)))
-         (count-region (mastodon-tl--find-property-range 'toot-post-counter
+          (visibility-region (mastodon-tl--find-property-range
+                              'toot-post-visibility (point-min)))
+          (nsfw-region (mastodon-tl--find-property-range 'toot-post-nsfw-flag
                                                          (point-min)))
-         (visibility-region (mastodon-tl--find-property-range
-                             'toot-post-visibility (point-min)))
-         (nsfw-region (mastodon-tl--find-property-range 'toot-post-nsfw-flag
-                                                        (point-min)))
-         (cw-region (mastodon-tl--find-property-range 'toot-post-cw-flag
-                                                      (point-min))))
-     (add-text-properties (car count-region) (cdr count-region)
-                          (list 'display
-                                (format "%s/%s characters"
-                                        (- (point-max) (cdr header-region))
-                                        mastodon-toot--max-toot-chars)))
-     (add-text-properties (car visibility-region) (cdr visibility-region)
-                         (list 'display
-                               (format "Visibility: %s"
-                                       (if (equal
-                                            mastodon-toot--visibility
-                                            "private")
-                                           "followers-only"
-                                         mastodon-toot--visibility))))
-     (add-text-properties (car nsfw-region) (cdr nsfw-region)
-                          (list 'display (if mastodon-toot--content-nsfw
-                                             (if mastodon-toot--media-attachments
-                                                 "NSFW" "NSFW (no effect until attachments added)")
-                                           "")
-                                'face 'mastodon-cw-face))
-     (add-text-properties (car cw-region) (cdr cw-region)
-                          (list 'invisible (not mastodon-toot--content-warning)
-                                'face 'mastodon-cw-face)))))
+          (cw-region (mastodon-tl--find-property-range 'toot-post-cw-flag
+                                                       (point-min))))
+      (add-text-properties (car count-region) (cdr count-region)
+                           (list 'display
+                                 (format "%s/%s characters"
+                                         (- (point-max) (cdr header-region))
+                                         mastodon-toot--max-toot-chars)))
+      (add-text-properties (car visibility-region) (cdr visibility-region)
+                           (list 'display
+                                 (format "Visibility: %s"
+                                         (if (equal
+                                              mastodon-toot--visibility
+                                              "private")
+                                             "followers-only"
+                                           mastodon-toot--visibility))))
+      (add-text-properties (car nsfw-region) (cdr nsfw-region)
+                           (list 'display (if mastodon-toot--content-nsfw
+                                              (if mastodon-toot--media-attachments
+                                                  "NSFW" "NSFW (no effect until attachments added)")
+                                            "")
+                                 'face 'mastodon-cw-face))
+      (add-text-properties (car cw-region) (cdr cw-region)
+                           (list 'invisible (not mastodon-toot--content-warning)
+                                 'face 'mastodon-cw-face)))))
 
 (defun mastodon-toot--compose-buffer (reply-to-user reply-to-id &optional reply-json)
   "Create a new buffer to capture text for a new toot.
