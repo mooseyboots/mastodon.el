@@ -726,12 +726,18 @@ takes a single function. By default it is
       'base-toot-id (mastodon-tl--toot-id toot)
       'help-echo    (when (and mastodon-tl--buffer-spec
                                (string-match-p
-                                "context"
+                                "context" ; when thread view
                                 (plist-get mastodon-tl--buffer-spec 'endpoint)))
-                      (format "%s faves | %s boosts | %s replies"
-                              (cdr (assoc 'favourites_count toot))
-                              (cdr (assoc 'reblogs_count toot))
-                              (cdr (assoc 'replies_count toot))))
+                      (if (alist-get 'reblog toot)
+                          (let ((reblog (cdr (assoc 'reblog toot))))
+                            (format "%s faves | %s boosts | %s replies"
+                                    (alist-get 'favourites_count reblog)
+                                    (alist-get 'reblogs_count reblog)
+                                    (alist-get 'replies_count reblog)))
+                        (format "%s faves | %s boosts | %s replies"
+                                (alist-get 'favourites_count toot)
+                                (alist-get 'reblogs_count toot)
+                                (alist-get 'replies_count toot))))
       'toot-json    toot)
      "\n")
     (when mastodon-tl--display-media-p
