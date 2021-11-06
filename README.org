@@ -40,6 +40,7 @@ It adds the following features:
 |                 | media uploads previews in toot compose buffer                                      |
 | =C-c C-n=         | and sensitive media/nsfw flag                                                      |
 | =C-c C-e=         | add emoji (if =emojify= installed)                                                   |
+|                 | download and use your instance's custom emoji                                      |
 |                 | replies preserve visibility status/CW of original toot                             |
 |                 | server's maximum toot length shown in toot compose buffer                          |
 | Search:         |                                                                                    |

@@ -73,7 +73,6 @@
    " "
    (cdr (assoc message mastodon-notifications--response-alist))))
 
-
 (defun mastodon-notifications--follow-request-accept-notifs ()
   "Accept the follow request of user at point, in notifications view."
   (interactive)

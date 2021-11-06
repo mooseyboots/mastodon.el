@@ -159,7 +159,7 @@ Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"p
    (mastodon-http--api "instance") 'mastodon-toot--get-max-toot-chars-callback))
 
 (defun mastodon-toot--get-max-toot-chars-callback (json-response)
-  "Set max_toot_chars returned in JSON-RESPONSE."
+  "Set max_toot_chars returned in JSON-RESPONSE and display in new toot buffer."
   (setq mastodon-toot--max-toot-chars
         (number-to-string
          (cdr (assoc 'max_toot_chars json-response))))
