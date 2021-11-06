@@ -724,15 +724,12 @@ takes a single function. By default it is
                                (string-match-p
                                 "context" ; when thread view
                                 (plist-get mastodon-tl--buffer-spec 'endpoint)))
-                      (if-let ((reblog (alist-get 'reblog toot)))
-                          (format "%s faves | %s boosts | %s replies"
-                                  (alist-get 'favourites_count reblog)
-                                  (alist-get 'reblogs_count reblog)
-                                  (alist-get 'replies_count reblog))
+                      ;; prefer the reblog toot if present:
+                      (let ((toot-to-use (or (alist-get 'reblog toot) toot)))
                         (format "%s faves | %s boosts | %s replies"
-                                (alist-get 'favourites_count toot)
-                                (alist-get 'reblogs_count toot)
-                                (alist-get 'replies_count toot))))
+                                (alist-get 'favourites_count toot-to-use)
+                                (alist-get 'reblogs_count toot-to-use)
+                                (alist-get 'replies_count toot-to-use))))
       'toot-json    toot)
      "\n")
     (when mastodon-tl--display-media-p
