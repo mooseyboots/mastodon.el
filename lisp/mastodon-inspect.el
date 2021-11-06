@@ -69,7 +69,7 @@
 (defun mastodon-inspect--view-single-toot (toot-id)
   "View the toot/status represented by TOOT-ID."
   (interactive "s Toot ID: ")
-  (let ((buffer (get-buffer-create(concat "*mastodon-status-" toot-id "*"))))
+  (let ((buffer (get-buffer-create (concat "*mastodon-status-" toot-id "*"))))
     (with-current-buffer buffer
       (let ((toot (mastodon-inspect--download-single-toot toot-id )))
         (mastodon-tl--toot toot)
@@ -86,6 +86,38 @@
   (mastodon-inspect--dump-json-in-buffer
    (concat "*mastodon-status-raw-" toot-id "*")
    (mastodon-inspect--download-single-toot toot-id)))
+
+
+(defvar mastodon-inspect--search-query-accounts-result)
+(defvar mastodon-inspect--single-account-json)
+
+(defvar mastodon-inspect--search-query-full-result)
+(defvar mastodon-inspect--search-result-tags)
+
+(defun mastodon-inspect--get-search-result (query)
+  (interactive)
+  (setq mastodon-inspect--search-query-full-result
+        (append ; convert vector to list
+         (mastodon-http--get-search-json
+         (format "%s/api/v2/search" mastodon-instance-url)
+         query)
+         nil))
+  (setq mastodon-inspect--search-result-tags
+        (append (cdr
+                 (caddr mastodon-inspect--search-query-full-result))
+                nil)))
+
+(defun mastodon-inspect--get-search-account (query)
+  (interactive)
+  (setq mastodon-inspect--search-query-accounts-result
+        (append ; convert vector to list
+         (mastodon-http--get-search-json
+         (format "%s/api/v1/accounts/search" mastodon-instance-url)
+         query)
+         nil))
+  (setq mastodon-inspect--single-account-json
+      (car mastodon-inspect--search-query-accounts-result)))
+
 
 (provide 'mastodon-inspect)
 ;;; mastodon-inspect.el ends here
