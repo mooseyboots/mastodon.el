@@ -208,6 +208,8 @@ notification to be tested."
            (string= " Favourited your status from"
                     (mastodon-notifications--byline-concat "Favourited"))
            (string= " Boosted your status from"
-                    (mastodon-notifications--byline-concat "Boosted")))))
+                    (mastodon-notifications--byline-concat "Boosted"))
+           (string= " Posted a post"
+                    (mastodon-notifications--byline-concat "Posted")))))
 
 
