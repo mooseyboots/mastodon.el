@@ -36,12 +36,24 @@
   (should (string= "foo" (mastodon-auth--handle-token-response '(:access_token "foo" :token_type "Bearer" :scope "read write follow" :created_at 0)))))
 
 (ert-deftest mastodon-auth--handle-token-response--unknown ()
-  :expected-result :failed
-  (mastodon-auth--handle-token-response '(:herp "derp")))
+  (should
+   (equal
+    '(error "Unknown response from mastodon-auth--get-token!")
+    (condition-case error
+        (progn
+          (mastodon-auth--handle-token-response '(:herp "derp"))
+          nil)
+      (t error)))))
 
 (ert-deftest mastodon-auth--handle-token-response--failure ()
-  :expected-result :failed
-  (mastodon-auth--handle-token-response '(:error "invalid_grant" :error_description "The provided authorization grant is invalid, expired, revoked, does not match the redirection URI used in the authorization request, or was issued to another client.")))
+  (let ((error-message "The provided authorization grant is invalid, expired, revoked, does not match the redirection URI used in the authorization request, or was issued to another client."))
+    (should
+     (equal
+      `(error ,(format "Mastodon-auth--access-token: invalid_grant: %s" error-message))
+      (condition-case error
+          (mastodon-auth--handle-token-response
+           `(:error "invalid_grant" :error_description ,error-message))
+        (t error))))))
 
 (provide 'mastodon-auth--test)
 ;;; mastodon-auth--test.el ends here
