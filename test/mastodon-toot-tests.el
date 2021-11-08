@@ -41,6 +41,6 @@
 
 (ert-deftest cancel ()
   (with-mock
-   (mock (kill-buffer-and-window))
-   (mastodon-toot--cancel)
-   (mock-verify)))
+    (mock (kill-buffer-and-window))
+    (mastodon-toot--cancel)
+    (mock-verify)))
