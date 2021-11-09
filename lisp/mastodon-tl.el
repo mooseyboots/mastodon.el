@@ -720,16 +720,6 @@ takes a single function. By default it is
               (mastodon-tl--byline toot author-byline action-byline))
       'toot-id      (alist-get 'id toot)
       'base-toot-id (mastodon-tl--toot-id toot)
-      'help-echo    (when (and mastodon-tl--buffer-spec
-                               (string-match-p
-                                "context" ; when thread view
-                                (plist-get mastodon-tl--buffer-spec 'endpoint)))
-                      ;; prefer the reblog toot if present:
-                      (let ((toot-to-use (or (alist-get 'reblog toot) toot)))
-                        (format "%s faves | %s boosts | %s replies"
-                                (alist-get 'favourites_count toot-to-use)
-                                (alist-get 'reblogs_count toot-to-use)
-                                (alist-get 'replies_count toot-to-use))))
       'toot-json    toot)
      "\n")
     (when mastodon-tl--display-media-p
