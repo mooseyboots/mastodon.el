@@ -24,7 +24,8 @@
    (let* ((mastodon-media--preview-max-height 123)
           (result
            (mastodon-media--get-media-link-rendering "http://example.org/img.png"
-                                                     "http://example.org/remote/img.png"))
+                                                     "http://example.org/remote/img.png"
+                                                     "image"))
           (result-no-properties (substring-no-properties result))
           (properties (text-properties-at 0 result)))
      (should (string= "[img] " result-no-properties))
@@ -36,7 +37,33 @@
      (should (eq 'image (plist-get properties 'mastodon-tab-stop)))
      (should (string= "http://example.org/remote/img.png" (plist-get properties 'image-url)))
      (should (eq mastodon-tl--shr-image-map-replacement (plist-get properties 'keymap)))
+     (should (string= "image" (plist-get properties 'mastodon-media-type)))
      (should (string= "RET/i: load full image (prefix: copy URL), +/-: zoom, r: rotate, o: save preview"
+                      (plist-get properties 'help-echo))))))
+
+(ert-deftest mastodon-media:get-media-link-rendering-gif ()
+  "Should return text with all expected properties."
+  (with-mock
+   (mock (create-image * nil t) => :mock-image)
+
+   (let* ((mastodon-media--preview-max-height 123)
+          (result
+           (mastodon-media--get-media-link-rendering "http://example.org/img.png"
+                                                     "http://example.org/remote/img.png"
+                                                     "gifv"))
+          (result-no-properties (substring-no-properties result))
+          (properties (text-properties-at 0 result)))
+     (should (string= "[img] " result-no-properties))
+     (should (string= "http://example.org/img.png" (plist-get properties 'media-url)))
+     (should (eq 'needs-loading (plist-get properties 'media-state)))
+     (should (eq 'media-link (plist-get properties 'media-type)))
+     (should (eq :mock-image (plist-get properties 'display)))
+     (should (eq 'highlight (plist-get properties 'mouse-face)))
+     (should (eq 'image (plist-get properties 'mastodon-tab-stop)))
+     (should (string= "http://example.org/remote/img.png" (plist-get properties 'image-url)))
+     (should (eq mastodon-tl--shr-image-map-replacement (plist-get properties 'keymap)))
+     (should (string= "gifv" (plist-get properties 'mastodon-media-type)))
+     (should (string= "RET/i: load full image (prefix: copy URL), +/-: zoom, r: rotate, o: save preview\ntype: gifv"
                  (plist-get properties 'help-echo))))))
 
 (ert-deftest mastodon-media:load-image-from-url:avatar-with-imagemagic ()
