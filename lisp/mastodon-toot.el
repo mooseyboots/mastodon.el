@@ -521,8 +521,8 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
 The prefix can match against both user handles and display names."
   (let (res)
     (dolist (item (mastodon-search--search-accounts-query prefix))
-      (when (or (string-prefix-p prefix (cadr item))
-                (string-prefix-p prefix (car item)))
+      (when (or (string-prefix-p prefix (cadr item) t)
+                (string-prefix-p prefix (car item) t))
         (push (mastodon-toot--mentions-company-make-candidate item) res)))
     res))
 
