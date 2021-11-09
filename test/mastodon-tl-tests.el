@@ -1,3 +1,5 @@
+;;; mastodon-tl-test.el --- Tests for mastodon-tl.el  -*- lexical-binding: nil -*-
+
 (require 'cl-lib)
 (require 'cl-macs)
 (require 'el-mock)
@@ -89,46 +91,46 @@
             (reblogged)))
   "A sample reblogged/boosted toot (parsed json)")
 
-(ert-deftest remove-html-1 ()
+(ert-deftest mastodon-tl--remove-html-1 ()
   "Should remove all <span> tags."
   (let ((input "<span class=\"h-card\">foobar</span> <span>foobaz</span>"))
     (should (string= (mastodon-tl--remove-html input) "foobar foobaz"))))
 
-(ert-deftest remove-html-2 ()
+(ert-deftest mastodon-tl--remove-html-2 ()
   "Should replace <\p> tags with two new lines."
   (let ((input "foobar</p>"))
     (should (string= (mastodon-tl--remove-html input) "foobar\n\n"))))
 
-(ert-deftest toot-id-boosted ()
+(ert-deftest mastodon-tl--toot-id-boosted ()
   "If a toot is boostedm, return the reblog id."
   (should (string= (mastodon-tl--as-string
                     (mastodon-tl--toot-id mastodon-tl-test-base-boosted-toot))
                    "4543919")))
 
-(ert-deftest toot-id ()
+(ert-deftest mastodon-tl--toot-id ()
   "If a toot is boostedm, return the reblog id."
   (should (string= (mastodon-tl--as-string
                     (mastodon-tl--toot-id mastodon-tl-test-base-toot))
                    "61208")))
 
-(ert-deftest as-string-1 ()
+(ert-deftest mastodon-tl--as-string-1 ()
   "Should accept a string or number and return a string."
   (let ((id "1000"))
     (should (string= (mastodon-tl--as-string id) id))))
 
-(ert-deftest as-string-2 ()
+(ert-deftest mastodon-tl--as-string-2 ()
   "Should accept a string or number and return a string."
   (let ((id 1000))
     (should (string= (mastodon-tl--as-string id) (number-to-string id)))))
 
-(ert-deftest more-json ()
+(ert-deftest mastodon-tl--more-json ()
   "Should request toots older than max_id."
   (let ((mastodon-instance-url "https://instance.url"))
     (with-mock
       (mock (mastodon-http--get-json "https://instance.url/api/v1/timelines/foo?max_id=12345"))
       (mastodon-tl--more-json "timelines/foo" 12345))))
 
-(ert-deftest more-json-id-string ()
+(ert-deftest mastodon-tl--more-json-id-string ()
   "Should request toots older than max_id.
 
 `mastodon-tl--more-json' should accept and id that is either
@@ -138,7 +140,7 @@ a string or a numeric."
       (mock (mastodon-http--get-json "https://instance.url/api/v1/timelines/foo?max_id=12345"))
       (mastodon-tl--more-json "timelines/foo" "12345"))))
 
-(ert-deftest update-json-id-string ()
+(ert-deftest mastodon-tl--update-json-id-string ()
   "Should request toots more recent than since_id.
 
 `mastodon-tl--updated-json' should accept and id that is either
@@ -912,23 +914,27 @@ constant."
                    "Browse tag #sampletag"))))
 
 (ert-deftest mastodon-tl--extract-hashtag-from-url-mastodon-link ()
+  "Should extract the hashtag from a tags url."
   (should (equal (mastodon-tl--extract-hashtag-from-url
 		  "https://example.org/tags/foo"
 		  "https://example.org")
 		 "foo")))
 
 (ert-deftest mastodon-tl--extract-hashtag-from-url-other-link ()
+  "Should extract the hashtag from a tag url."
   (should (equal (mastodon-tl--extract-hashtag-from-url
 		  "https://example.org/tag/foo"
 		  "https://example.org")
 		 "foo")))
 
 (ert-deftest mastodon-tl--extract-hashtag-from-url-wrong-instance ()
+  "Should not find a tag when the instance doesn't match."
   (should (null (mastodon-tl--extract-hashtag-from-url
 		 "https://example.org/tags/foo"
 		 "https://other.example.org"))))
 
 (ert-deftest mastodon-tl--extract-hashtag-from-url-not-tag ()
+  "Should not find a hashtag when not a tag url"
   (should (null (mastodon-tl--extract-hashtag-from-url
 		 "https://example.org/@userid"
 		 "https://example.org"))))
@@ -957,17 +963,20 @@ constant."
                    "Browse user profile of @foo@bar.example"))))
 
 (ert-deftest mastodon-tl--extract-userhandle-from-url-correct-case ()
+  "Should extract the user handle from url."
   (should (equal (mastodon-tl--extract-userhandle-from-url
                   "https://example.org/@someuser"
                   "@SomeUser")
                  "@SomeUser@example.org")))
 
 (ert-deftest mastodon-tl--extract-userhandle-from-url-missing-at-in-text ()
+  "Should not extract a user handle from url if the text is wrong."
   (should (null (mastodon-tl--extract-userhandle-from-url
                  "https://example.org/@someuser"
                  "SomeUser"))))
 
 (ert-deftest mastodon-tl--extract-userhandle-from-url-query-in-url ()
+  "Should not extract a user handle from url if there is a query param."
   (should (null (mastodon-tl--extract-userhandle-from-url
                  "https://example.org/@someuser?shouldnot=behere"
                  "SomeUser"))))

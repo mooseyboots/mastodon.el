@@ -1,4 +1,4 @@
-
+;;; mastodon-search-test.el --- Tests for mastodon-search.el  -*- lexical-binding: nil -*-
 
 (defconst mastodon-search--single-account-query
   '((id . "242971")
@@ -37,7 +37,7 @@
               (verified_at))]))
   "A sample mastodon account search result (parsed json)")
 
-(defconst mastodon-search-test-single-tag
+(defconst mastodon-search--test-single-tag
   '((name . "TeamBringBackVisibleScrollbars")
     (url . "https://todon.nl/tags/TeamBringBackVisibleScrollbars")
     (history . [((day . "1636156800") (uses . "0") (accounts . "0"))
@@ -48,7 +48,7 @@
                 ((day . "1635724800") (uses . "0") (accounts . "0"))
                 ((day . "1635638400") (uses . "0") (accounts . "0"))])))
 
-(defconst mastodon-search-test-single-status
+(defconst mastodon-search--test-single-status
   '((id . "107230316503209282")
     (created_at . "2021-11-06T13:19:40.628Z")
     (in_reply_to_id)
@@ -114,33 +114,33 @@
     (card)
     (poll)))
 
-(ert-deftest mastodon-search-test-get-user-info-@ ()
+(ert-deftest mastodon-search--get-user-info-@ ()
   "Should build a list from a single account for company completion."
   (should
    (equal
     (mastodon-search--get-user-info-@ mastodon-search--single-account-query)
     '(": ( ) { : | : & } ; :" "@mousebot" "https://todon.nl/@mousebot"))))
 
-(ert-deftest mastodon-search-test-get-user-info ()
+(ert-deftest mastodon-search--get-user-info ()
   "Should build a list from a single account for company completion."
   (should
    (equal
     (mastodon-search--get-user-info mastodon-search--single-account-query)
     '(": ( ) { : | : & } ; :" "mousebot" "https://todon.nl/@mousebot"))))
 
-(ert-deftest mastodon-search-test-get-hashtag-info ()
+(ert-deftest mastodon-search--get-hashtag-info ()
   "Should build a list of hashtag name and URL."
   (should
    (equal
-    (mastodon-search--get-hashtag-info mastodon-search-test-single-tag)
+    (mastodon-search--get-hashtag-info mastodon-search--test-single-tag)
     '("TeamBringBackVisibleScrollbars"
       "https://todon.nl/tags/TeamBringBackVisibleScrollbars"))))
 
-(ert-deftest mastodon-search-test-get-status-info ()
+(ert-deftest mastodon-search--get-status-info ()
   "Should return a list of ID, timestamp, content, and spoiler."
   (should
    (equal
-    (mastodon-search--get-status-info mastodon-search-test-single-status)
+    (mastodon-search--get-status-info mastodon-search--test-single-status)
     '("107230316503209282"
       "2021-11-06T13:19:40.628Z"
       ""

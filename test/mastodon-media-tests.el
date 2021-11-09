@@ -1,6 +1,8 @@
+;;; mastodon-media-test.el --- Tests for mastodon-media.el  -*- lexical-binding: nil -*-
+
 (require 'el-mock)
 
-(ert-deftest mastodon-media:get-avatar-rendering ()
+(ert-deftest mastodon-media--get-avatar-rendering ()
   "Should return text with all expected properties."
   (with-mock
     (mock (image-type-available-p 'imagemagick) => t)
@@ -16,7 +18,7 @@
       (should (eq 'avatar (plist-get properties 'media-type)))
       (should (eq :mock-image (plist-get properties 'display))))))
 
-(ert-deftest mastodon-media:get-media-link-rendering ()
+(ert-deftest mastodon-media--get-media-link-rendering ()
   "Should return text with all expected properties."
   (with-mock
     (mock (create-image * nil t) => :mock-image)
@@ -39,7 +41,7 @@
       (should (string= "RET/i: load full image (prefix: copy URL), +/-: zoom, r: rotate, o: save preview"
                        (plist-get properties 'help-echo))))))
 
-(ert-deftest mastodon-media:load-image-from-url:avatar-with-imagemagic ()
+(ert-deftest mastodon-media--load-image-from-url-avatar-with-imagemagic ()
   "Should make the right call to url-retrieve."
   (let ((url "http://example.org/image.png")
         (mastodon-media--avatar-height 123))
@@ -63,7 +65,7 @@
 
         (should (eq :called-as-expected (mastodon-media--load-image-from-url url 'avatar 7 1)))))))
 
-(ert-deftest mastodon-media:load-image-from-url:avatar-without-imagemagic ()
+(ert-deftest mastodon-media--load-image-from-url-avatar-without-imagemagic ()
   "Should make the right call to url-retrieve."
   (let ((url "http://example.org/image.png"))
     (with-mock
@@ -83,7 +85,7 @@
 
         (should (eq :called-as-expected (mastodon-media--load-image-from-url url 'avatar 7 1)))))))
 
-(ert-deftest mastodon-media:load-image-from-url:media-link-with-imagemagic ()
+(ert-deftest mastodon-media--load-image-from-url-media-link-with-imagemagic ()
   "Should make the right call to url-retrieve."
   (let ((url "http://example.org/image.png"))
     (with-mock
@@ -102,7 +104,7 @@
         (let ((mastodon-media--preview-max-height 321))
           (should (eq :called-as-expected (mastodon-media--load-image-from-url url 'media-link 7 5))))))))
 
-(ert-deftest mastodon-media:load-image-from-url:media-link-without-imagemagic ()
+(ert-deftest mastodon-media--load-image-from-url-media-link-without-imagemagic ()
   "Should make the right call to url-retrieve."
   (let ((url "http://example.org/image.png"))
     (with-mock
@@ -122,7 +124,7 @@
         (let ((mastodon-media--preview-max-height 321))
           (should (eq :called-as-expected (mastodon-media--load-image-from-url url 'media-link 7 5))))))))
 
-(ert-deftest mastodon-media:load-image-from-url:url-fetching-fails ()
+(ert-deftest mastodon-media--load-image-from-url-url-fetching-fails ()
   "Should cope with failures in url-retrieve."
   (let ((url "http://example.org/image.png")
         (mastodon-media--avatar-height 123))
@@ -143,7 +145,7 @@
         ;; the media state was updated so we won't load this again: 
         (should (eq 'loading-failed (get-text-property 7 'media-state)))))))
 
-(ert-deftest mastodon-media:process-image-response ()
+(ert-deftest mastodon-media--process-image-response ()
   "Should process the HTTP response and adjust the source buffer."
   (with-temp-buffer
     (with-mock
@@ -180,7 +182,7 @@
           (should (eq 'loaded (get-text-property saved-marker 'media-state source-buffer)))
           (should (eq ':fake-image (get-text-property saved-marker 'display source-buffer))))))))
 
-(ert-deftest mastodon-media:inline-images ()
+(ert-deftest mastodon-media--inline-images ()
   "Should process all media in buffer."
   (with-mock
     ;; Stub needed for the test setup:
