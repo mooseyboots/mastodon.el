@@ -720,6 +720,7 @@ takes a single function. By default it is
               (mastodon-tl--byline toot author-byline action-byline))
       'toot-id      (alist-get 'id toot)
       'base-toot-id (mastodon-tl--toot-id toot)
+      ;; FIXME this breaks help property of `mastodon-media--get-media-link-rendering'.
       'help-echo    (when (and mastodon-tl--buffer-spec
                                (string-match-p
                                 "context" ; when thread view
