@@ -36,7 +36,7 @@
         (should (equal (mastodon-client--store) plist))))))
 
 (ert-deftest mastodon-client--store-2 ()
- "Should store client in `mastodon-client--token-file'."
+  "Should store client in `mastodon-client--token-file'."
   (let* ((mastodon-instance-url "http://mastodon.example")
          (plstore (plstore-open "stubfile.plstore"))
          (client (cdr (plstore-get plstore "mastodon-http://mastodon.example"))))

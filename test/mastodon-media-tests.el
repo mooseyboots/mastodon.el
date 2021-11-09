@@ -70,6 +70,7 @@
   (let ((url "http://example.org/image.png"))
     (with-mock
       (mock (image-type-available-p 'imagemagick) => nil)
+      (mock (image-transforms-p) => nil)
       (mock (create-image * nil t) => '(image foo))
       (mock (copy-marker 7) => :my-marker )
       (mock (url-retrieve
@@ -109,6 +110,7 @@
   (let ((url "http://example.org/image.png"))
     (with-mock
       (mock (image-type-available-p 'imagemagick) => nil)
+      (mock (image-transforms-p) => nil)
       (mock (create-image * nil t) => '(image foo))
       (mock (copy-marker 7) => :my-marker )
       (mock (url-retrieve
