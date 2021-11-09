@@ -676,10 +676,11 @@ message is a link which unhides/hides the main body."
                                  (if (alist-get 'remote_url media-attachement)
                                      (alist-get 'remote_url media-attachement)
                                    ;; fallback b/c notifications don't have remote_url
-                                   (alist-get 'url media-attachement))))
+                                   (alist-get 'url media-attachement)))
+                                (type (alist-get 'type media-attachement)))
                             (if mastodon-tl--display-media-p
                                 (mastodon-media--get-media-link-rendering
-                                 preview-url remote-url) ; 2nd arg for shr-browse-url
+                                 preview-url remote-url type) ; 2nd arg for shr-browse-url
                               (concat "Media::" preview-url "\n"))))
                         media-attachements "")))
     (if (not (and mastodon-tl--display-media-p
