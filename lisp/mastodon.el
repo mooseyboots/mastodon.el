@@ -145,7 +145,7 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map (kbd "C-S-B") #'mastodon-tl--unblock-user)
     (define-key map (kbd "M") #'mastodon-tl--mute-user)
     (define-key map (kbd "C-S-M") #'mastodon-tl--unmute-user)
-    (define-key map (kbd "C-S-P") #'mastodon-profile--my-profile)
+    (define-key map (kbd "O") #'mastodon-profile--my-profile)
     (define-key map (kbd "S") #'mastodon-search--search-query)
     (define-key map (kbd "d") #'mastodon-toot--delete-toot)
     (define-key map (kbd "D") #'mastodon-toot--delete-and-redraft-toot)
