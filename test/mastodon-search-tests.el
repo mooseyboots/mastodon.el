@@ -1,4 +1,4 @@
-
+;;; mastodon-search-test.el --- Tests for mastodon-search.el  -*- lexical-binding: nil -*-
 
 (defconst mastodon-search--single-account-query
   '((id . "242971")
@@ -37,10 +37,18 @@
               (verified_at))]))
   "A sample mastodon account search result (parsed json)")
 
-(defconst mastodon-search-test-single-tag
-  '((name . "TeamBringBackVisibleScrollbars") (url . "https://todon.nl/tags/TeamBringBackVisibleScrollbars") (history . [((day . "1636156800") (uses . "0") (accounts . "0")) ((day . "1636070400") (uses . "0") (accounts . "0")) ((day . "1635984000") (uses . "0") (accounts . "0")) ((day . "1635897600") (uses . "0") (accounts . "0")) ((day . "1635811200") (uses . "0") (accounts . "0")) ((day . "1635724800") (uses . "0") (accounts . "0")) ((day . "1635638400") (uses . "0") (accounts . "0"))])))
+(defconst mastodon-search--test-single-tag
+  '((name . "TeamBringBackVisibleScrollbars")
+    (url . "https://todon.nl/tags/TeamBringBackVisibleScrollbars")
+    (history . [((day . "1636156800") (uses . "0") (accounts . "0"))
+                ((day . "1636070400") (uses . "0") (accounts . "0"))
+                ((day . "1635984000") (uses . "0") (accounts . "0"))
+                ((day . "1635897600") (uses . "0") (accounts . "0"))
+                ((day . "1635811200") (uses . "0") (accounts . "0"))
+                ((day . "1635724800") (uses . "0") (accounts . "0"))
+                ((day . "1635638400") (uses . "0") (accounts . "0"))])))
 
-(defconst mastodon-search-test-single-status
+(defconst mastodon-search--test-single-status
   '((id . "107230316503209282")
     (created_at . "2021-11-06T13:19:40.628Z")
     (in_reply_to_id)
@@ -83,59 +91,57 @@
      (following_count . 634)
      (statuses_count . 3807)
      (last_status_at . "2021-11-05")
-     (emojis .
-             [])
-     (fields .
-             [((name . "dark to")
-               (value . "themselves")
-               (verified_at))
-              ((name . "its raining")
-               (value . "plastic")
-               (verified_at))
-              ((name . "dis")
-               (value . "integration")
-               (verified_at))
-              ((name . "ungleichzeitigkeit und")
-               (value . "gleichzeitigkeit, philosophisch")
-               (verified_at))]))
-    (media_attachments .
-                       [])
-    (mentions .
-              [((id . "242971")
-                (username . "mousebot")
-                (url . "https://todon.nl/@mousebot")
-                (acct . "mousebot"))])
-    (tags .
-          [])
-    (emojis .
-            [])
+     (emojis . [])
+     (fields . [((name . "dark to")
+                 (value . "themselves")
+                 (verified_at))
+                ((name . "its raining")
+                 (value . "plastic")
+                 (verified_at))
+                ((name . "dis")
+                 (value . "integration")
+                 (verified_at))
+                ((name . "ungleichzeitigkeit und")
+                 (value . "gleichzeitigkeit, philosophisch")
+                 (verified_at))]))
+    (media_attachments . [])
+    (mentions . [((id . "242971")
+                  (username . "mousebot")
+                  (url . "https://todon.nl/@mousebot")
+                  (acct . "mousebot"))])
+    (tags . [])
+    (emojis . [])
     (card)
     (poll)))
 
-(ert-deftest mastodon-search-test-get-user-info-@ ()
+(ert-deftest mastodon-search--get-user-info-@ ()
   "Should build a list from a single account for company completion."
-  (let ((account mastodon-search--single-account-query))
-    (should (equal (mastodon-search--get-user-info-@ account)
-                   '(": ( ) { : | : & } ; :" "@mousebot" "https://todon.nl/@mousebot")))))
+  (should
+   (equal
+    (mastodon-search--get-user-info-@ mastodon-search--single-account-query)
+    '(": ( ) { : | : & } ; :" "@mousebot" "https://todon.nl/@mousebot"))))
 
-(ert-deftest mastodon-search-test-get-user-info ()
+(ert-deftest mastodon-search--get-user-info ()
   "Should build a list from a single account for company completion."
-  (let ((account mastodon-search--single-account-query))
-    (should (equal (mastodon-search--get-user-info account)
-                   '(": ( ) { : | : & } ; :" "mousebot" "https://todon.nl/@mousebot")))))
+  (should
+   (equal
+    (mastodon-search--get-user-info mastodon-search--single-account-query)
+    '(": ( ) { : | : & } ; :" "mousebot" "https://todon.nl/@mousebot"))))
 
-(ert-deftest mastodon-search-test-get-hashtag-info ()
+(ert-deftest mastodon-search--get-hashtag-info ()
   "Should build a list of hashtag name and URL."
-  (let ((tag mastodon-search-test-single-tag))
-    (should (equal (mastodon-search--get-hashtag-info tag)
-                   '("TeamBringBackVisibleScrollbars"
-                     "https://todon.nl/tags/TeamBringBackVisibleScrollbars")))))
+  (should
+   (equal
+    (mastodon-search--get-hashtag-info mastodon-search--test-single-tag)
+    '("TeamBringBackVisibleScrollbars"
+      "https://todon.nl/tags/TeamBringBackVisibleScrollbars"))))
 
-(ert-deftest mastodon-search-test-get-status-info ()
+(ert-deftest mastodon-search--get-status-info ()
   "Should return a list of ID, timestamp, content, and spoiler."
-  (let ((status mastodon-search-test-single-status))
-    (should (equal (mastodon-search--get-status-info status)
-                   '("107230316503209282"
-                     "2021-11-06T13:19:40.628Z"
-                     ""
-                     "<p>This is a nice test toot, for testing purposes. Thank you.</p>")))))
+  (should
+   (equal
+    (mastodon-search--get-status-info mastodon-search--test-single-status)
+    '("107230316503209282"
+      "2021-11-06T13:19:40.628Z"
+      ""
+      "<p>This is a nice test toot, for testing purposes. Thank you.</p>"))))
