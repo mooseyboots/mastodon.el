@@ -519,9 +519,10 @@ eg. \"feduser@fed.social\" -> \"feduser@fed.social\"."
 (defun mastodon-toot--mentions-company-candidates (prefix)
   "Given a company PREFIX query, build a list of candidates.
 The prefix can match against both user handles and display names."
-  (let (res)
+  (let ((prefix (substring prefix 1)) ;remove @ for search
+        (res))
     (dolist (item (mastodon-search--search-accounts-query prefix))
-      (when (or (string-prefix-p prefix (cadr item) t)
+      (when (or (string-prefix-p prefix (substring (cadr item) 1) t)
                 (string-prefix-p prefix (car item) t))
         (push (mastodon-toot--mentions-company-make-candidate item) res)))
     res))
@@ -533,11 +534,11 @@ The prefix can match against both user handles and display names."
         (url (caddr candidate)))
     (propertize handle 'annot display-name 'meta url)))
 
-(defun mastodon-toot--mentions-completion (command &optional arg &rest ignored)
+(defun mastodon-toot-mentions (command &optional arg &rest ignored)
   "A company completion backend for toot mentions."
   (interactive (list 'interactive))
   (cl-case command
-    (interactive (company-begin-backend 'mastodon-toot--mentions-completion))
+    (interactive (company-begin-backend 'mastodon-toot-mentions))
     (prefix (when (and (bound-and-true-p mastodon-toot-mode) ; if masto toot minor mode
                        (save-excursion
                          (forward-whitespace -1)
@@ -856,7 +857,7 @@ REPLY-JSON is the full JSON of the toot being replied to."
     (when (require 'company nil :noerror)
       (when mastodon-toot--enable-completion-for-mentions
         (set (make-local-variable 'company-backends)
-             (add-to-list 'company-backends 'mastodon-toot--mentions-completion))
+             (add-to-list 'company-backends 'mastodon-toot-mentions))
         (company-mode-on)))
     (make-local-variable 'after-change-functions)
     (push #'mastodon-toot--update-status-fields after-change-functions)
