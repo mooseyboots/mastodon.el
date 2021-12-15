@@ -463,11 +463,14 @@ If media items have been attached and uploaded with
                                             (symbol-name t)))
                           ("spoiler_text" . ,spoiler)))
          (args-media (when mastodon-toot--media-attachments
+                       (if (= (length mastodon-toot--media-attachments)
+                              (length mastodon-toot--media-attachment-ids))
                        ;; (mastodon-toot--upload-attached-media)
                        ;; moved upload to mastodon-toot--attach-media
-                       (mapcar (lambda (id)
-                                 (cons "media_ids[]" id))
-                               mastodon-toot--media-attachment-ids)))
+                           (mapcar (lambda (id)
+                                     (cons "media_ids[]" id))
+                                   mastodon-toot--media-attachment-ids)
+                         (message "Looks like something went wrong with your uploads. Maybe you want to try again."))))
          (args (append args-media args-no-media)))
     (if (> (length toot) (string-to-number mastodon-toot--max-toot-chars))
         (message "Looks like your toot is longer than that maximum allowed length.")
