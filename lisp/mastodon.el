@@ -223,7 +223,9 @@ If REPLY-JSON is the json of the toot being replied to."
 ;;;###autoload
 (add-hook 'mastodon-mode-hook (lambda ()
                                 (when (require 'emojify nil :noerror)
-                                  (emojify-mode t))))
+                                  (emojify-mode t)
+                                  (when mastodon-toot--enable-custom-instance-emoji
+                                    (mastodon-toot--enable-custom-emoji)))))
 
 (define-derived-mode mastodon-mode special-mode "Mastodon"
   "Major mode for Mastodon, the federated microblogging network."

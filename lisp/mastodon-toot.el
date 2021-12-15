@@ -106,6 +106,11 @@ This is only used if company mode is installed."
           (const :tag "following only" "following")
           (const :tag "all users" "all")))
 
+(defcustom mastodon-toot--enable-custom-instance-emoji nil
+  "Whether to enable your instance's custom emoji by default."
+  :group 'mastodon-toot
+  :type 'boolean)
+
 (defvar-local mastodon-toot--content-warning nil
   "A flag whether the toot should be marked with a content warning.")
 
