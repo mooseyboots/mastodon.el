@@ -940,144 +940,100 @@ webapp"
   "Query for USER-HANDLE from current status and follow that user."
   (interactive
    (list
-    (let ((user-handles (mastodon-profile--extract-users-handles
-                         (mastodon-profile--toot-json))))
-      (completing-read "Handle of user to follow: "
-                       user-handles
-                       nil ; predicate
-                       'confirm))))
-  (let* ((account (mastodon-profile--lookup-account-in-status
-                   user-handle (mastodon-profile--toot-json)))
-         (user-id (mastodon-profile--account-field account 'id))
-         (name (mastodon-profile--account-field account 'display_name))
-         (url (mastodon-http--api (format "accounts/%s/follow" user-id))))
-    (if account
-        (let ((response (mastodon-http--post url nil nil)))
-          (mastodon-http--triage response
-                                 (lambda ()
-                                   (message "User %s (@%s) followed!" name user-handle))))
-      (message "Cannot find a user with handle %S" user-handle))))
+    (mastodon-tl--interactive-user-handles-get "follow")))
+  (mastodon-tl--do-user-action-and-response user-handle "follow"))
 
 (defun mastodon-tl--unfollow-user (user-handle)
   "Query for USER-HANDLE from current status and unfollow that user."
   (interactive
    (list
-    (let ((user-handles (mastodon-profile--extract-users-handles
-                         (mastodon-profile--toot-json))))
-      (completing-read "Handle of user to unfollow: "
-                       user-handles
-                       nil ; predicate
-                       'confirm))))
-  (let* ((account (mastodon-profile--lookup-account-in-status
-                   user-handle (mastodon-profile--toot-json)))
-         (user-id (mastodon-profile--account-field account 'id))
-         (name (mastodon-profile--account-field account 'display_name))
-         (url (mastodon-http--api (format "accounts/%s/unfollow" user-id))))
-    (if account
-        (when (y-or-n-p (format "Unfollow user %s? " name))
-          (let ((response (mastodon-http--post url nil nil)))
-            (mastodon-http--triage response
-                                   (lambda ()
-                                     (message "User %s (@%s) unfollowed!" name user-handle)))))
-      (message "Cannot find a user with handle %S" user-handle))))
-
-(defun mastodon-tl--mute-user (user-handle)
-  "Query for USER-HANDLE from current status and mute that user."
-  (interactive
-   (list
-    (let ((user-handles (mastodon-profile--extract-users-handles
-                         (mastodon-profile--toot-json))))
-      (completing-read "Handle of user to mute: "
-                       user-handles
-                       nil ; predicate
-                       'confirm))))
-  (let* ((account (mastodon-profile--lookup-account-in-status
-                   user-handle (mastodon-profile--toot-json)))
-         (user-id (mastodon-profile--account-field account 'id))
-         (name (mastodon-profile--account-field account 'display_name))
-         (url (mastodon-http--api (format "accounts/%s/mute" user-id))))
-    (if account
-        (when (y-or-n-p (format "Mute user %s? " name))
-          (let ((response (mastodon-http--post url nil nil)))
-            (mastodon-http--triage response
-                                   (lambda ()
-                                     (message "User %s (@%s) muted!" name user-handle)))))
-      (message "Cannot find a user with handle %S" user-handle))))
-
-(defun mastodon-tl--unmute-user (user-handle)
-  "Query for USER-HANDLE from list of muted users and unmute that user."
-  (interactive
-   (list
-    (let* ((mutes-url (mastodon-http--api (format "mutes")))
-           (mutes-json (mastodon-http--get-json mutes-url))
-           (muted-accts (mapcar (lambda (muted)
-                                  (alist-get 'acct muted))
-                                mutes-json)))
-      (completing-read "Handle of user to unmute: "
-                       muted-accts
-                       nil ; predicate
-                       t))))
-  (let* ((account (mastodon-profile--search-account-by-handle
-                   user-handle))
-         (user-id (mastodon-profile--account-field account 'id))
-         (name (mastodon-profile--account-field account 'display_name))
-         (url (mastodon-http--api (format "accounts/%s/unmute" user-id))))
-    (if account
-        (when (y-or-n-p (format "Unmute user %s? " name))
-          (let ((response (mastodon-http--post url nil nil)))
-            (mastodon-http--triage response
-                                   (lambda ()
-                                     (message "User %s (@%s) unmuted!" name user-handle)))))
-      (message "Cannot find a user with handle %S" user-handle))))
+    (mastodon-tl--interactive-user-handles-get "unfollow")))
+  (mastodon-tl--do-user-action-and-response user-handle "unfollow" t))
 
 (defun mastodon-tl--block-user (user-handle)
   "Query for USER-HANDLE from current status and block that user."
   (interactive
    (list
-    (let ((user-handles (mastodon-profile--extract-users-handles
-                         (mastodon-profile--toot-json))))
-      (completing-read "Handle of user to block: "
-                       user-handles
-                       nil ; predicate
-                       'confirm))))
-  (let* ((account (mastodon-profile--lookup-account-in-status
-                   user-handle (mastodon-profile--toot-json)))
-         (user-id (mastodon-profile--account-field account 'id))
-         (name (mastodon-profile--account-field account 'display_name))
-         (url (mastodon-http--api (format "accounts/%s/block" user-id))))
-    (if account
-        (when (y-or-n-p (format "Block user %s? " name))
-          (let ((response (mastodon-http--post url nil nil)))
-            (mastodon-http--triage response
-                                   (lambda ()
-                                     (message "User %s (@%s) blocked!" name user-handle)))))
-      (message "Cannot find a user with handle %S" user-handle))))
+    (mastodon-tl--interactive-user-handles-get "block")))
+  (mastodon-tl--do-user-action-and-response user-handle "block"))
 
 (defun mastodon-tl--unblock-user (user-handle)
   "Query for USER-HANDLE from list of blocked users and unblock that user."
   (interactive
    (list
-    (let* ((blocks-url (mastodon-http--api (format "blocks")))
-           (blocks-json (mastodon-http--get-json blocks-url))
-           (blocked-accts (mapcar (lambda (blocked)
-                                    (alist-get 'acct blocked))
-                                  blocks-json)))
-      (completing-read "Handle of user to unblock: "
-                       blocked-accts
+    (mastodon-tl--interactive-blocks-or-mutes-list-get "unblock")))
+  (if (not user-handle)
+      (message "Looks like you have no blocks to unblock!")
+    (mastodon-tl--do-user-action-and-response user-handle "unblock" t)))
+
+(defun mastodon-tl--mute-user (user-handle)
+  "Query for USER-HANDLE from current status and mute that user."
+  (interactive
+   (list
+    (mastodon-tl--interactive-user-handles-get "mute")))
+  (mastodon-tl--do-user-action-and-response user-handle "mute"))
+
+(defun mastodon-tl--unmute-user (user-handle)
+  "Query for USER-HANDLE from list of muted users and unmute that user."
+  (interactive
+   (list
+    (mastodon-tl--interactive-blocks-or-mutes-list-get "unmute")))
+  (if (not user-handle)
+      (message "Looks like you have no mutes to unmute!")
+    (mastodon-tl--do-user-action-and-response user-handle "unmute" t)))
+
+(defun mastodon-tl--interactive-user-handles-get (action)
+  "Get the list of user-handles for ACTION from the current toot."
+  (let ((user-handles (mastodon-profile--extract-users-handles
+                       (mastodon-profile--toot-json))))
+      (completing-read (format "Handle of user to %s: " action)
+                       user-handles
                        nil ; predicate
-                       t))))
-  (let* ((account (mastodon-profile--search-account-by-handle
-                   user-handle))
+                       'confirm)))
+
+(defun mastodon-tl--interactive-blocks-or-mutes-list-get (action)
+  "Fetch the list of accounts for ACTION from the server.
+Action must be either \"unblock\" or \"mute\"."
+  (let* ((endpoint (cond ((equal action "unblock")
+                          "blocks")
+                         ((equal action "unmute")
+                          "mutes")))
+         (url (mastodon-http--api endpoint))
+         (json (mastodon-http--get-json url))
+         (accts (mapcar (lambda (user)
+                          (alist-get 'acct user))
+                        json)))
+    (when accts
+        (completing-read (format "Handle of user to %s: " action)
+                         accts
+                         nil ; predicate
+                         t))))
+
+(defun mastodon-tl--do-user-action-and-response (user-handle action &optional negp)
+  "Do ACTION on user NAME/USER-HANDLE.
+NEGP is whether the action involves un-doing something."
+  (let* ((account (if negp
+                      ;; TODO check if both are actually needed
+                      (mastodon-profile--search-account-by-handle
+                       user-handle)
+                    (mastodon-profile--lookup-account-in-status
+                     user-handle (mastodon-profile--toot-json))))
          (user-id (mastodon-profile--account-field account 'id))
          (name (mastodon-profile--account-field account 'display_name))
-         (url (mastodon-http--api (format "accounts/%s/unblock" user-id))))
+         (url (mastodon-http--api (format "accounts/%s/%s" user-id action))))
     (if account
-        (when (y-or-n-p (format "Unblock user %s? " name))
-          (let ((response (mastodon-http--post url nil nil)))
-            (mastodon-http--triage response
-                                   (lambda ()
-                                     (message "User %s (@%s) unblocked!" name user-handle)))))
+        (if (equal action "follow") ; y-or-n for all but follow
+            (mastodon-tl--do-user-action-function url name user-handle action)
+          (when (y-or-n-p (format "%s user %s? " action name))
+            (mastodon-tl--do-user-action-function url name user-handle action)))
       (message "Cannot find a user with handle %S" user-handle))))
+
+(defun mastodon-tl--do-user-action-function (url name user-handle action)
+"Post ACTION on user NAME/USER-HANDLE to URL."
+  (let ((response (mastodon-http--post url nil nil)))
+    (mastodon-http--triage response
+                           (lambda ()
+                             (message "User %s (@%s) %sed!" name user-handle action)))))
 
 ;; TODO: add this to new posts in some cases, e.g. in thread view.
 (defun mastodon-tl--reload-timeline-or-profile ()
