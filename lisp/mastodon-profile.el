@@ -68,8 +68,8 @@
 ;; this way you can update it with C-M-x:
 (defvar mastodon-profile-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "O") #'mastodon-profile--open-followers)
-    (define-key map (kbd "o") #'mastodon-profile--open-following)
+    (define-key map (kbd "s") #'mastodon-profile--open-followers)
+    (define-key map (kbd "g") #'mastodon-profile--open-following)
     (define-key map (kbd "a") #'mastodon-profile--follow-request-accept)
     (define-key map (kbd "j") #'mastodon-profile--follow-request-reject)
     map)
