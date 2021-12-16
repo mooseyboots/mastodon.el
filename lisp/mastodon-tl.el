@@ -695,9 +695,9 @@ message is a link which unhides/hides the main body."
                      (alist-get 'poll reblog)
                    (alist-get 'poll toot))))
     (concat
+     (mastodon-tl--render-text content toot)
      (when poll-p
        (mastodon-tl--get-poll toot))
-     (mastodon-tl--render-text content toot)
      (mastodon-tl--media toot))))
 
 (defun mastodon-tl--insert-status (toot body author-byline action-byline)
@@ -729,16 +729,30 @@ takes a single function. By default it is
   "If post TOOT is a poll, return a formatted string of poll."
   (let* ((poll (mastodon-tl--field 'poll toot))
          (options (mastodon-tl--field 'options poll))
+         (option-titles (mapcar (lambda (x)
+                                  (alist-get 'title x))
+                                options))
+         (longest-option (car (sort option-titles
+                                    (lambda (x y)
+                                      (> (length x)
+                                         (length y))))))
          (option-counter 0))
-    (concat "Poll: \n\n"
+    (concat "\nPoll: \n\n"
             (mapconcat (lambda (option)
                          (progn
-                           (format "Option %s: %s, %s votes.\n"
+                           (format "Option %s: %s%s [%s votes].\n"
                                    (setq option-counter (1+ option-counter))
                                    (alist-get 'title option)
+                                   (make-string
+                                    (1+
+                                     (- (length longest-option)
+                                        (length (alist-get 'title
+                                                           option))))
+                                    ?\ )
                                    (alist-get 'votes_count option))))
                        options
-                       "\n") "\n")))
+                       "\n")
+            "\n")))
 
 (defun mastodon-tl--poll-vote (option)
   "If there is a poll at point, prompt user for OPTION to vote on it."
