@@ -287,13 +287,13 @@ Optionally start from POS."
      (propertize (concat "@" handle)
                  'face 'mastodon-handle-face
                  'mouse-face 'highlight
-		 ;; TODO: Replace url browsing with native profile viewing
-		 'mastodon-tab-stop 'user-handle
+		         ;; TODO: Replace url browsing with native profile viewing
+		         'mastodon-tab-stop 'user-handle
                  'account account
-		 'shr-url profile-url
-		 'keymap mastodon-tl--link-keymap
+		         'shr-url profile-url
+		         'keymap mastodon-tl--link-keymap
                  'mastodon-handle (concat "@" handle)
-		 'help-echo (concat "Browse user profile of @" handle))
+		         'help-echo (concat "Browse user profile of @" handle))
      ")")))
 
 (defun mastodon-tl--byline-boosted (toot)
@@ -986,10 +986,10 @@ webapp"
   "Get the list of user-handles for ACTION from the current toot."
   (let ((user-handles (mastodon-profile--extract-users-handles
                        (mastodon-profile--toot-json))))
-      (completing-read (format "Handle of user to %s: " action)
-                       user-handles
-                       nil ; predicate
-                       'confirm)))
+    (completing-read (format "Handle of user to %s: " action)
+                     user-handles
+                     nil ; predicate
+                     'confirm)))
 
 (defun mastodon-tl--interactive-blocks-or-mutes-list-get (action)
   "Fetch the list of accounts for ACTION from the server.
@@ -1004,10 +1004,10 @@ Action must be either \"unblock\" or \"mute\"."
                           (alist-get 'acct user))
                         json)))
     (when accts
-        (completing-read (format "Handle of user to %s: " action)
-                         accts
-                         nil ; predicate
-                         t))))
+      (completing-read (format "Handle of user to %s: " action)
+                       accts
+                       nil ; predicate
+                       t))))
 
 (defun mastodon-tl--do-user-action-and-response (user-handle action &optional negp)
   "Do ACTION on user NAME/USER-HANDLE.
@@ -1029,7 +1029,7 @@ NEGP is whether the action involves un-doing something."
       (message "Cannot find a user with handle %S" user-handle))))
 
 (defun mastodon-tl--do-user-action-function (url name user-handle action)
-"Post ACTION on user NAME/USER-HANDLE to URL."
+  "Post ACTION on user NAME/USER-HANDLE to URL."
   (let ((response (mastodon-http--post url nil nil)))
     (mastodon-http--triage response
                            (lambda ()
