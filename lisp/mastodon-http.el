@@ -261,7 +261,7 @@ item uploaded, and `mastodon-toot--update-status-fields' is run."
      :parser 'json-read
      :headers `(("Authorization" . ,(concat "Bearer "
                                             (mastodon-auth--access-token))))
-     :sync t
+     :sync nil
      :success (cl-function
                (lambda (&key data &allow-other-keys)
                  (when data

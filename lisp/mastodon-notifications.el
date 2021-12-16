@@ -54,7 +54,8 @@
     ("follow" . mastodon-notifications--follow)
     ("favourite" . mastodon-notifications--favourite)
     ("reblog" . mastodon-notifications--reblog)
-    ("follow_request" . mastodon-notifications--follow-request))
+    ("follow_request" . mastodon-notifications--follow-request)
+    ("status" . mastodon-notifications--status))
   "Alist of notification types and their corresponding function.")
 
 (defvar mastodon-notifications--response-alist
@@ -62,7 +63,8 @@
     ("Followed" . "you")
     ("Favourited" . "your status from")
     ("Boosted" . "your status from")
-    ("Requested to follow" . "you"))
+    ("Requested to follow" . "you")
+    ("Posted" . "a post"))
   "Alist of subjects for notification types.")
 
 (defun mastodon-notifications--byline-concat (message)
@@ -202,6 +204,26 @@
      (lambda (_status)
        (mastodon-notifications--byline-concat
         "Boosted"))
+     id)))
+
+(defun mastodon-notifications--status (note)
+  "Format for a `status' NOTE.
+Status notifications are given when
+`mastodon-tl--notify-user-posts' has been set."
+  (let ((id (cdr (assoc 'id note)))
+        (status (mastodon-tl--field 'status note)))
+    (mastodon-notifications--insert-status
+     status
+     (mastodon-tl--clean-tabs-and-nl
+      (if (mastodon-tl--has-spoiler status)
+          (mastodon-tl--spoiler status)
+        (mastodon-tl--content status)))
+     (lambda (_status)
+       (mastodon-tl--byline-author
+        note))
+     (lambda (_status)
+       (mastodon-notifications--byline-concat
+        "Posted"))
      id)))
 
 (defun mastodon-notifications--insert-status (toot body author-byline action-byline &optional id)

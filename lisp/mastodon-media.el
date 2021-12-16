@@ -292,21 +292,27 @@ Replace them with the referenced image."
                                  t image-options))
      " ")))
 
-(defun mastodon-media--get-media-link-rendering (media-url &optional full-remote-url)
+(defun mastodon-media--get-media-link-rendering (media-url &optional full-remote-url type)
   "Return the string to be written that renders the image at MEDIA-URL.
-FULL-REMOTE-URL is used for `shr-browse-image'."
-  (concat
-   (propertize "[img]"
-               'media-url media-url
-               'media-state 'needs-loading
-               'media-type 'media-link
-               'display (create-image mastodon-media--generic-broken-image-data nil t)
-               'mouse-face 'highlight
-               'mastodon-tab-stop 'image ; for do-link-action-at-point
-               'image-url full-remote-url ; for shr-browse-image
-               'keymap mastodon-tl--shr-image-map-replacement
-               'help-echo (concat "RET/i: load full image (prefix: copy URL), +/-: zoom, r: rotate, o: save preview"))
-   " "))
+FULL-REMOTE-URL is used for `shr-browse-image'.
+TYPE is the attachment's type field on the server."
+  (let ((help-echo
+         "RET/i: load full image (prefix: copy URL), +/-: zoom, r: rotate, o: save preview"))
+    (concat
+     (propertize "[img]"
+                 'media-url media-url
+                 'media-state 'needs-loading
+                 'media-type 'media-link
+                 'mastodon-media-type type
+                 'display (create-image mastodon-media--generic-broken-image-data nil t)
+                 'mouse-face 'highlight
+                 'mastodon-tab-stop 'image ; for do-link-action-at-point
+                 'image-url full-remote-url ; for shr-browse-image
+                 'keymap mastodon-tl--shr-image-map-replacement
+                 'help-echo (if (string= type "image")
+                                help-echo
+                              (concat help-echo "\ntype: " type)))
+                 " ")))
 
 (provide 'mastodon-media)
 ;;; mastodon-media.el ends here

@@ -1,8 +1,10 @@
+;;; mastodon-notifications-test.el --- Tests for mastodon-notifications.el  -*- lexical-binding: nil -*-
+
 (require 'cl-lib)
 (require 'cl-macs)
 (require 'el-mock)
 
-(defconst mastodon-notifications-test-base-mentioned
+(defconst mastodon-notifications--test-base-mentioned
   '((id . "1234")
     (type . "mention")
     (created_at . "2018-03-06T04:27:21.288Z" )
@@ -43,7 +45,7 @@
             (favourites_count . 0)
             (reblog))))
 
-(defconst mastodon-notifications-test-base-favourite
+(defconst mastodon-notifications--test-base-favourite
   '((id . "1234")
     (type . "favourite")
     (created_at . "2018-03-06T04:27:21.288Z" )
@@ -84,7 +86,7 @@
             (favourites_count . 0)
             (reblog))))
 
-(defconst mastodon-notifications-test-base-boosted
+(defconst mastodon-notifications--test-base-boosted
   '((id . "1234")
     (type . "reblog")
     (created_at . "2018-03-06T04:27:21.288Z" )
@@ -125,7 +127,7 @@
             (favourites_count . 0)
             (reblog))))
 
-(defconst mastodon-notifications-test-base-followed
+(defconst mastodon-notifications--test-base-followed
   '((id . "1234")
     (type . "follow")
     (created_at . "2018-03-06T04:27:21.288Z" )
@@ -166,7 +168,7 @@
             (favourites_count . 0)
             (reblog))))
 
-(defconst mastodon-notifications-test-base-favourite
+(defconst mastodon-notifications--test-base-favourite
   '((id . "1234")
     (type . "mention")
     (created_at . "2018-03-06T04:27:21.288Z" )
@@ -181,12 +183,12 @@
              (statuses_count . 101)
              (note . "E"))))
 
-(ert-deftest notification-get ()
+(ert-deftest mastodon-notifications--notification-get ()
   "Ensure get request format for notifictions is accurate."
   (let ((mastodon-instance-url "https://instance.url"))
     (with-mock
-     (mock (mastodon-http--get-json "https://instance.url/api/v1/notifications" ))
-     (mastodon-notifications--get))))
+      (mock (mastodon-http--get-json "https://instance.url/api/v1/notifications" ))
+      (mastodon-notifications--get))))
 
 (defun mastodon-notifications--test-type (fun sample)
   "Test notification draw functions.
@@ -208,6 +210,8 @@ notification to be tested."
            (string= " Favourited your status from"
                     (mastodon-notifications--byline-concat "Favourited"))
            (string= " Boosted your status from"
-                    (mastodon-notifications--byline-concat "Boosted")))))
+                    (mastodon-notifications--byline-concat "Boosted"))
+           (string= " Posted a post"
+                    (mastodon-notifications--byline-concat "Posted")))))
 
 
