@@ -451,10 +451,8 @@ to `emojify-user-emojis', and the emoji data is updated."
 
 (defun mastodon-toot--send ()
   "POST contents of new-toot buffer to Mastodon instance and kill buffer.
-If media items have been attached with
-`mastodon-toot--attach-media', upload them with
-`mastodon-toot-upload-attached-media' and attach them to the
-toot."
+If media items have been attached and uploaded with
+`mastodon-toot--attach-media', they are attached to the toot."
   (interactive)
   (let* ((toot (mastodon-toot--remove-docs))
          (empty-toot-p (and (not mastodon-toot--media-attachments)
@@ -470,10 +468,14 @@ toot."
                                             (symbol-name t)))
                           ("spoiler_text" . ,spoiler)))
          (args-media (when mastodon-toot--media-attachments
-                       (mastodon-toot--upload-attached-media) ; sync upload so we wait (and pray) till done
-                       (mapcar (lambda (id)
-                                 (cons "media_ids[]" id))
-                               mastodon-toot--media-attachment-ids)))
+                       (if (= (length mastodon-toot--media-attachments)
+                              (length mastodon-toot--media-attachment-ids))
+                       ;; (mastodon-toot--upload-attached-media)
+                       ;; moved upload to mastodon-toot--attach-media
+                           (mapcar (lambda (id)
+                                     (cons "media_ids[]" id))
+                                   mastodon-toot--media-attachment-ids)
+                         (message "Looks like something went wrong with your uploads. Maybe you want to try again."))))
          (args (append args-media args-no-media)))
     (if (> (length toot) (string-to-number mastodon-toot--max-toot-chars))
         (message "Looks like your toot is longer than that maximum allowed length.")
@@ -619,9 +621,10 @@ The prefix can match against both user handles and display names."
   (mastodon-toot--update-status-fields))
 
 (defun mastodon-toot--attach-media (file content-type description)
-  "Prompt for a attachment FILE of CONTENT-TYPE with DESCRIPTION.
-A preview is displayed in the toot create buffer, and the file
-will be uploaded and attached to the toot upon sending."
+  "Prompt for an attachment FILE of CONTENT-TYPE with DESCRIPTION.
+A preview is displayed in the new toot buffer, and the file
+is uploaded asynchronously using `mastodon-toot--upload-attached-media'.
+File is actually attached to the toot upon posting."
   (interactive "fFilename: \nsContent type: \nsDescription: ")
   (when (>= (length mastodon-toot--media-attachments) 4)
     ;; Only a max. of 4 attachments are allowed, so pop the oldest one.
@@ -632,21 +635,20 @@ will be uploaded and attached to the toot upon sending."
                   (:content-type . ,content-type)
                   (:description . ,description)
                   (:filename . ,file)))))
-  (mastodon-toot--refresh-attachments-display))
+  (mastodon-toot--refresh-attachments-display)
+  ;; upload only most recent attachment:
+  (mastodon-toot--upload-attached-media (car (last mastodon-toot--media-attachments))))
 
-(defun mastodon-toot--upload-attached-media ()
-  "Actually upload attachments using `mastodon-http--post-media-attachment'.
-The files to be uploaded are in `mastodon-toot--media-attachments'.
-The items' ids are added to `mastodon-toot--media-attachment-ids',
-which are used to attach them to a toot after uploading."
-  (mapcar (lambda (attachment)
-            (let* ((filename (expand-file-name
-                              (alist-get :filename attachment)))
-                   (caption (alist-get :description attachment))
-                   (url (concat mastodon-instance-url "/api/v2/media")))
-              (message "Uploading %s..." (file-name-nondirectory filename))
-              (mastodon-http--post-media-attachment url filename caption)))
-          mastodon-toot--media-attachments))
+(defun mastodon-toot--upload-attached-media (attachment)
+  "Upload a single attachment using `mastodon-http--post-media-attachment'.
+The item's id is added to `mastodon-toot--media-attachment-ids',
+which is used to attach it to a toot when posting."
+  (let* ((filename (expand-file-name
+                    (alist-get :filename attachment)))
+         (caption (alist-get :description attachment))
+         (url (concat mastodon-instance-url "/api/v2/media")))
+    (message "Uploading %s..." (file-name-nondirectory filename))
+    (mastodon-http--post-media-attachment url filename caption)))
 
 (defun mastodon-toot--refresh-attachments-display ()
   "Update the display attachment previews in toot draft buffer."
