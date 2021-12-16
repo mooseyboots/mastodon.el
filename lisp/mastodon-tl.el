@@ -67,7 +67,7 @@
   :group 'mastodon)
 
 (defcustom mastodon-tl--enable-relative-timestamps t
-  "Nonnil to enable showing relative (to the current time) timestamps.
+  "Whether to show relative (to the current time) timestamps.
 
 This will require periodic updates of a timeline buffer to
 keep the timestamps current as time progresses."
@@ -82,9 +82,8 @@ By default fixed width fonts are used."
   :type '(boolean :tag "Enable using proportional rather than fixed \
 width fonts when rendering HTML text"))
 
-(defvar mastodon-tl--buffer-spec nil
+(defvar-local mastodon-tl--buffer-spec nil
   "A unique identifier and functions for each Mastodon buffer.")
-(make-variable-buffer-local 'mastodon-tl--buffer-spec)
 
 (defcustom mastodon-tl--show-avatars nil
   "Whether to enable display of user avatars in timelines."
@@ -92,27 +91,24 @@ width fonts when rendering HTML text"))
   :type '(boolean :tag "Whether to display user avatars in timelines"))
 
 ;; (defvar mastodon-tl--show-avatars nil
-        ;; (if (version< emacs-version "27.1")
-            ;; (image-type-available-p 'imagemagick)
-          ;; (image-transforms-p))
-  ;; "A boolean value stating whether to show avatars in timelines.")
+;; (if (version< emacs-version "27.1")
+;; (image-type-available-p 'imagemagick)
+;; (image-transforms-p))
+;; "A boolean value stating whether to show avatars in timelines.")
 
-(defvar mastodon-tl--update-point nil
+(defvar-local mastodon-tl--update-point nil
   "When updating a mastodon buffer this is where new toots will be inserted.
 
 If nil `(point-min)' is used instead.")
-(make-variable-buffer-local 'mastodon-tl--update-point)
 
 (defvar mastodon-tl--display-media-p t
   "A boolean value stating whether to show media in timelines.")
 
-(defvar mastodon-tl--timestamp-next-update nil
+(defvar-local mastodon-tl--timestamp-next-update nil
   "The timestamp when the buffer should next be scanned to update the timestamps.")
-(make-variable-buffer-local 'mastodon-tl--timestamp-next-update)
 
-(defvar mastodon-tl--timestamp-update-timer nil
+(defvar-local mastodon-tl--timestamp-update-timer nil
   "The timer that, when set will scan the buffer to update the timestamps.")
-(make-variable-buffer-local 'mastodon-tl--timestamp-update-timer)
 
 (defvar mastodon-tl--link-keymap
   (let ((map (make-sparse-keymap)))
@@ -270,13 +266,13 @@ Optionally start from POS."
 
 (defun mastodon-tl--byline-author (toot)
   "Propertize author of TOOT."
-  (let* ((account (cdr (assoc 'account toot)))
-         (handle (cdr (assoc 'acct account)))
-         (name (if (not (string= "" (cdr (assoc 'display_name account))))
-                   (cdr (assoc 'display_name account))
-                 (cdr (assoc 'username account))))
-         (profile-url (cdr (assoc 'url account)))
-         (avatar-url (cdr (assoc 'avatar account))))
+  (let* ((account (alist-get 'account toot))
+         (handle (alist-get 'acct account))
+         (name (if (not (string= "" (alist-get 'display_name account)))
+                   (alist-get 'display_name account)
+                 (alist-get 'username account)))
+         (profile-url (alist-get 'url account))
+         (avatar-url (alist-get 'avatar account)))
     ;; TODO: Once we have a view for a user (e.g. their posts
     ;; timeline) make this a tab-stop and attach an action
     (concat
@@ -291,18 +287,18 @@ Optionally start from POS."
      (propertize (concat "@" handle)
                  'face 'mastodon-handle-face
                  'mouse-face 'highlight
-		 ;; TODO: Replace url browsing with native profile viewing
-		 'mastodon-tab-stop 'user-handle
+		         ;; TODO: Replace url browsing with native profile viewing
+		         'mastodon-tab-stop 'user-handle
                  'account account
-		 'shr-url profile-url
-		 'keymap mastodon-tl--link-keymap
+		         'shr-url profile-url
+		         'keymap mastodon-tl--link-keymap
                  'mastodon-handle (concat "@" handle)
-		 'help-echo (concat "Browse user profile of @" handle))
+		         'help-echo (concat "Browse user profile of @" handle))
      ")")))
 
 (defun mastodon-tl--byline-boosted (toot)
   "Add byline for boosted data from TOOT."
-  (let ((reblog (cdr (assoc 'reblog toot))))
+  (let ((reblog (alist-get 'reblog toot)))
     (when reblog
       (concat
        "\n "
@@ -314,8 +310,8 @@ Optionally start from POS."
   "Return FIELD from TOOT.
 
 Return value from boosted content if available."
-  (or (cdr (assoc field (cdr (assoc 'reblog toot))))
-      (cdr (assoc field toot))))
+  (or (alist-get field (alist-get 'reblog toot))
+      (alist-get field toot)))
 
 (defun mastodon-tl--relative-time-details (timestamp &optional current-time)
   "Return cons of (descriptive string . next change) for the TIMESTAMP.
@@ -467,7 +463,7 @@ START and END are the boundaries of the link in the toot."
          (url-instance (concat "https://"
                                (url-host (url-generic-parse-url url))))
          (maybe-userhandle (if (string= mastodon-instance-url url-instance)
-                               ; if handle is local, then no instance suffix:
+                                        ; if handle is local, then no instance suffix:
                                (buffer-substring-no-properties start end)
                              (mastodon-tl--extract-userhandle-from-url
                               url (buffer-substring-no-properties start end)))))
@@ -506,14 +502,14 @@ START and END are the boundaries of the link in the toot."
 
 (defun mastodon-tl--extract-userid-toot (toot acct)
   "Extract a user id for an ACCT from mentions in a TOOT."
-  (let* ((mentions (append (cdr (assoc 'mentions toot)) nil))
+  (let* ((mentions (append (alist-get 'mentions toot) nil))
          (mention (pop mentions))
          (short-acct (substring acct 1 (length acct)))
          return)
     (while mention
-      (when (string= (cdr (assoc 'acct mention))
+      (when (string= (alist-get 'acct mention)
                      short-acct)
-        (setq return (cdr (assoc 'id  mention))))
+        (setq return (alist-get 'id  mention)))
       (setq mention (pop mentions)))
     return))
 
@@ -630,7 +626,10 @@ Used for a mouse-click EVENT on a link."
   (mastodon-tl--do-link-action-at-point (posn-point (event-end event))))
 
 (defun mastodon-tl--has-spoiler (toot)
-  "Check if the given TOOT has a spoiler text that should initially be shown only while the main content should be hidden."
+  "Check if the given TOOT has a spoiler text.
+
+Spoiler text should initially be shown only while the main
+content should be hidden."
   (let ((spoiler (mastodon-tl--field 'spoiler_text toot)))
     (and spoiler (> (length spoiler) 0))))
 
@@ -653,12 +652,12 @@ message is a link which unhides/hides the main body."
                    (mastodon-tl--render-text spoiler toot))
                   'default))
          (message (concat ;"\n"
-                          " ---------------\n"
-                          " " (mastodon-tl--make-link
-                               (concat "CW: " string)
-                                                      'content-warning)
-                          "\n"
-                          " ---------------\n"))
+                   " ---------------\n"
+                   " " (mastodon-tl--make-link
+                        (concat "CW: " string)
+                        'content-warning)
+                   "\n"
+                   " ---------------\n"))
          (cw (mastodon-tl--set-face message 'mastodon-cw-face)))
     (concat
      cw
@@ -672,15 +671,16 @@ message is a link which unhides/hides the main body."
          (media-string (mapconcat
                         (lambda (media-attachement)
                           (let ((preview-url
-                                 (cdr (assoc 'preview_url media-attachement)))
+                                 (alist-get 'preview_url media-attachement))
                                 (remote-url
-                                 (if (cdr (assoc 'remote_url media-attachement))
-                                     (cdr (assoc 'remote_url media-attachement))
+                                 (if (alist-get 'remote_url media-attachement)
+                                     (alist-get 'remote_url media-attachement)
                                    ;; fallback b/c notifications don't have remote_url
-                                   (cdr (assoc 'url media-attachement)))))
+                                   (alist-get 'url media-attachement)))
+                                (type (alist-get 'type media-attachement)))
                             (if mastodon-tl--display-media-p
                                 (mastodon-media--get-media-link-rendering
-                                 preview-url remote-url) ; 2nd arg for shr-browse-url
+                                 preview-url remote-url type) ; 2nd arg for shr-browse-url
                               (concat "Media::" preview-url "\n"))))
                         media-attachements "")))
     (if (not (and mastodon-tl--display-media-p
@@ -691,14 +691,14 @@ message is a link which unhides/hides the main body."
 (defun mastodon-tl--content (toot)
   "Retrieve text content from TOOT."
   (let* ((content (mastodon-tl--field 'content toot))
-         (reblog (cdr (assoc 'reblog toot)))
+         (reblog (alist-get 'reblog toot))
          (poll-p (if reblog
-                     (cdr (assoc 'poll reblog))
-                   (cdr (assoc 'poll toot)))))
+                     (alist-get 'poll reblog)
+                   (alist-get 'poll toot))))
     (concat
+     (mastodon-tl--render-text content toot)
      (when poll-p
        (mastodon-tl--get-poll toot))
-     (mastodon-tl--render-text content toot)
      (mastodon-tl--media toot))))
 
 (defun mastodon-tl--insert-status (toot body author-byline action-byline)
@@ -719,16 +719,8 @@ takes a single function. By default it is
               body
               " \n"
               (mastodon-tl--byline toot author-byline action-byline))
-      'toot-id      (cdr (assoc 'id toot))
+      'toot-id      (alist-get 'id toot)
       'base-toot-id (mastodon-tl--toot-id toot)
-      'help-echo    (when (and mastodon-tl--buffer-spec
-                               (string-match-p
-                                "context"
-                                (plist-get mastodon-tl--buffer-spec 'endpoint)))
-                      (format "%s faves | %s boosts | %s replies"
-                              (cdr (assoc 'favourites_count toot))
-                              (cdr (assoc 'reblogs_count toot))
-                              (cdr (assoc 'replies_count toot))))
       'toot-json    toot)
      "\n")
     (when mastodon-tl--display-media-p
@@ -738,29 +730,43 @@ takes a single function. By default it is
   "If post TOOT is a poll, return a formatted string of poll."
   (let* ((poll (mastodon-tl--field 'poll toot))
          (options (mastodon-tl--field 'options poll))
+         (option-titles (mapcar (lambda (x)
+                                  (alist-get 'title x))
+                                options))
+         (longest-option (car (sort option-titles
+                                    (lambda (x y)
+                                      (> (length x)
+                                         (length y))))))
          (option-counter 0))
-    (concat "Poll: \n\n"
+    (concat "\nPoll: \n\n"
             (mapconcat (lambda (option)
                          (progn
-                         (format "Option %s: %s, %s votes.\n"
-                                 (setq option-counter (1+ option-counter))
-                                 (cdr (assoc 'title option))
-                                 (cdr (assoc 'votes_count option)))))
+                           (format "Option %s: %s%s [%s votes].\n"
+                                   (setq option-counter (1+ option-counter))
+                                   (alist-get 'title option)
+                                   (make-string
+                                    (1+
+                                     (- (length longest-option)
+                                        (length (alist-get 'title
+                                                           option))))
+                                    ?\ )
+                                   (alist-get 'votes_count option))))
                        options
-                       "\n") "\n")))
+                       "\n")
+            "\n")))
 
 (defun mastodon-tl--poll-vote (option)
   "If there is a poll at point, prompt user for OPTION to vote on it."
   (interactive
    (list
     (let* ((toot (mastodon-tl--property 'toot-json))
-           (reblog (cdr (assoc 'reblog toot)))
-           (poll (or (cdr (assoc 'poll reblog))
+           (reblog (alist-get 'reblog toot))
+           (poll (or (alist-get 'poll reblog)
                      (mastodon-tl--field 'poll toot)))
            (options (mastodon-tl--field 'options poll))
            (options-titles (mapcar (lambda (x)
-                                   (cdr (assoc 'title x)))
-                                 options))
+                                     (alist-get 'title x))
+                                   options))
            (options-number-seq (number-sequence 1 (length options)))
            (options-numbers (mapcar (lambda(x)
                                       (number-to-string x))
@@ -770,22 +776,22 @@ takes a single function. By default it is
            ;; but also store both as cons cell as cdr, as we need it below
            (candidates (mapcar (lambda (cell)
                                  (cons (format "%s | %s" (car cell) (cdr cell))
-                                        cell))
+                                       cell))
                                options-alist)))
       (if (null (mastodon-tl--field 'poll (mastodon-tl--property 'toot-json)))
           (message "No poll here.")
         ;; var "option" = just the cdr, a cons of option number and desc
         (cdr (assoc
               (completing-read "Poll option to vote for: "
-                         candidates
-                         nil ; (predicate)
-                         t) ; require match
+                               candidates
+                               nil ; (predicate)
+                               t) ; require match
               candidates))))))
   (if (null (mastodon-tl--field 'poll (mastodon-tl--property 'toot-json)))
       (message "No poll here.")
     (let* ((toot (mastodon-tl--property 'toot-json))
            (poll (mastodon-tl--field 'poll toot))
-           (poll-id (cdr (assoc 'id poll)))
+           (poll-id (alist-get 'id poll))
            (url (mastodon-http--api (format "polls/%s/votes" poll-id)))
            ;; need to zero-index our option:
            (option-as-arg (number-to-string (1- (string-to-number (car option)))))
@@ -911,9 +917,9 @@ If the toot has been boosted use the id found in the
 reblog portion of the toot.  Otherwise, use the body of
 the toot.  This is the same behaviour as the mastodon.social
 webapp"
-  (let ((id (cdr (assoc 'id json)))
-        (reblog (cdr (assoc 'reblog json))))
-    (if reblog (cdr (assoc 'id reblog)) id)))
+  (let ((id (alist-get 'id json))
+        (reblog (alist-get 'reblog json)))
+    (if reblog (alist-get 'id reblog) id)))
 
 
 (defun mastodon-tl--thread ()
@@ -925,10 +931,10 @@ webapp"
          (buffer (format "*mastodon-thread-%s*" id))
          (toot (mastodon-tl--property 'toot-json))
          (context (mastodon-http--get-json url)))
-    (when (member (cdr (assoc 'type toot)) '("reblog" "favourite"))
-      (setq toot (cdr (assoc 'status toot))))
-    (if (> (+ (length (cdr (assoc 'ancestors context)))
-              (length (cdr (assoc 'descendants context))))
+    (when (member (alist-get 'type toot) '("reblog" "favourite"))
+      (setq toot (alist-get 'status toot)))
+    (if (> (+ (length (alist-get 'ancestors context))
+              (length (alist-get 'descendants context)))
            0)
         (with-output-to-temp-buffer buffer
           (switch-to-buffer buffer)
@@ -940,9 +946,9 @@ webapp"
                               (lambda(toot) (message "END of thread."))))
           (let ((inhibit-read-only t))
             (mastodon-tl--timeline (vconcat
-                                    (cdr (assoc 'ancestors context))
+                                    (alist-get 'ancestors context)
                                     `(,toot)
-                                    (cdr (assoc 'descendants context))))))
+                                    (alist-get 'descendants context)))))
       (message "No Thread!"))))
 
 (defun mastodon-tl--follow-user (user-handle &optional notify)
@@ -951,56 +957,8 @@ If NOTIFY is \"true\", enable notifications when that user posts.
 If NOTIFY is \"false\", disable notifications when that user posts."
   (interactive
    (list
-    (let ((user-handles (mastodon-profile--extract-users-handles
-                         (mastodon-profile--toot-json))))
-      (completing-read "Handle of user to follow: "
-                       user-handles
-                       nil ; predicate
-                       'confirm))))
-  (let* ((account (mastodon-profile--lookup-account-in-status
-                  user-handle (mastodon-profile--toot-json)))
-         (user-id (mastodon-profile--account-field account 'id))
-         (name (mastodon-profile--account-field account 'display_name))
-         (url (mastodon-http--api
-               (if notify
-                   (format "accounts/%s/follow?notify=%s" user-id notify)
-                 (format "accounts/%s/follow" user-id)))))
-    (if account
-        (let ((response (mastodon-http--post url nil nil)))
-          (mastodon-http--triage response
-                                 (lambda ()
-                                   (cond ((string-equal notify "true")
-                                          (message "Receiving notifications for user %s (@%s)!"
-                                                   name user-handle))
-                                         ((string-equal notify "false")
-                                          (message "Not receiving notifications for user %s (@%s)!"
-                                                   name user-handle))
-                                         ((eq notify nil)
-                                          (message "User %s (@%s) followed!" name user-handle))))))
-      (message "Cannot find a user with handle %S" user-handle))))
-
-(defun mastodon-tl--unfollow-user (user-handle)
-  "Query for USER-HANDLE from current status and unfollow that user."
-  (interactive
-   (list
-    (let ((user-handles (mastodon-profile--extract-users-handles
-                         (mastodon-profile--toot-json))))
-      (completing-read "Handle of user to unfollow: "
-                       user-handles
-                       nil ; predicate
-                       'confirm))))
-  (let* ((account (mastodon-profile--lookup-account-in-status
-                  user-handle (mastodon-profile--toot-json)))
-         (user-id (mastodon-profile--account-field account 'id))
-         (name (mastodon-profile--account-field account 'display_name))
-         (url (mastodon-http--api (format "accounts/%s/unfollow" user-id))))
-    (if account
-        (when (y-or-n-p (format "Unfollow user %s? " name))
-          (let ((response (mastodon-http--post url nil nil)))
-            (mastodon-http--triage response
-                                   (lambda ()
-                                     (message "User %s (@%s) unfollowed!" name user-handle)))))
-      (message "Cannot find a user with handle %S" user-handle))))
+    (mastodon-tl--interactive-user-handles-get "follow")))
+  (mastodon-tl--do-user-action-and-response user-handle "follow" notify))
 
 (defun mastodon-tl--notify-user-posts (user-handle)
   "Query for USER-HANDLE from current status and enable notifications when they post."
@@ -1026,103 +984,97 @@ If NOTIFY is \"false\", disable notifications when that user posts."
                        'confirm))))
   (mastodon-tl--follow-user user-handle "false"))
 
-(defun mastodon-tl--mute-user (user-handle)
-  "Query for USER-HANDLE from current status and mute that user."
+(defun mastodon-tl--unfollow-user (user-handle)
+  "Query for USER-HANDLE from current status and unfollow that user."
   (interactive
    (list
-    (let ((user-handles (mastodon-profile--extract-users-handles
-                         (mastodon-profile--toot-json))))
-      (completing-read "Handle of user to mute: "
-                       user-handles
-                       nil ; predicate
-                       'confirm))))
-  (let* ((account (mastodon-profile--lookup-account-in-status
-                  user-handle (mastodon-profile--toot-json)))
-         (user-id (mastodon-profile--account-field account 'id))
-         (name (mastodon-profile--account-field account 'display_name))
-         (url (mastodon-http--api (format "accounts/%s/mute" user-id))))
-    (if account
-        (when (y-or-n-p (format "Mute user %s? " name))
-          (let ((response (mastodon-http--post url nil nil)))
-            (mastodon-http--triage response
-                                   (lambda ()
-                                     (message "User %s (@%s) muted!" name user-handle)))))
-      (message "Cannot find a user with handle %S" user-handle))))
-
-(defun mastodon-tl--unmute-user (user-handle)
-  "Query for USER-HANDLE from list of muted users and unmute that user."
-  (interactive
-   (list
-    (let* ((mutes-url (mastodon-http--api (format "mutes")))
-           (mutes-json (mastodon-http--get-json mutes-url))
-           (muted-accts (mapcar (lambda (muted)
-                                  (cdr (assoc 'acct muted)))
-                                  mutes-json)))
-      (completing-read "Handle of user to unmute: "
-                       muted-accts
-                       nil ; predicate
-                       t))))
-  (let* ((account (mastodon-profile--search-account-by-handle
-                   user-handle))
-         (user-id (mastodon-profile--account-field account 'id))
-         (name (mastodon-profile--account-field account 'display_name))
-         (url (mastodon-http--api (format "accounts/%s/unmute" user-id))))
-    (if account
-        (when (y-or-n-p (format "Unmute user %s? " name))
-          (let ((response (mastodon-http--post url nil nil)))
-            (mastodon-http--triage response
-                                   (lambda ()
-                                     (message "User %s (@%s) unmuted!" name user-handle)))))
-      (message "Cannot find a user with handle %S" user-handle))))
+    (mastodon-tl--interactive-user-handles-get "unfollow")))
+  (mastodon-tl--do-user-action-and-response user-handle "unfollow" t))
 
 (defun mastodon-tl--block-user (user-handle)
   "Query for USER-HANDLE from current status and block that user."
   (interactive
    (list
-    (let ((user-handles (mastodon-profile--extract-users-handles
-                         (mastodon-profile--toot-json))))
-      (completing-read "Handle of user to block: "
-                       user-handles
-                       nil ; predicate
-                       'confirm))))
-  (let* ((account (mastodon-profile--lookup-account-in-status
-                  user-handle (mastodon-profile--toot-json)))
-         (user-id (mastodon-profile--account-field account 'id))
-         (name (mastodon-profile--account-field account 'display_name))
-         (url (mastodon-http--api (format "accounts/%s/block" user-id))))
-    (if account
-        (when (y-or-n-p (format "Block user %s? " name))
-          (let ((response (mastodon-http--post url nil nil)))
-            (mastodon-http--triage response
-                                   (lambda ()
-                                     (message "User %s (@%s) blocked!" name user-handle)))))
-      (message "Cannot find a user with handle %S" user-handle))))
+    (mastodon-tl--interactive-user-handles-get "block")))
+  (mastodon-tl--do-user-action-and-response user-handle "block"))
 
 (defun mastodon-tl--unblock-user (user-handle)
   "Query for USER-HANDLE from list of blocked users and unblock that user."
   (interactive
    (list
-    (let* ((blocks-url (mastodon-http--api (format "blocks")))
-           (blocks-json (mastodon-http--get-json blocks-url))
-           (blocked-accts (mapcar (lambda (blocked)
-                                  (cdr (assoc 'acct blocked)))
-                                  blocks-json)))
-      (completing-read "Handle of user to unblock: "
-                       blocked-accts
+    (mastodon-tl--interactive-blocks-or-mutes-list-get "unblock")))
+  (if (not user-handle)
+      (message "Looks like you have no blocks to unblock!")
+    (mastodon-tl--do-user-action-and-response user-handle "unblock" t)))
+
+(defun mastodon-tl--mute-user (user-handle)
+  "Query for USER-HANDLE from current status and mute that user."
+  (interactive
+   (list
+    (mastodon-tl--interactive-user-handles-get "mute")))
+  (mastodon-tl--do-user-action-and-response user-handle "mute"))
+
+(defun mastodon-tl--unmute-user (user-handle)
+  "Query for USER-HANDLE from list of muted users and unmute that user."
+  (interactive
+   (list
+    (mastodon-tl--interactive-blocks-or-mutes-list-get "unmute")))
+  (if (not user-handle)
+      (message "Looks like you have no mutes to unmute!")
+    (mastodon-tl--do-user-action-and-response user-handle "unmute" t)))
+
+(defun mastodon-tl--interactive-user-handles-get (action)
+  "Get the list of user-handles for ACTION from the current toot."
+  (let ((user-handles (mastodon-profile--extract-users-handles
+                       (mastodon-profile--toot-json))))
+    (completing-read (format "Handle of user to %s: " action)
+                     user-handles
+                     nil ; predicate
+                     'confirm)))
+
+(defun mastodon-tl--interactive-blocks-or-mutes-list-get (action)
+  "Fetch the list of accounts for ACTION from the server.
+Action must be either \"unblock\" or \"mute\"."
+  (let* ((endpoint (cond ((equal action "unblock")
+                          "blocks")
+                         ((equal action "unmute")
+                          "mutes")))
+         (url (mastodon-http--api endpoint))
+         (json (mastodon-http--get-json url))
+         (accts (mapcar (lambda (user)
+                          (alist-get 'acct user))
+                        json)))
+    (when accts
+      (completing-read (format "Handle of user to %s: " action)
+                       accts
                        nil ; predicate
                        t))))
-  (let* ((account (mastodon-profile--search-account-by-handle
-                   user-handle))
+
+(defun mastodon-tl--do-user-action-and-response (user-handle action &optional negp)
+  "Do ACTION on user NAME/USER-HANDLE.
+NEGP is whether the action involves un-doing something."
+  (let* ((account (if negp
+                      ;; TODO check if both are actually needed
+                      (mastodon-profile--search-account-by-handle
+                       user-handle)
+                    (mastodon-profile--lookup-account-in-status
+                     user-handle (mastodon-profile--toot-json))))
          (user-id (mastodon-profile--account-field account 'id))
          (name (mastodon-profile--account-field account 'display_name))
-         (url (mastodon-http--api (format "accounts/%s/unblock" user-id))))
+         (url (mastodon-http--api (format "accounts/%s/%s" user-id action))))
     (if account
-        (when (y-or-n-p (format "Unblock user %s? " name))
-          (let ((response (mastodon-http--post url nil nil)))
-            (mastodon-http--triage response
-                                   (lambda ()
-                                     (message "User %s (@%s) unblocked!" name user-handle)))))
+        (if (equal action "follow") ; y-or-n for all but follow
+            (mastodon-tl--do-user-action-function url name user-handle action)
+          (when (y-or-n-p (format "%s user %s? " action name))
+            (mastodon-tl--do-user-action-function url name user-handle action)))
       (message "Cannot find a user with handle %S" user-handle))))
+
+(defun mastodon-tl--do-user-action-function (url name user-handle action)
+  "Post ACTION on user NAME/USER-HANDLE to URL."
+  (let ((response (mastodon-http--post url nil nil)))
+    (mastodon-http--triage response
+                           (lambda ()
+                             (message "User %s (@%s) %sed!" name user-handle action)))))
 
 ;; TODO: add this to new posts in some cases, e.g. in thread view.
 (defun mastodon-tl--reload-timeline-or-profile ()
@@ -1354,7 +1306,7 @@ JSON is the data returned from the server."
 (defun mastodon-tl--init-sync (buffer-name endpoint update-function)
   "Initialize BUFFER-NAME with timeline targeted by ENDPOINT.
 
-UPDATE-FUNCTION is used to recieve more toots.
+UPDATE-FUNCTION is used to receive more toots.
 Runs synchronously."
   (let* ((url (mastodon-http--api endpoint))
          (buffer (concat "*mastodon-" buffer-name "*"))

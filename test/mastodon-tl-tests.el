@@ -1,3 +1,5 @@
+;;; mastodon-tl-test.el --- Tests for mastodon-tl.el  -*- lexical-binding: nil -*-
+
 (require 'cl-lib)
 (require 'cl-macs)
 (require 'el-mock)
@@ -89,46 +91,46 @@
             (reblogged)))
   "A sample reblogged/boosted toot (parsed json)")
 
-(ert-deftest remove-html-1 ()
+(ert-deftest mastodon-tl--remove-html-1 ()
   "Should remove all <span> tags."
   (let ((input "<span class=\"h-card\">foobar</span> <span>foobaz</span>"))
     (should (string= (mastodon-tl--remove-html input) "foobar foobaz"))))
 
-(ert-deftest remove-html-2 ()
+(ert-deftest mastodon-tl--remove-html-2 ()
   "Should replace <\p> tags with two new lines."
   (let ((input "foobar</p>"))
     (should (string= (mastodon-tl--remove-html input) "foobar\n\n"))))
 
-(ert-deftest toot-id-boosted ()
+(ert-deftest mastodon-tl--toot-id-boosted ()
   "If a toot is boostedm, return the reblog id."
   (should (string= (mastodon-tl--as-string
                     (mastodon-tl--toot-id mastodon-tl-test-base-boosted-toot))
                    "4543919")))
 
-(ert-deftest toot-id ()
+(ert-deftest mastodon-tl--toot-id ()
   "If a toot is boostedm, return the reblog id."
   (should (string= (mastodon-tl--as-string
                     (mastodon-tl--toot-id mastodon-tl-test-base-toot))
                    "61208")))
 
-(ert-deftest as-string-1 ()
+(ert-deftest mastodon-tl--as-string-1 ()
   "Should accept a string or number and return a string."
   (let ((id "1000"))
-      (should (string= (mastodon-tl--as-string id) id))))
+    (should (string= (mastodon-tl--as-string id) id))))
 
-(ert-deftest as-string-2 ()
+(ert-deftest mastodon-tl--as-string-2 ()
   "Should accept a string or number and return a string."
   (let ((id 1000))
-      (should (string= (mastodon-tl--as-string id) (number-to-string id)))))
+    (should (string= (mastodon-tl--as-string id) (number-to-string id)))))
 
-(ert-deftest more-json ()
+(ert-deftest mastodon-tl--more-json ()
   "Should request toots older than max_id."
   (let ((mastodon-instance-url "https://instance.url"))
     (with-mock
       (mock (mastodon-http--get-json "https://instance.url/api/v1/timelines/foo?max_id=12345"))
       (mastodon-tl--more-json "timelines/foo" 12345))))
 
-(ert-deftest more-json-id-string ()
+(ert-deftest mastodon-tl--more-json-id-string ()
   "Should request toots older than max_id.
 
 `mastodon-tl--more-json' should accept and id that is either
@@ -138,7 +140,7 @@ a string or a numeric."
       (mock (mastodon-http--get-json "https://instance.url/api/v1/timelines/foo?max_id=12345"))
       (mastodon-tl--more-json "timelines/foo" "12345"))))
 
-(ert-deftest update-json-id-string ()
+(ert-deftest mastodon-tl--update-json-id-string ()
   "Should request toots more recent than since_id.
 
 `mastodon-tl--updated-json' should accept and id that is either
@@ -156,10 +158,10 @@ a string or a numeric."
               (weeks (n) (* n (days 7)))
               (years (n) (* n (days 365)))
               (format-seconds-since (seconds)
-                                    (let ((timestamp (time-subtract (current-time) (seconds-to-time seconds))))
-                                      (mastodon-tl--relative-time-description timestamp)))
+                (let ((timestamp (time-subtract (current-time) (seconds-to-time seconds))))
+                  (mastodon-tl--relative-time-description timestamp)))
               (check (seconds expected)
-                     (should (string= (format-seconds-since seconds) expected))))
+                (should (string= (format-seconds-since seconds) expected))))
     (check 1 "less than a minute ago")
     (check 59 "less than a minute ago")
     (check 60 "one minute ago")
@@ -195,33 +197,33 @@ a string or a numeric."
                 (weeks (n) (* n (days 7)))
                 (years (n) (* n (days 365.25)))
                 (next-update (seconds-ago)
-                             (let* ((timestamp (time-subtract current-time
-                                                              (seconds-to-time seconds-ago))))
-                               (cdr (mastodon-tl--relative-time-details timestamp current-time))))
+                  (let* ((timestamp (time-subtract current-time
+                                                   (seconds-to-time seconds-ago))))
+                    (cdr (mastodon-tl--relative-time-details timestamp current-time))))
                 (check (seconds-ago)
-                       (let* ((timestamp (time-subtract current-time (seconds-to-time seconds-ago)))
-                              (at-now (mastodon-tl--relative-time-description timestamp current-time))
-                              (at-one-second-before (mastodon-tl--relative-time-description
-                                                     timestamp
-                                                     (time-subtract (next-update seconds-ago)
-                                                                    (seconds-to-time 1))))
-                              (at-result (mastodon-tl--relative-time-description
-                                          timestamp
-                                          (next-update seconds-ago))))
-                         (when nil  ;; change to t to debug test failures
-                           (prin1 (format "\nFor %s: %s / %s"
-                                          seconds-ago
-                                          (time-to-seconds
-                                           (time-subtract (next-update seconds-ago)
-                                                          timestamp))
-                                          (round
-                                           (time-to-seconds
-                                            (time-subtract (next-update seconds-ago)
-                                                           current-time))))))
-                         ;; a second earlier the description is the same as at current time
-                         (should (string= at-now at-one-second-before))
-                         ;; but at the result time it is different
-                         (should-not (string= at-one-second-before at-result)))))
+                  (let* ((timestamp (time-subtract current-time (seconds-to-time seconds-ago)))
+                         (at-now (mastodon-tl--relative-time-description timestamp current-time))
+                         (at-one-second-before (mastodon-tl--relative-time-description
+                                                timestamp
+                                                (time-subtract (next-update seconds-ago)
+                                                               (seconds-to-time 1))))
+                         (at-result (mastodon-tl--relative-time-description
+                                     timestamp
+                                     (next-update seconds-ago))))
+                    (when nil  ;; change to t to debug test failures
+                      (prin1 (format "\nFor %s: %s / %s"
+                                     seconds-ago
+                                     (time-to-seconds
+                                      (time-subtract (next-update seconds-ago)
+                                                     timestamp))
+                                     (round
+                                      (time-to-seconds
+                                       (time-subtract (next-update seconds-ago)
+                                                      current-time))))))
+                    ;; a second earlier the description is the same as at current time
+                    (should (string= at-now at-one-second-before))
+                    ;; but at the result time it is different
+                    (should-not (string= at-one-second-before at-result)))))
       (check 0)
       (check 1)
       (check 59)
@@ -257,20 +259,20 @@ a string or a numeric."
       (mock (format-time-string mastodon-toot-timestamp-format '(22782 21551)) => "2999-99-99 00:11:22")
 
       (let ((byline (mastodon-tl--byline mastodon-tl-test-base-toot
-                                             'mastodon-tl--byline-author
-                                             'mastodon-tl--byline-boosted))
+                                         'mastodon-tl--byline-author
+                                         'mastodon-tl--byline-boosted))
 	    (handle-location 20))
-	(should (string= (substring-no-properties
+        (should (string= (substring-no-properties
 			  byline)
 			 "Account 42 (@acct42@example.space) 2999-99-99 00:11:22
   ------------
 "))
-	(should (eq (get-text-property handle-location 'mastodon-tab-stop byline)
+        (should (eq (get-text-property handle-location 'mastodon-tab-stop byline)
                     'user-handle))
         (should (string= (get-text-property handle-location 'mastodon-handle byline)
                          "@acct42@example.space"))
-	(should (equal (get-text-property handle-location 'help-echo byline)
-                   "Browse user profile of @acct42@example.space"))))))
+        (should (equal (get-text-property handle-location 'help-echo byline)
+                       "Browse user profile of @acct42@example.space"))))))
 
 (ert-deftest mastodon-tl--byline-regular-with-avatar ()
   "Should format the regular toot correctly."
@@ -285,7 +287,7 @@ a string or a numeric."
                         (mastodon-tl--byline mastodon-tl-test-base-toot
                                              'mastodon-tl--byline-author
                                              'mastodon-tl--byline-boosted))
-                       "  Account 42 (@acct42@example.space) 2999-99-99 00:11:22
+                       "Account 42 (@acct42@example.space) 2999-99-99 00:11:22
   ------------
 ")))))
 
@@ -361,19 +363,19 @@ a string or a numeric."
 					 'mastodon-tl--byline-boosted))
 	    (handle1-location 20)
 	    (handle2-location 65))
-	(should (string= (substring-no-properties byline)
+        (should (string= (substring-no-properties byline)
 			 "Account 42 (@acct42@example.space)
  Boosted Account 43 (@acct43@example.space) original time
   ------------
 "))
-	(should (eq (get-text-property handle1-location 'mastodon-tab-stop byline)
-                'user-handle))
-	(should (equal (get-text-property handle1-location 'help-echo byline)
+        (should (eq (get-text-property handle1-location 'mastodon-tab-stop byline)
+                    'user-handle))
+        (should (equal (get-text-property handle1-location 'help-echo byline)
 		       "Browse user profile of @acct42@example.space"))
-	(should (eq (get-text-property handle2-location 'mastodon-tab-stop byline)
-                'user-handle))
-	(should (equal (get-text-property handle2-location 'help-echo byline)
-                   "Browse user profile of @acct43@example.space"))))))
+        (should (eq (get-text-property handle2-location 'mastodon-tab-stop byline)
+                    'user-handle))
+        (should (equal (get-text-property handle2-location 'help-echo byline)
+                       "Browse user profile of @acct43@example.space"))))))
 
 (ert-deftest mastodon-tl--byline-reblogged-with-avatars ()
   "Should format the reblogged toot correctly."
@@ -395,8 +397,8 @@ a string or a numeric."
                         (mastodon-tl--byline toot
                                              'mastodon-tl--byline-author
                                              'mastodon-tl--byline-boosted))
-                       "  Account 42 (@acct42@example.space)
- Boosted   Account 43 (@acct43@example.space) original time
+                       "Account 42 (@acct42@example.space)
+ Boosted Account 43 (@acct43@example.space) original time
   ------------
 ")))))
 
@@ -419,7 +421,7 @@ a string or a numeric."
                         (mastodon-tl--byline toot
                                              'mastodon-tl--byline-author
                                              'mastodon-tl--byline-boosted))
-                      "(B) (F) Account 42 (@acct42@example.space)
+                       "(B) (F) Account 42 (@acct42@example.space)
  Boosted Account 43 (@acct43@example.space) original time
   ------------
 ")))))
@@ -691,20 +693,20 @@ a string or a numeric."
                    (list 'r3 r3 r2 r3)
                    (list 'end end r3 end))))
         (with-mock
-         (stub message => nil) ;; don't mess up our test output with the function's messages
-         (cl-dolist (test test-cases)
-           (let ((test-name (cl-first test))
-                 (test-start (cl-second test))
-                 (expected-prev (cl-third test))
-                 (expected-next (cl-fourth test)))
-             (goto-char test-start)
-             (mastodon-tl--previous-tab-item)
-             (should (equal (list 'prev test-name expected-prev)
-                            (list 'prev test-name (point))))
-             (goto-char test-start)
-             (mastodon-tl--next-tab-item)
-             (should (equal (list 'next test-name expected-next)
-                            (list 'next test-name (point)))))))))))
+          (stub message => nil) ;; don't mess up our test output with the function's messages
+          (cl-dolist (test test-cases)
+            (let ((test-name (cl-first test))
+                  (test-start (cl-second test))
+                  (expected-prev (cl-third test))
+                  (expected-next (cl-fourth test)))
+              (goto-char test-start)
+              (mastodon-tl--previous-tab-item)
+              (should (equal (list 'prev test-name expected-prev)
+                             (list 'prev test-name (point))))
+              (goto-char test-start)
+              (mastodon-tl--next-tab-item)
+              (should (equal (list 'next test-name expected-next)
+                             (list 'next test-name (point)))))))))))
 
 (ert-deftest mastodon-tl--next-tab-item--no-spaces-at-ends ()
   "Should do the correct tab actions even with regions right at buffer ends."
@@ -739,20 +741,20 @@ a string or a numeric."
                    (list 'gap2 gap2 r3 r4)
                    (list 'r4 r4 r3 r4))))
         (with-mock
-         (stub message => nil) ;; don't mess up our test output with the function's messages
-         (cl-dolist (test test-cases)
-           (let ((test-name (cl-first test))
-                 (test-start (cl-second test))
-                 (expected-prev (cl-third test))
-                 (expected-next (cl-fourth test)))
-             (goto-char test-start)
-             (mastodon-tl--previous-tab-item)
-             (should (equal (list 'prev test-name expected-prev)
-                            (list 'prev test-name (point))))
-             (goto-char test-start)
-             (mastodon-tl--next-tab-item)
-             (should (equal (list 'next test-name expected-next)
-                            (list 'next test-name (point)))))))))))
+          (stub message => nil) ;; don't mess up our test output with the function's messages
+          (cl-dolist (test test-cases)
+            (let ((test-name (cl-first test))
+                  (test-start (cl-second test))
+                  (expected-prev (cl-third test))
+                  (expected-next (cl-fourth test)))
+              (goto-char test-start)
+              (mastodon-tl--previous-tab-item)
+              (should (equal (list 'prev test-name expected-prev)
+                             (list 'prev test-name (point))))
+              (goto-char test-start)
+              (mastodon-tl--next-tab-item)
+              (should (equal (list 'next test-name expected-next)
+                             (list 'next test-name (point)))))))))))
 
 
 (defun tl-tests--property-values-at (property ranges)
@@ -769,13 +771,13 @@ constant."
   (let ((now (current-time))
         markers)
     (cl-labels ((insert-timestamp (n)
-                                  (insert (format "\nSome text before timestamp %s:" n))
-                                  (insert (propertize
-                                           (format "timestamp #%s" n)
-                                           'timestamp (time-subtract now (seconds-to-time (* 60 n)))
-                                           'display (format "unset %s" n)))
-                                  (push (copy-marker (point)) markers)
-                                  (insert " some more text.")))
+                  (insert (format "\nSome text before timestamp %s:" n))
+                  (insert (propertize
+                           (format "timestamp #%s" n)
+                           'timestamp (time-subtract now (seconds-to-time (* 60 n)))
+                           'display (format "unset %s" n)))
+                  (push (copy-marker (point)) markers)
+                  (insert " some more text.")))
       (with-temp-buffer
         (cl-dotimes (n 12) (insert-timestamp (+ n 2)))
         (setq markers (nreverse markers))
@@ -833,10 +835,10 @@ constant."
       (insert "some text before\n")
       (setq toot-start (point))
       (with-mock
-       (stub create-image => '(image "fake data"))
-       (stub shr-render-region => nil) ;; Travis's Emacs doesn't have libxml
-       (insert
-        (mastodon-tl--spoiler normal-toot-with-spoiler)))
+        (stub create-image => '(image "fake data"))
+        (stub shr-render-region => nil) ;; Travis's Emacs doesn't have libxml
+        (insert
+         (mastodon-tl--spoiler normal-toot-with-spoiler)))
       (setq toot-end (point))
       (insert "\nsome more text.")
       (add-text-properties
@@ -899,10 +901,10 @@ constant."
                    'help-echo "https://example.space/tags/sampletag")
                   " some text after"))
          (rendered (with-mock
-                    (stub shr-render-region => nil)
-                    (mastodon-tl--render-text
-                     fake-input-text
-                     mastodon-tl-test-base-toot)))
+                     (stub shr-render-region => nil)
+                     (mastodon-tl--render-text
+                      fake-input-text
+                      mastodon-tl-test-base-toot)))
          (tag-location 7))
     (should (eq (get-text-property tag-location 'mastodon-tab-stop rendered)
                 'hashtag))
@@ -912,26 +914,30 @@ constant."
                    "Browse tag #sampletag"))))
 
 (ert-deftest mastodon-tl--extract-hashtag-from-url-mastodon-link ()
+  "Should extract the hashtag from a tags url."
   (should (equal (mastodon-tl--extract-hashtag-from-url
 		  "https://example.org/tags/foo"
 		  "https://example.org")
 		 "foo")))
 
 (ert-deftest mastodon-tl--extract-hashtag-from-url-other-link ()
+  "Should extract the hashtag from a tag url."
   (should (equal (mastodon-tl--extract-hashtag-from-url
 		  "https://example.org/tag/foo"
 		  "https://example.org")
 		 "foo")))
 
 (ert-deftest mastodon-tl--extract-hashtag-from-url-wrong-instance ()
+  "Should not find a tag when the instance doesn't match."
   (should (null (mastodon-tl--extract-hashtag-from-url
-		  "https://example.org/tags/foo"
-		  "https://other.example.org"))))
+		 "https://example.org/tags/foo"
+		 "https://other.example.org"))))
 
 (ert-deftest mastodon-tl--extract-hashtag-from-url-not-tag ()
+  "Should not find a hashtag when not a tag url"
   (should (null (mastodon-tl--extract-hashtag-from-url
-		  "https://example.org/@userid"
-		  "https://example.org"))))
+		 "https://example.org/@userid"
+		 "https://example.org"))))
 
 (ert-deftest mastodon-tl--userhandles ()
   "Should recognise iserhandles in a toot and add the required properties to it."
@@ -946,10 +952,10 @@ constant."
                    'help-echo "https://bar.example/@foo")
                   " some text after"))
          (rendered (with-mock
-                    (stub shr-render-region => nil)
-                    (mastodon-tl--render-text
-                     fake-input-text
-                     mastodon-tl-test-base-toot)))
+                     (stub shr-render-region => nil)
+                     (mastodon-tl--render-text
+                      fake-input-text
+                      mastodon-tl-test-base-toot)))
          (mention-location 11))
     (should (eq (get-text-property mention-location 'mastodon-tab-stop rendered)
                 'user-handle))
@@ -957,17 +963,20 @@ constant."
                    "Browse user profile of @foo@bar.example"))))
 
 (ert-deftest mastodon-tl--extract-userhandle-from-url-correct-case ()
+  "Should extract the user handle from url."
   (should (equal (mastodon-tl--extract-userhandle-from-url
                   "https://example.org/@someuser"
                   "@SomeUser")
                  "@SomeUser@example.org")))
 
 (ert-deftest mastodon-tl--extract-userhandle-from-url-missing-at-in-text ()
+  "Should not extract a user handle from url if the text is wrong."
   (should (null (mastodon-tl--extract-userhandle-from-url
                  "https://example.org/@someuser"
                  "SomeUser"))))
 
 (ert-deftest mastodon-tl--extract-userhandle-from-url-query-in-url ()
+  "Should not extract a user handle from url if there is a query param."
   (should (null (mastodon-tl--extract-userhandle-from-url
                  "https://example.org/@someuser?shouldnot=behere"
                  "SomeUser"))))

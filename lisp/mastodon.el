@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
 ;; Version: 0.9.1
-;; Package-Requires: ((emacs "26.1") (request "0.2.0") (seq "1.8"))
+;; Package-Requires: ((emacs "26.1") (request "0.3.2") (seq "1.0"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -145,7 +145,7 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map (kbd "C-S-B") #'mastodon-tl--unblock-user)
     (define-key map (kbd "M") #'mastodon-tl--mute-user)
     (define-key map (kbd "C-S-M") #'mastodon-tl--unmute-user)
-    (define-key map (kbd "C-S-P") #'mastodon-profile--my-profile)
+    (define-key map (kbd "O") #'mastodon-profile--my-profile)
     (define-key map (kbd "S") #'mastodon-search--search-query)
     (define-key map (kbd "d") #'mastodon-toot--delete-toot)
     (define-key map (kbd "D") #'mastodon-toot--delete-and-redraft-toot)
@@ -204,8 +204,8 @@ Use. e.g. \"%c\" for your locale's date and time format."
                     "favourites"
                     "search"))
          (buffer (cl-some (lambda (el)
-                           (get-buffer (concat "*mastodon-" el "*")))
-                         tls))) ; return first buff that exists
+                            (get-buffer (concat "*mastodon-" el "*")))
+                          tls))) ; return first buff that exists
     (if buffer
         (switch-to-buffer buffer)
       (mastodon-tl--get-home-timeline)
@@ -223,7 +223,9 @@ If REPLY-JSON is the json of the toot being replied to."
 ;;;###autoload
 (add-hook 'mastodon-mode-hook (lambda ()
                                 (when (require 'emojify nil :noerror)
-                                  (emojify-mode t))))
+                                  (emojify-mode t)
+                                  (when mastodon-toot--enable-custom-instance-emoji
+                                    (mastodon-toot--enable-custom-emoji)))))
 
 (define-derived-mode mastodon-mode special-mode "Mastodon"
   "Major mode for Mastodon, the federated microblogging network."

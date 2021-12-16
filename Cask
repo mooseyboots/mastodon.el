@@ -4,6 +4,7 @@
 (package-file "lisp/mastodon.el")
 (files "lisp/*.el")
 
+(depends-on "request")
 (depends-on "seq")
 
 (development

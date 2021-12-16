@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
 ;; Version: 0.9.1
-;; Package-Requires: ((emacs "26.1") (request "0.2.0"))
+;; Package-Requires: ((emacs "27.1") (request "0.2.0"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -67,15 +67,15 @@
     (string-match "[0-9][0-9][0-9]" status-line)
     (match-string 0 status-line)))
 
-;; (defun mastodon-http--triage (response success)
-;;   "Determine if RESPONSE was successful. Call SUCCESS if successful.
+(defun mastodon-http--url-retrieve-synchronously (url)
+  "Retrieve URL asynchronously.
 
-;; Open RESPONSE buffer if unsuccessful."
-;;   (let ((status (with-current-buffer response
-;;                   (mastodon-http--status))))
-;;     (if (string-prefix-p "2" status)
-;;         (funcall success)
-;;       (switch-to-buffer response))))
+This is a thin abstraction over the system
+`url-retrieve-synchronously`.  Depending on which version of this
+is available we will call it with or without a timeout."
+  (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
+      (url-retrieve-synchronously url)
+    (url-retrieve-synchronously url nil nil mastodon-http--timeout)))
 
 (defun mastodon-http--triage (response success)
   "Determine if RESPONSE was successful. Call SUCCESS if successful.
@@ -85,10 +85,9 @@ Message status and JSON error from RESPONSE if unsuccessful."
                   (mastodon-http--status))))
     (if (string-prefix-p "2" status)
         (funcall success)
-      (progn
-        (switch-to-buffer response)
-        (let ((json-response (mastodon-http--process-json)))
-          (message "Error %s: %s" status (cdr (assoc 'error json-response))))))))
+      (switch-to-buffer response)
+      (let ((json-response (mastodon-http--process-json)))
+        (message "Error %s: %s" status (alist-get 'error json-response))))))
 
 (defun mastodon-http--read-file-as-string (filename)
   "Read a file FILENAME as a string. Used to generate image preview."
@@ -115,9 +114,7 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
 	    `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token)))))
 	  headers)))
     (with-temp-buffer
-      (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
-          (url-retrieve-synchronously url)
-        (url-retrieve-synchronously url nil nil mastodon-http--timeout)))))
+      (mastodon-http--url-retrieve-synchronously url))))
 
 (defun mastodon-http--get (url)
   "Make synchronous GET request to URL.
@@ -127,9 +124,7 @@ Pass response buffer to CALLBACK function."
         (url-request-extra-headers
          `(("Authorization" . ,(concat "Bearer "
                                        (mastodon-auth--access-token))))))
-    (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
-        (url-retrieve-synchronously url)
-      (url-retrieve-synchronously url nil nil mastodon-http--timeout))))
+    (mastodon-http--url-retrieve-synchronously url)))
 
 (defun mastodon-http--get-json (url)
   "Make synchronous GET request to URL. Return JSON response."
@@ -145,8 +140,8 @@ Pass response buffer to CALLBACK function."
           (buffer-substring-no-properties (point) (point-max))
           'utf-8)))
     (kill-buffer)
-    (unless (or (string= "" json-string) (equal nil json-string)))
-        (json-read-from-string json-string)))
+    (unless (or (string-equal "" json-string) (null json-string))
+      (json-read-from-string json-string))))
 
 (defun mastodon-http--delete (url)
   "Make DELETE request to URL."
@@ -155,7 +150,7 @@ Pass response buffer to CALLBACK function."
          `(("Authorization" . ,(concat "Bearer "
                                        (mastodon-auth--access-token))))))
     (with-temp-buffer
-      (url-retrieve-synchronously url))))
+      (mastodon-http--url-retrieve-synchronously url))))
 
 ;; search functions:
 (defun mastodon-http--process-json-search ()
@@ -187,9 +182,7 @@ PARAM is a formatted request parameter, eg 'following=true'."
         (url-request-extra-headers
          `(("Authorization" . ,(concat "Bearer "
                                        (mastodon-auth--access-token))))))
-    (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
-        (url-retrieve-synchronously url)
-      (url-retrieve-synchronously url nil nil mastodon-http--timeout))))
+    (mastodon-http--url-retrieve-synchronously url)))
 
 ;; profile update functions
 
@@ -210,9 +203,7 @@ Pass response buffer to CALLBACK function."
         (url-request-extra-headers
          `(("Authorization" . ,(concat "Bearer "
                                        (mastodon-auth--access-token))))))
-    (if (< (cdr (func-arity 'url-retrieve-synchronously)) 4)
-        (url-retrieve-synchronously url)
-      (url-retrieve-synchronously url nil nil mastodon-http--timeout))))
+    (mastodon-http--url-retrieve-synchronously url)))
 
  ;; Asynchronous functions
 
@@ -248,8 +239,8 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
                       args
                       "&")))
         (url-request-extra-headers
-	     (append `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token))))
-	             headers)))
+	 (append `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token))))
+	         headers)))
     (with-temp-buffer
       (url-retrieve url callback cbargs))))
 
@@ -261,46 +252,44 @@ The upload is asynchronous. On succeeding,
 item uploaded, and `mastodon-toot--update-status-fields' is run."
   (let* ((file (file-name-nondirectory filename))
          (request-backend 'curl))
-         ;; (response
-         (request
-            url
-            :type "POST"
-            :params `(("description" . ,caption))
-            :files `(("file" . (,file :file ,filename
-                                      :mime-type "multipart/form-data")))
-            :parser 'json-read
-            :headers `(("Authorization" . ,(concat "Bearer "
-                                                   (mastodon-auth--access-token))))
-            :sync t
-            :success (cl-function
-                      (lambda (&key data &allow-other-keys)
-                        (when data
-                          (progn
-                            (push (cdr (assoc 'id data))
-                                  mastodon-toot--media-attachment-ids) ; add ID to list
-                            (message "%s file %s with id %S and caption '%s' uploaded!"
-                                     (capitalize (cdr (assoc 'type data)))
-                                     file
-                                     (cdr (assoc 'id data))
-                                     (cdr (assoc 'description data)))
-                            (mastodon-toot--update-status-fields)))))
-            :error (cl-function
-                    (lambda (&key error-thrown &allow-other-keys)
-                      (cond
-                       ;; handle curl errors first (eg 26, can't read file/path)
-                       ;; because the '=' test below fails for them
-                       ;; they have the form (error . error message 24)
-                       ((not (proper-list-p error-thrown)) ; not dotted list
-			            (message "Got error: %s. Shit went south." (cdr error-thrown)))
-                       ;; handle mastodon api errors
-                       ;; they have the form (error http 401)
-			           ((= (car (last error-thrown)) 401)
-                        (message "Got error: %s Unauthorized: The access token is invalid" error-thrown))
-                       ((= (car (last error-thrown)) 422)
-                        (message "Got error: %s Unprocessable entity: file or file type is unsupported or invalid" error-thrown))
-                       (t
-                        (message "Got error: %s Shit went south"
-                                 error-thrown))))))))
+    (request
+     url
+     :type "POST"
+     :params `(("description" . ,caption))
+     :files `(("file" . (,file :file ,filename
+                               :mime-type "multipart/form-data")))
+     :parser 'json-read
+     :headers `(("Authorization" . ,(concat "Bearer "
+                                            (mastodon-auth--access-token))))
+     :sync t
+     :success (cl-function
+               (lambda (&key data &allow-other-keys)
+                 (when data
+                   (push (alist-get 'id data)
+                         mastodon-toot--media-attachment-ids) ; add ID to list
+                   (message "%s file %s with id %S and caption '%s' uploaded!"
+                            (capitalize (alist-get 'type data))
+                            file
+                            (alist-get 'id data)
+                            (alist-get 'description data))
+                   (mastodon-toot--update-status-fields))))
+     :error (cl-function
+             (lambda (&key error-thrown &allow-other-keys)
+               (cond
+                ;; handle curl errors first (eg 26, can't read file/path)
+                ;; because the '=' test below fails for them
+                ;; they have the form (error . error message 24)
+                ((not (proper-list-p error-thrown)) ; not dotted list
+		 (message "Got error: %s. Shit went south." (cdr error-thrown)))
+                ;; handle mastodon api errors
+                ;; they have the form (error http 401)
+		((= (car (last error-thrown)) 401)
+                 (message "Got error: %s Unauthorized: The access token is invalid" error-thrown))
+                ((= (car (last error-thrown)) 422)
+                 (message "Got error: %s Unprocessable entity: file or file type is unsupported or invalid" error-thrown))
+                (t
+                 (message "Got error: %s Shit went south"
+                          error-thrown))))))))
 
 (provide 'mastodon-http)
 ;;; mastodon-http.el ends here
