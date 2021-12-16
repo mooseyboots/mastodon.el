@@ -954,34 +954,25 @@ webapp"
 (defun mastodon-tl--follow-user (user-handle &optional notify)
   "Query for USER-HANDLE from current status and follow that user.
 If NOTIFY is \"true\", enable notifications when that user posts.
-If NOTIFY is \"false\", disable notifications when that user posts."
+If NOTIFY is \"false\", disable notifications when that user posts.
+This can be called to toggle NOTIFY on users already being followed."
   (interactive
    (list
     (mastodon-tl--interactive-user-handles-get "follow")))
-  (mastodon-tl--do-user-action-and-response user-handle "follow" notify))
+  (mastodon-tl--do-user-action-and-response user-handle "follow" nil notify))
 
-(defun mastodon-tl--notify-user-posts (user-handle)
-  "Query for USER-HANDLE from current status and enable notifications when they post."
+(defun mastodon-tl--enable-notify-user-posts (user-handle)
+  "Query for USER-HANDLE and enable notifications when they post."
   (interactive
    (list
-    (let ((user-handles (mastodon-profile--extract-users-handles
-                         (mastodon-profile--toot-json))))
-      (completing-read "Receive notifications when user posts: "
-                       user-handles
-                       nil ; predicate
-                       'confirm))))
+    (mastodon-tl--interactive-user-handles-get "enable")))
   (mastodon-tl--follow-user user-handle "true"))
 
-(defun mastodon-tl--no-notify-user-posts (user-handle)
-  "Query for USER-HANDLE from current status and disable notifications when they post."
+(defun mastodon-tl--disable-notify-user-posts (user-handle)
+  "Query for USER-HANDLE and disable notifications when they post."
   (interactive
    (list
-    (let ((user-handles (mastodon-profile--extract-users-handles
-                         (mastodon-profile--toot-json))))
-      (completing-read "Disable notifications when user posts: "
-                       user-handles
-                       nil ; predicate
-                       'confirm))))
+    (mastodon-tl--interactive-user-handles-get "disable")))
   (mastodon-tl--follow-user user-handle "false"))
 
 (defun mastodon-tl--unfollow-user (user-handle)
@@ -1027,7 +1018,10 @@ If NOTIFY is \"false\", disable notifications when that user posts."
   "Get the list of user-handles for ACTION from the current toot."
   (let ((user-handles (mastodon-profile--extract-users-handles
                        (mastodon-profile--toot-json))))
-    (completing-read (format "Handle of user to %s: " action)
+    (completing-read (if (or (equal action "disable")
+                             (equal action "enable"))
+                         (format "%s notifications when user posts: " action)
+                       (format "Handle of user to %s: " action))
                      user-handles
                      nil ; predicate
                      'confirm)))
@@ -1050,9 +1044,12 @@ Action must be either \"unblock\" or \"mute\"."
                        nil ; predicate
                        t))))
 
-(defun mastodon-tl--do-user-action-and-response (user-handle action &optional negp)
+(defun mastodon-tl--do-user-action-and-response (user-handle action &optional negp notify)
   "Do ACTION on user NAME/USER-HANDLE.
-NEGP is whether the action involves un-doing something."
+NEGP is whether the action involves un-doing something.
+If NOTIFY is \"true\", enable notifications when that user posts.
+If NOTIFY is \"false\", disable notifications when that user posts.
+NOTIFY is only non-nil when called by `mastodon-tl--follow-user'."
   (let* ((account (if negp
                       ;; TODO check if both are actually needed
                       (mastodon-profile--search-account-by-handle
@@ -1061,20 +1058,30 @@ NEGP is whether the action involves un-doing something."
                      user-handle (mastodon-profile--toot-json))))
          (user-id (mastodon-profile--account-field account 'id))
          (name (mastodon-profile--account-field account 'display_name))
-         (url (mastodon-http--api (format "accounts/%s/%s" user-id action))))
+         (url (mastodon-http--api
+               (if notify
+                   (format "accounts/%s/%s?notify=%s" user-id action notify)
+                 (format "accounts/%s/%s" user-id action)))))
     (if account
         (if (equal action "follow") ; y-or-n for all but follow
-            (mastodon-tl--do-user-action-function url name user-handle action)
+            (mastodon-tl--do-user-action-function url name user-handle action notify)
           (when (y-or-n-p (format "%s user %s? " action name))
             (mastodon-tl--do-user-action-function url name user-handle action)))
       (message "Cannot find a user with handle %S" user-handle))))
 
-(defun mastodon-tl--do-user-action-function (url name user-handle action)
+(defun mastodon-tl--do-user-action-function (url name user-handle action &optional notify)
   "Post ACTION on user NAME/USER-HANDLE to URL."
   (let ((response (mastodon-http--post url nil nil)))
     (mastodon-http--triage response
                            (lambda ()
-                             (message "User %s (@%s) %sed!" name user-handle action)))))
+                             (cond ((string-equal notify "true")
+                                    (message "Receiving notifications for user %s (@%s)!"
+                                             name user-handle))
+                                   ((string-equal notify "false")
+                                    (message "Not receiving notifications for user %s (@%s)!"
+                                             name user-handle))
+                                   ((eq notify nil)
+                                    (message "User %s (@%s) %sed!" name user-handle action)))))))
 
 ;; TODO: add this to new posts in some cases, e.g. in thread view.
 (defun mastodon-tl--reload-timeline-or-profile ()
