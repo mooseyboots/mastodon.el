@@ -33,6 +33,7 @@
 (require 'shr)
 (require 'thingatpt) ; for word-at-point
 (require 'time-date)
+(require 'cl-lib) ; for cl-mapcar
 
 (autoload 'mastodon-auth--get-account-name "mastodon-auth")
 (autoload 'mastodon-http--api "mastodon-http")
@@ -59,8 +60,6 @@
 (defvar mastodon-instance-url)
 (defvar mastodon-toot-timestamp-format)
 (defvar shr-use-fonts)  ;; declare it since Emacs24 didn't have this
-
-(declare-function mapcar* "cl-lib")
 
 (defgroup mastodon-tl nil
   "Timelines in Mastodon."
@@ -786,7 +785,7 @@ takes a single function. By default it is
            (options-numbers (mapcar (lambda(x)
                                       (number-to-string x))
                                     options-number-seq))
-           (options-alist (mapcar* 'cons options-numbers options-titles))
+           (options-alist (cl-mapcar 'cons options-numbers options-titles))
            ;; we display both option number and the option title
            ;; but also store both as cons cell as cdr, as we need it below
            (candidates (mapcar (lambda (cell)
