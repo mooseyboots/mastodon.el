@@ -632,15 +632,17 @@ File is actually attached to the toot upon posting."
   (when (>= (length mastodon-toot--media-attachments) 4)
     ;; Only a max. of 4 attachments are allowed, so pop the oldest one.
     (pop mastodon-toot--media-attachments))
-  (setq mastodon-toot--media-attachments
-        (nconc mastodon-toot--media-attachments
-               `(((:contents . ,(mastodon-http--read-file-as-string file))
-                  (:content-type . ,content-type)
-                  (:description . ,description)
-                  (:filename . ,file)))))
-  (mastodon-toot--refresh-attachments-display)
-  ;; upload only most recent attachment:
-  (mastodon-toot--upload-attached-media (car (last mastodon-toot--media-attachments))))
+  (if (file-directory-p file)
+      (message "Looks like you chose a directory not a file.")
+    (setq mastodon-toot--media-attachments
+          (nconc mastodon-toot--media-attachments
+                 `(((:contents . ,(mastodon-http--read-file-as-string file))
+                    (:content-type . ,content-type)
+                    (:description . ,description)
+                    (:filename . ,file)))))
+    (mastodon-toot--refresh-attachments-display)
+    ;; upload only most recent attachment:
+    (mastodon-toot--upload-attached-media (car (last mastodon-toot--media-attachments)))))
 
 (defun mastodon-toot--upload-attached-media (attachment)
   "Upload a single attachment using `mastodon-http--post-media-attachment'.
