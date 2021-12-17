@@ -32,7 +32,7 @@ It adds the following features:
 |                 | images are links to the full image, can be zoomed/rotated/saved (see image keymap) |
 |                 | images scale properly                                                              |
 |                 | toot visibility (direct, followers only) icon appears in toot bylines              |
-|                 | display a toot's favorites, boosts and replies count in thread view                |
+|                 | display toot's number of favorites, boosts and replies                             |
 |                 | customize option to cache images                                                   |
 | Toots:          |                                                                                    |
 |                 | mention booster in replies by default                                              |

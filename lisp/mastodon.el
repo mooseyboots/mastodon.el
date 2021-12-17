@@ -2,9 +2,9 @@
 
 ;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.9.1
+;; Version: 0.9.2
 ;; Package-Requires: ((emacs "26.1") (request "0.3.2") (seq "1.0"))
-;; Homepage: https://github.com/jdenen/mastodon.el
+;; Homepage: https://git.blast.noho.st/mouse/mastodon.el
 
 ;; This file is not part of GNU Emacs.
 
