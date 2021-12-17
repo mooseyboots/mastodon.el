@@ -29,22 +29,23 @@
 
 ;;; Code:
 
+(autoload 'mastodon-http--api "mastodon-http.el")
+(autoload 'mastodon-http--post "mastodon-http.el")
+(autoload 'mastodon-http--triage "mastodon-http.el")
 (autoload 'mastodon-media--inline-images "mastodon-media.el")
+(autoload 'mastodon-tl--byline "mastodon-tl.el")
 (autoload 'mastodon-tl--byline-author "mastodon-tl.el")
 (autoload 'mastodon-tl--clean-tabs-and-nl "mastodon-tl.el")
 (autoload 'mastodon-tl--content "mastodon-tl.el")
-(autoload 'mastodon-tl--byline "mastodon-tl.el")
-(autoload 'mastodon-tl--toot-id "mastodon-tl.el")
 (autoload 'mastodon-tl--field "mastodon-tl.el")
+(autoload 'mastodon-tl--find-property-range "mastodon-tl.el")
 (autoload 'mastodon-tl--has-spoiler "mastodon-tl.el")
 (autoload 'mastodon-tl--init "mastodon-tl.el")
+(autoload 'mastodon-tl--init-sync "mastodon-tl.el")
 (autoload 'mastodon-tl--insert-status "mastodon-tl.el")
-(autoload 'mastodon-tl--spoiler "mastodon-tl.el")
 (autoload 'mastodon-tl--property "mastodon-tl.el")
-(autoload 'mastodon-tl--find-property-range "mastodon-tl.el")
-(autoload 'mastodon-http--triage "mastodon-http.el")
-(autoload 'mastodon-http--post "mastodon-http.el")
-(autoload 'mastodon-http--api "mastodon-http.el")
+(autoload 'mastodon-tl--spoiler "mastodon-tl.el")
+(autoload 'mastodon-tl--toot-id "mastodon-tl.el")
 (defvar mastodon-tl--display-media-p)
 
 
@@ -53,7 +54,8 @@
     ("follow" . mastodon-notifications--follow)
     ("favourite" . mastodon-notifications--favourite)
     ("reblog" . mastodon-notifications--reblog)
-    ("follow_request" . mastodon-notifications--follow-request))
+    ("follow_request" . mastodon-notifications--follow-request)
+    ("status" . mastodon-notifications--status))
   "Alist of notification types and their corresponding function.")
 
 (defvar mastodon-notifications--response-alist
@@ -61,7 +63,8 @@
     ("Followed" . "you")
     ("Favourited" . "your status from")
     ("Boosted" . "your status from")
-    ("Requested to follow" . "you"))
+    ("Requested to follow" . "you")
+    ("Posted" . "a post"))
   "Alist of subjects for notification types.")
 
 (defun mastodon-notifications--byline-concat (message)
@@ -72,31 +75,30 @@
    " "
    (cdr (assoc message mastodon-notifications--response-alist))))
 
-
 (defun mastodon-notifications--follow-request-accept-notifs ()
   "Accept the follow request of user at point, in notifications view."
   (interactive)
   (when (mastodon-tl--find-property-range 'toot-json (point))
     (let* ((toot-json (mastodon-tl--property 'toot-json))
-           (f-req-p (string= "follow_request" (cdr (assoc 'type toot-json)))))
+           (f-req-p (string= "follow_request" (alist-get 'type toot-json))))
       (if f-req-p
-        (let* ((account (cdr (assoc 'account toot-json)))
-               (id (cdr (assoc 'id account)))
-               (handle (cdr (assoc 'acct account)))
-               (name (cdr (assoc 'username account))))
-          (if id
-              (let ((response
-                     (mastodon-http--post
-                      (concat
-                       (mastodon-http--api "follow_requests")
-                       (format "/%s/authorize" id))
-                      nil nil)))
-                (mastodon-http--triage response
-                                       (lambda ()
-                                         (mastodon-notifications--get)
-                                         (message "Follow request of %s (@%s) accepted!"
-                                                  name handle))))
-            (message "No account result at point?")))
+          (let* ((account (alist-get 'account toot-json))
+                 (id (alist-get 'id account))
+                 (handle (alist-get 'acct account))
+                 (name (alist-get 'username account)))
+            (if id
+                (let ((response
+                       (mastodon-http--post
+                        (concat
+                         (mastodon-http--api "follow_requests")
+                         (format "/%s/authorize" id))
+                        nil nil)))
+                  (mastodon-http--triage response
+                                         (lambda ()
+                                           (mastodon-notifications--get)
+                                           (message "Follow request of %s (@%s) accepted!"
+                                                    name handle))))
+              (message "No account result at point?")))
         (message "No follow request at point?")))))
 
 (defun mastodon-notifications--follow-request-reject-notifs ()
@@ -104,30 +106,30 @@
   (interactive)
   (when (mastodon-tl--find-property-range 'toot-json (point))
     (let* ((toot-json (mastodon-tl--property 'toot-json))
-           (f-req-p (string= "follow_request" (cdr (assoc 'type toot-json)))))
+           (f-req-p (string= "follow_request" (alist-get 'type toot-json))))
       (if f-req-p
-        (let* ((account (cdr (assoc 'account toot-json)))
-               (id (cdr (assoc 'id account)))
-               (handle (cdr (assoc 'acct account)))
-               (name (cdr (assoc 'username account))))
-          (if id
-              (let ((response
-                     (mastodon-http--post
-                      (concat
-                       (mastodon-http--api "follow_requests")
-                       (format "/%s/reject" id))
-                      nil nil)))
-                (mastodon-http--triage response
-                                       (lambda ()
-                                         (mastodon-notifications--get)
-                                         (message "Follow request of %s (@%s) rejected!"
-                                                  name handle))))
-            (message "No account result at point?")))
+          (let* ((account (alist-get 'account toot-json))
+                 (id (alist-get 'id account))
+                 (handle (alist-get 'acct account))
+                 (name (alist-get 'username account)))
+            (if id
+                (let ((response
+                       (mastodon-http--post
+                        (concat
+                         (mastodon-http--api "follow_requests")
+                         (format "/%s/reject" id))
+                        nil nil)))
+                  (mastodon-http--triage response
+                                         (lambda ()
+                                           (mastodon-notifications--get)
+                                           (message "Follow request of %s (@%s) rejected!"
+                                                    name handle))))
+              (message "No account result at point?")))
         (message "No follow request at point?")))))
 
 (defun mastodon-notifications--mention (note)
   "Format for a `mention' NOTE."
-  (let ((id (cdr (assoc 'id note)))
+  (let ((id (alist-get 'id note))
         (status (mastodon-tl--field 'status note)))
     (mastodon-notifications--insert-status
      status
@@ -156,8 +158,8 @@
 
 (defun mastodon-notifications--follow-request (note)
   "Format for a `follow-request' NOTE."
-  (let ((id (cdr (assoc 'id note)))
-        (follower (cdr (assoc 'username (cdr (assoc 'account note))))))
+  (let ((id (alist-get 'id note))
+        (follower (alist-get 'username (alist-get 'account note))))
     (mastodon-notifications--insert-status
      (cons '(reblog (id . nil)) note)
      (propertize (format "You have a follow request from... %s" follower)
@@ -170,7 +172,7 @@
 
 (defun mastodon-notifications--favourite (note)
   "Format for a `favourite' NOTE."
-  (let ((id (cdr (assoc 'id note)))
+  (let ((id (alist-get 'id note))
         (status (mastodon-tl--field 'status note)))
     (mastodon-notifications--insert-status
      status
@@ -188,7 +190,7 @@
 
 (defun mastodon-notifications--reblog (note)
   "Format for a `boost' NOTE."
-  (let ((id (cdr (assoc 'id note)))
+  (let ((id (alist-get 'id note))
         (status (mastodon-tl--field 'status note)))
     (mastodon-notifications--insert-status
      status
@@ -202,6 +204,26 @@
      (lambda (_status)
        (mastodon-notifications--byline-concat
         "Boosted"))
+     id)))
+
+(defun mastodon-notifications--status (note)
+  "Format for a `status' NOTE.
+Status notifications are given when
+`mastodon-tl--notify-user-posts' has been set."
+  (let ((id (cdr (assoc 'id note)))
+        (status (mastodon-tl--field 'status note)))
+    (mastodon-notifications--insert-status
+     status
+     (mastodon-tl--clean-tabs-and-nl
+      (if (mastodon-tl--has-spoiler status)
+          (mastodon-tl--spoiler status)
+        (mastodon-tl--content status)))
+     (lambda (_status)
+       (mastodon-tl--byline-author
+        note))
+     (lambda (_status)
+       (mastodon-notifications--byline-concat
+        "Posted"))
      id)))
 
 (defun mastodon-notifications--insert-status (toot body author-byline action-byline &optional id)
@@ -252,7 +274,7 @@ ID is the notification's own id, which is attached as a property."
   "Display NOTIFICATIONS in buffer."
   (interactive)
   (message "Loading your notifications...")
-  (mastodon-tl--init
+  (mastodon-tl--init-sync
    "notifications"
    "notifications"
    'mastodon-notifications--timeline))

@@ -1,3 +1,5 @@
+#+OPTIONS: toc:nil
+
 * mastodon.el fork
 
 This is a fork of of the great but seemingly dormant https://github.com/jdenen/mastodon.el.
@@ -9,26 +11,39 @@ It adds the following features:
 |                 | display pinned toots on profiles                                                   |
 |                 | display relationship (follows you/followed by you) on profiles                     |
 |                 | display toots/follows/followers counts on profiles                                 |
-|                 | links/tags/mentions in profiles are active links                                   |
+|                 | links/tags/mentions in profile bios are active links                               |
+|                 | show a lock icon for locked accounts                                               |
 | =R=, =C-c a=, =C-c r= | view/accept/reject follow requests                                                 |
-| =v=               | view your favorited toots                                                          |
+| =V=               | view your favorited toots                                                          |
 | =i=               | toggle pinning of toots                                                            |
 | =S-C-P=           | jump to your profile                                                               |
 | =U=               | update your profile bio note                                                       |
+| Notifications:  |                                                                                    |
+|                 | follow requests now also appear in notifications                                   |
+| =a=, =r=            | accept/reject follow requests                                                      |
+|                 | notifications for when a user posts (optional)                                     |
 | Timelines:      |                                                                                    |
 | =C=               | copy url of toot at point                                                          |
 | =d=               | delete your toot at point, and reload current timeline                             |
-| =D=               | delete and redraft toot at point                                                   |
+| =D=               | delete and redraft toot at point, preserving reply/CW/visibility                   |
 | =W=, =M=, =B=         | (un)follow, (un)mute, (un)block author of toot at point                            |
-|                 | display polls and vote on polls (pretty basic for now)                             |
+| =k=, =K=            | toggle bookmark of toot at point, view bookmarked toots                            |
+|                 | display polls and vote on them                                                     |
 |                 | images are links to the full image, can be zoomed/rotated/saved (see image keymap) |
 |                 | images scale properly                                                              |
+|                 | toot visibility (direct, followers only) icon appears in toot bylines              |
+|                 | display a toot's favorites, boosts and replies count in thread view                |
+|                 | customize option to cache images                                                   |
 | Toots:          |                                                                                    |
 |                 | mention booster in replies by default                                              |
-| =C-c C-a=         | media uploads                                                                      |
+|                 | replies preserve visibility status/CW of original toot                             |
+|                 | autocompletion of user mentions, via =company-mode= (must be installed to work)      |
+| =C-c C-a=         | media uploads, asynchronous                                                        |
+|                 | media upload previews displayed in toot compose buffer                             |
 | =C-c C-n=         | and sensitive media/nsfw flag                                                      |
 | =C-c C-e=         | add emoji (if =emojify= installed)                                                   |
-|                 |                                                                                    |
+|                 | download and use your instance's custom emoji                                      |
+|                 | server's maximum toot length shown in toot compose buffer                          |
 | Search:         |                                                                                    |
 | =S=               | search (posts, users, tags) (NB: only posts you have interacted with are searched) |
 |                 |                                                                                    |
@@ -41,11 +56,13 @@ The minimum Emacs version is now 26.1. But if you are running an older version i
 
 I did this for my own use and to learn more Elisp. Feel free to improve it.
 
-** live-updating timelines
+** live-updating timelines: =mastodon-async-mode=
 
 (code taken from https://github.com/alexjgriffith/mastodon-future.el.)
 
-Works for federated, local, and home timelines and for notifications. It's pretty necro, sometimes it goes off the rails, so use at your own risk. Not a super high priority for me, but some people dig it. The command prefix is =mastodon-async--stream=.
+Works for federated, local, and home timelines and for notifications. It's pretty necro, sometimes it goes off the rails, so use at your own risk. Not a super high priority for me, but some people dig it. 
+
+To enable, it, add =(require 'mastodon-async)= to your =init.el=. Then you can view a timeline with one of the commands that begin with =mastodon-async--stream-=.
 
 ** NB: dependency
 
@@ -57,26 +74,15 @@ This repo also incorporates fixes for two bugs that were never merged into the u
 - https://github.com/jdenen/mastodon.el/issues/227 (and https://github.com/jdenen/mastodon.el/issues/234)
 - https://github.com/jdenen/mastodon.el/issues/228
 
-** roadmap-ish
-
-I might add a few more features if the ones I added turn out to work ok. Possible additions/amendments:
-
-- [X] update profile note.
-- [X] fix loading more notifications re-loads the same ones
-- [X] view/accept/reject follow requests in notifications view.
-- [X] fix sometimes usernames don't appear in timelines
-- [X] voting on polls
-- [X] delete and redraft toots
-- [X] prevent loss of draft toots by the toot-send bug
-- [X] fix scaling of images
-- [ ] display post visibility status in timelines
-- better display of polls
-- display number of boosts/faves in toot byline
-- mention all thread participants in replies
-- handle newlines in toots better, for poetry, etc.
-- improve (or even partially disable) async.
+** 2FA
 
 It looks like 2-factor auth was never completed in the original repo. It's not a priority for me, auth ain't my thing. If you want to hack on it, its on the develop branch in the original repo.
+
+** contributing
+
+Contributions are welcome. Registration is disabled by default on the gitea instance, but if you are interested, get in touch with me on mastodon:
+
+[[https://todon.nl/@mousebot][@mousebot@todon.nl]]
 
 * Original README
 

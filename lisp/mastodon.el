@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
 ;; Version: 0.9.1
-;; Package-Requires: ((emacs "26.1") (request "0.2.0") (seq "1.8"))
+;; Package-Requires: ((emacs "26.1") (request "0.3.2") (seq "1.0"))
 ;; Homepage: https://github.com/jdenen/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -31,6 +31,7 @@
 
 ;;; Code:
 (require 'cl-lib) ; for `cl-some' call in mastodon
+(require 'mastodon-toot) ; hack to make mastodon-toot customs visible
 
 (declare-function discover-add-context-menu "discover")
 (declare-function emojify-mode "emojify")
@@ -51,10 +52,10 @@
 (autoload 'mastodon-profile--get-toot-author "mastodon-profile")
 (autoload 'mastodon-profile--make-author-buffer "mastodon-profile")
 (autoload 'mastodon-profile--show-user "mastodon-profile")
-(autoload 'mastodon-toot--compose-buffer "mastodon-toot")
-(autoload 'mastodon-toot--reply "mastodon-toot")
-(autoload 'mastodon-toot--toggle-boost "mastodon-toot")
-(autoload 'mastodon-toot--toggle-favourite "mastodon-toot")
+;; (autoload 'mastodon-toot--compose-buffer "mastodon-toot")
+;; (autoload 'mastodon-toot--reply "mastodon-toot")
+;; (autoload 'mastodon-toot--toggle-boost "mastodon-toot")
+;; (autoload 'mastodon-toot--toggle-favourite "mastodon-toot")
 (autoload 'mastodon-discover "mastodon-discover")
 
 (autoload 'mastodon-tl--block-user "mastodon-tl")
@@ -69,18 +70,21 @@
 (autoload 'mastodon-notifications--follow-request-accept-notifs "mastodon-profile")
 (autoload 'mastodon-notifications--follow-request-reject-notifs "mastodon-profile")
 (autoload 'mastodon-search--search-query "mastodon-search")
-(autoload 'mastodon-toot--delete-toot "mastodon-toot")
-(autoload 'mastodon-toot--copy-toot-url "mastodon-toot")
-(autoload 'mastodon-toot--pin-toot-toggle "mastodon-toot")
+;; (autoload 'mastodon-toot--delete-toot "mastodon-toot")
+;; (autoload 'mastodon-toot--copy-toot-url "mastodon-toot")
+;; (autoload 'mastodon-toot--pin-toot-toggle "mastodon-toot")
 (autoload 'mastodon-auth--get-account-name "mastodon-auth")
 ;; (autoload 'mastodon-async--stream-federated "mastodon-async")
 ;; (autoload 'mastodon-async--stream-local "mastodon-async")
 ;; (autoload 'mastodon-async--stream-home "mastodon-async")
 ;; (autoload 'mastodon-async--stream-notifications "mastodon-async")
+;; (autoload 'mastodon-async-mode "mastodon-async")
 (autoload 'mastodon-profile--update-user-profile-note "mastodon-profile")
 (autoload 'mastodon-auth--user-acct "mastodon-auth")
 (autoload 'mastodon-tl--poll-vote "mastodon-http")
-(autoload 'mastodon-toot--delete-and-redraft-toot "mastodon-toot")
+;; (autoload 'mastodon-toot--delete-and-redraft-toot "mastodon-toot")
+(autoload 'mastodon-profile--view-bookmarks "mastodon-profile")
+;; (autoload 'mastodon-toot--bookmark-toot-toggle "mastodon-toot")
 
 (defgroup mastodon nil
   "Interface with Mastodon."
@@ -141,7 +145,7 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map (kbd "C-S-B") #'mastodon-tl--unblock-user)
     (define-key map (kbd "M") #'mastodon-tl--mute-user)
     (define-key map (kbd "C-S-M") #'mastodon-tl--unmute-user)
-    (define-key map (kbd "C-S-P") #'mastodon-profile--my-profile)
+    (define-key map (kbd "O") #'mastodon-profile--my-profile)
     (define-key map (kbd "S") #'mastodon-search--search-query)
     (define-key map (kbd "d") #'mastodon-toot--delete-toot)
     (define-key map (kbd "D") #'mastodon-toot--delete-and-redraft-toot)
@@ -157,6 +161,8 @@ Use. e.g. \"%c\" for your locale's date and time format."
     (define-key map (kbd "a") #'mastodon-notifications--follow-request-accept-notifs)
     (define-key map (kbd "j") #'mastodon-notifications--follow-request-reject-notifs)
     (define-key map (kbd "v") #'mastodon-tl--poll-vote)
+    (define-key map (kbd "k") #'mastodon-toot--bookmark-toot-toggle)
+    (define-key map (kbd "K") #'mastodon-profile--view-bookmarks)
     map)
 
   "Keymap for `mastodon-mode'.")
@@ -198,26 +204,28 @@ Use. e.g. \"%c\" for your locale's date and time format."
                     "favourites"
                     "search"))
          (buffer (cl-some (lambda (el)
-                           (get-buffer (concat "*mastodon-" el "*")))
-                         tls))) ; return first buff that exists
+                            (get-buffer (concat "*mastodon-" el "*")))
+                          tls))) ; return first buff that exists
     (if buffer
         (switch-to-buffer buffer)
       (mastodon-tl--get-home-timeline)
       (message "Loading Mastodon account %s on %s..." (mastodon-auth--user-acct) mastodon-instance-url))))
 
 ;;;###autoload
-(defun mastodon-toot (&optional user reply-to-id)
+(defun mastodon-toot (&optional user reply-to-id reply-json)
   "Update instance with new toot. Content is captured in a new buffer.
-
 If USER is non-nil, insert after @ symbol to begin new toot.
-If REPLY-TO-ID is non-nil, attach new toot to a conversation."
+If REPLY-TO-ID is non-nil, attach new toot to a conversation.
+If REPLY-JSON is the json of the toot being replied to."
   (interactive)
-  (mastodon-toot--compose-buffer user reply-to-id))
+  (mastodon-toot--compose-buffer user reply-to-id reply-json))
 
 ;;;###autoload
 (add-hook 'mastodon-mode-hook (lambda ()
                                 (when (require 'emojify nil :noerror)
-                                  (emojify-mode t))))
+                                  (emojify-mode t)
+                                  (when mastodon-toot--enable-custom-instance-emoji
+                                    (mastodon-toot--enable-custom-emoji)))))
 
 (define-derived-mode mastodon-mode special-mode "Mastodon"
   "Major mode for Mastodon, the federated microblogging network."
