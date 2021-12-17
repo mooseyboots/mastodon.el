@@ -359,7 +359,13 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
 (defun mastodon-toot--cancel ()
   "Kill new-toot buffer/window. Does not POST content to Mastodon."
   (interactive)
-  (mastodon-toot--kill))
+  (let* ((toot (mastodon-toot--remove-docs))
+         (empty-toot-p (and (not mastodon-toot--media-attachments)
+                            (string= "" (mastodon-tl--clean-tabs-and-nl toot)))))
+    (if empty-toot-p
+        (mastodon-toot--kill)
+      (when (y-or-n-p "Discard draft toot? ")
+        (mastodon-toot--kill)))))
 
 (defalias 'mastodon-toot--insert-emoji
   'emojify-insert-emoji
