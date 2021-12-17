@@ -31,7 +31,7 @@
 ;;; Code:
 
 (require 'shr)
-(require 'thingatpt) ;; for word-at-point
+(require 'thingatpt) ; for word-at-point
 (require 'time-date)
 
 (autoload 'mastodon-auth--get-account-name "mastodon-auth")
@@ -60,7 +60,7 @@
 (defvar mastodon-toot-timestamp-format)
 (defvar shr-use-fonts)  ;; declare it since Emacs24 didn't have this
 
-(declare-function mapcar* "cl")
+(declare-function mapcar* "cl-lib")
 
 (defgroup mastodon-tl nil
   "Timelines in Mastodon."
