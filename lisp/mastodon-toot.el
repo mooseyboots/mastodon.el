@@ -468,24 +468,27 @@ If media items have been attached and uploaded with
                                             (symbol-name t)))
                           ("spoiler_text" . ,spoiler)))
          (args-media (when mastodon-toot--media-attachments
-                       (if (= (length mastodon-toot--media-attachments)
-                              (length mastodon-toot--media-attachment-ids))
-                       ;; (mastodon-toot--upload-attached-media)
-                       ;; moved upload to mastodon-toot--attach-media
                            (mapcar (lambda (id)
                                      (cons "media_ids[]" id))
-                                   mastodon-toot--media-attachment-ids)
-                         (message "Looks like something went wrong with your uploads. Maybe you want to try again."))))
+                                   mastodon-toot--media-attachment-ids)))
          (args (append args-media args-no-media)))
-    (if (> (length toot) (string-to-number mastodon-toot--max-toot-chars))
-        (message "Looks like your toot is longer than that maximum allowed length.")
-      (if empty-toot-p
-          (message "Empty toot. Cowardly refusing to post this.")
-        (let ((response (mastodon-http--post endpoint args nil)))
-          (mastodon-http--triage response
-                                 (lambda ()
-                                   (mastodon-toot--kill)
-                                   (message "Toot toot!"))))))))
+    (cond ((and mastodon-toot--media-attachments
+                ;; make sure we have media args
+                ;; and the same num of ids as attachments
+                (or (not args-media)
+                    (not (= (length mastodon-toot--media-attachments)
+                            (length mastodon-toot--media-attachment-ids)))))
+           (message "Something is wrong with your uploads. Wait for them to complete or try again."))
+          ((> (length toot) (string-to-number mastodon-toot--max-toot-chars))
+           (message "Looks like your toot is longer than that maximum allowed length."))
+          (empty-toot-p
+           (message "Empty toot. Cowardly refusing to post this."))
+          (t
+           (let ((response (mastodon-http--post endpoint args nil)))
+             (mastodon-http--triage response
+                                    (lambda ()
+                                      (mastodon-toot--kill)
+                                      (message "Toot toot!"))))))))
 
 (defun mastodon-toot--process-local (acct)
   "Add domain to local ACCT and replace the curent user name with \"\".
