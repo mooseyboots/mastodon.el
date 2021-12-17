@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
 ;; Version: 0.9.2
-;; Package-Requires: ((emacs "26.1"))
+;; Package-Requires: ((emacs "27.1"))
 ;; Homepage: https://git.blast.noho.st/mouse/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -545,7 +545,11 @@ The prefix can match against both user handles and display names."
     (propertize handle 'annot display-name 'meta url)))
 
 (defun mastodon-toot-mentions (command &optional arg &rest ignored)
-  "A company completion backend for toot mentions."
+  "A company completion backend for toot mentions.
+COMMAND is either prefix, to fetch a prefix query, candidates, to
+build a list of candidates with query ARG, annotation, to format
+an annotation for candidate ARG, or meta, to format meta info for
+candidate ARG. IGNORED remains a mystery."
   (interactive (list 'interactive))
   (cl-case command
     (interactive (company-begin-backend 'mastodon-toot-mentions))
@@ -645,7 +649,7 @@ File is actually attached to the toot upon posting."
     (mastodon-toot--upload-attached-media (car (last mastodon-toot--media-attachments)))))
 
 (defun mastodon-toot--upload-attached-media (attachment)
-  "Upload a single attachment using `mastodon-http--post-media-attachment'.
+  "Upload a single ATTACHMENT using `mastodon-http--post-media-attachment'.
 The item's id is added to `mastodon-toot--media-attachment-ids',
 which is used to attach it to a toot when posting."
   (let* ((filename (expand-file-name

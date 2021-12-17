@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
 ;; Version: 0.9.2
-;; Package-Requires: ((emacs "26.1") (request "0.3.2") (seq "1.0"))
+;; Package-Requires: ((emacs "27.1") (request "0.3.2") (seq "1.0"))
 ;; Homepage: https://git.blast.noho.st/mouse/mastodon.el
 
 ;; This file is not part of GNU Emacs.
@@ -31,7 +31,8 @@
 
 ;;; Code:
 (require 'cl-lib) ; for `cl-some' call in mastodon
-(require 'mastodon-toot) ; hack to make mastodon-toot customs visible
+;; hack to make mastodon-toot customizes visible prior to running mastodon-toot:
+(require 'mastodon-toot)
 
 (declare-function discover-add-context-menu "discover")
 (declare-function emojify-mode "emojify")
