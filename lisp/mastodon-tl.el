@@ -282,7 +282,17 @@ Optionally start from POS."
                     (image-type-available-p 'imagemagick)
                   (image-transforms-p)))
        (mastodon-media--get-avatar-rendering avatar-url))
-     (propertize name 'face 'mastodon-display-name-face)
+     (propertize name
+                 'face 'mastodon-display-name-face
+                 'help-echo
+                 ;; echo faves count when point on post author name:
+                 ;; which is where --goto-next-toot puts point.
+                 ;; prefer the reblog toot if present:
+                 (let ((toot-to-use (or (alist-get 'reblog toot) toot)))
+                   (format "%s faves | %s boosts | %s replies"
+                           (alist-get 'favourites_count toot-to-use)
+                           (alist-get 'reblogs_count toot-to-use)
+                           (alist-get 'replies_count toot-to-use))))
      " ("
      (propertize (concat "@" handle)
                  'face 'mastodon-handle-face
@@ -689,17 +699,30 @@ message is a link which unhides/hides the main body."
       "")))
 
 (defun mastodon-tl--content (toot)
-  "Retrieve text content from TOOT."
+  "Retrieve text content from TOOT.
+If we are in thread view, the toot content is propertized with
+faves/boosts/replies counts."
   (let* ((content (mastodon-tl--field 'content toot))
          (reblog (alist-get 'reblog toot))
          (poll-p (if reblog
                      (alist-get 'poll reblog)
                    (alist-get 'poll toot))))
     (concat
+     (propertize
      (mastodon-tl--render-text content toot)
-     (when poll-p
-       (mastodon-tl--get-poll toot))
-     (mastodon-tl--media toot))))
+                  'help-echo (when (and mastodon-tl--buffer-spec
+                                        (string-match-p
+                                         "context" ; only when thread view
+                                         (plist-get mastodon-tl--buffer-spec 'endpoint)))
+                               ;; prefer the reblog toot if present:
+                               (let ((toot-to-use (or (alist-get 'reblog toot) toot)))
+                                 (format "%s faves | %s boosts | %s replies"
+                                         (alist-get 'favourites_count toot-to-use)
+                                         (alist-get 'reblogs_count toot-to-use)
+                                         (alist-get 'replies_count toot-to-use)))))
+      (when poll-p
+        (mastodon-tl--get-poll toot))
+      (mastodon-tl--media toot))))
 
 (defun mastodon-tl--insert-status (toot body author-byline action-byline)
   "Display the content and byline of timeline element TOOT.
@@ -721,17 +744,6 @@ takes a single function. By default it is
               (mastodon-tl--byline toot author-byline action-byline))
       'toot-id      (alist-get 'id toot)
       'base-toot-id (mastodon-tl--toot-id toot)
-      ;; FIXME this breaks help property of `mastodon-media--get-media-link-rendering'.
-      'help-echo    (when (and mastodon-tl--buffer-spec
-                               (string-match-p
-                                "context" ; when thread view
-                                (plist-get mastodon-tl--buffer-spec 'endpoint)))
-                      ;; prefer the reblog toot if present:
-                      (let ((toot-to-use (or (alist-get 'reblog toot) toot)))
-                        (format "%s faves | %s boosts | %s replies"
-                                (alist-get 'favourites_count toot-to-use)
-                                (alist-get 'reblogs_count toot-to-use)
-                                (alist-get 'replies_count toot-to-use))))
       'toot-json    toot)
      "\n")
     (when mastodon-tl--display-media-p
