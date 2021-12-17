@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
 ;; Maintainer: Marty Hiatt <martianhiatus@riseup.net>
-;; Version: 0.9.2
+;; Version: 0.10.0
 ;; Package-Requires: ((emacs "27.1") (request "0.3.2") (seq "1.0"))
 ;; Homepage: https://git.blast.noho.st/mouse/mastodon.el
 
