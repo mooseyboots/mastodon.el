@@ -148,6 +148,8 @@ types of mastodon links and not just shr.el-generated ones.")
     ;; remove shr's u binding, as it the maybe-probe-and-copy-url
     ;; is already bound to w also
     (define-key map (kbd "u") 'mastodon-tl--update)
+    ;; keep new my-profile binding; shr 'O' doesn't work here anyway
+    (define-key map (kbd "O") 'mastodon-profile--my-profile)
     (keymap-canonicalize map))
   "The keymap to be set for shr.el generated image links.
 
