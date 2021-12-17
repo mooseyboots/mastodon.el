@@ -287,14 +287,11 @@ Optionally start from POS."
      (propertize name
                  'face 'mastodon-display-name-face
                  'help-echo
+                 (mastodon-tl--format-faves-count toot))
+                 ;; 'help-echo
                  ;; echo faves count when point on post author name:
                  ;; which is where --goto-next-toot puts point.
-                 ;; prefer the reblog toot if present:
-                 (let ((toot-to-use (or (alist-get 'reblog toot) toot)))
-                   (format "%s faves | %s boosts | %s replies"
-                           (alist-get 'favourites_count toot-to-use)
-                           (alist-get 'reblogs_count toot-to-use)
-                           (alist-get 'replies_count toot-to-use))))
+                 ;; (mastodon-tl--format-faves-count toot))
      " ("
      (propertize (concat "@" handle)
                  'face 'mastodon-handle-face
@@ -307,6 +304,21 @@ Optionally start from POS."
                  'mastodon-handle (concat "@" handle)
 		         'help-echo (concat "Browse user profile of @" handle))
      ")")))
+
+(defun mastodon-tl--format-faves-count (toot)
+  "Format a favorites, boosts, replies count for a TOOT.
+Used to help-echo when point is at the start of a byline,
+i.e. where `mastodon-tl--goto-next-toot' leaves point."
+  (let ((toot-to-count
+         (or
+          ;; simply praying this order works
+          (alist-get 'status toot) ; notifications timeline
+          (alist-get 'reblog toot) ; boosts
+          toot))) ; everything else
+    (format "%s faves | %s boosts | %s replies"
+            (alist-get 'favourites_count toot-to-count)
+            (alist-get 'reblogs_count toot-to-count)
+            (alist-get 'replies_count toot-to-count))))
 
 (defun mastodon-tl--byline-boosted (toot)
   "Add byline for boosted data from TOOT."
@@ -406,11 +418,19 @@ By default it is `mastodon-tl--byline-boosted'"
      ;; (propertize "\n | " 'face 'default)
      (propertize
       (concat (when boosted
-                (format "(%s) "
-                        (propertize "B" 'face 'mastodon-boost-fave-face)))
+                (format
+                 (propertize "(%s) "
+                             'help-echo
+                             (mastodon-tl--format-faves-count toot))
+                 (propertize "B" 'face 'mastodon-boost-fave-face)))
               (when faved
-                (format "(%s) "
-                        (propertize "F" 'face 'mastodon-boost-fave-face)))
+                (format
+                 (propertize "(%s) "
+                             'help-echo
+                             (mastodon-tl--format-faves-count toot))
+                 (propertize "F" 'face 'mastodon-boost-fave-face)))
+              ;; we propertize help-echo format faves for author name
+              ;; in `mastodon-tl--byline-author'
               (funcall author-byline toot)
               (cond ((equal visibility "direct")
                      (if (fontp (char-displayable-p #10r128274))
