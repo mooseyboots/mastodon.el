@@ -50,7 +50,7 @@
 (autoload 'mastodon-http--api "mastodon-http")
 (autoload 'mastodon-http--delete "mastodon-http")
 (autoload 'mastodon-http--get-json "mastodon-http")
-(autoload 'mastodon-http--get-json-async "mastodon-htpp")
+(autoload 'mastodon-http--get-json-async "mastodon-http")
 (autoload 'mastodon-http--post "mastodon-http")
 (autoload 'mastodon-http--post-media-attachment "mastodon-http")
 (autoload 'mastodon-http--process-json "mastodon-http")
