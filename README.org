@@ -8,9 +8,9 @@ It adds the following features:
 
 | Profiles:       |                                                                                    |
 |                 | display profile metadata fields                                                    |
-|                 | display pinned toots on profiles                                                   |
-|                 | display relationship (follows you/followed by you) on profiles                     |
-|                 | display toots/follows/followers counts on profiles                                 |
+|                 | display pinned toots first                                                         |
+|                 | display relationship (follows you/followed by you)                                 |
+|                 | display toots/follows/followers counts                                             |
 |                 | links/tags/mentions in profile bios are active links                               |
 |                 | show a lock icon for locked accounts                                               |
 | =R=, =C-c a=, =C-c r= | view/accept/reject follow requests                                                 |
@@ -18,10 +18,11 @@ It adds the following features:
 | =i=               | toggle pinning of toots                                                            |
 | =S-C-P=           | jump to your profile                                                               |
 | =U=               | update your profile bio note                                                       |
+| =O=               | jump to own profile                                                                |
 | Notifications:  |                                                                                    |
 |                 | follow requests now also appear in notifications                                   |
-| =a=, =r=            | accept/reject follow requests                                                      |
-|                 | notifications for when a user posts (optional)                                     |
+| =a=, =r=            | accept/reject follow request                                                       |
+|                 | notifications for when a user posts (=mastodon-tl--enable-notify-user-posts=)        |
 | Timelines:      |                                                                                    |
 | =C=               | copy url of toot at point                                                          |
 | =d=               | delete your toot at point, and reload current timeline                             |
