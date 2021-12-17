@@ -710,18 +710,7 @@ faves/boosts/replies counts."
                      (alist-get 'poll reblog)
                    (alist-get 'poll toot))))
     (concat
-     (propertize
-     (mastodon-tl--render-text content toot)
-                  'help-echo (when (and mastodon-tl--buffer-spec
-                                        (string-match-p
-                                         "context" ; only when thread view
-                                         (plist-get mastodon-tl--buffer-spec 'endpoint)))
-                               ;; prefer the reblog toot if present:
-                               (let ((toot-to-use (or (alist-get 'reblog toot) toot)))
-                                 (format "%s faves | %s boosts | %s replies"
-                                         (alist-get 'favourites_count toot-to-use)
-                                         (alist-get 'reblogs_count toot-to-use)
-                                         (alist-get 'replies_count toot-to-use)))))
+      (mastodon-tl--render-text content toot)
       (when poll-p
         (mastodon-tl--get-poll toot))
       (mastodon-tl--media toot))))
