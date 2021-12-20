@@ -1,6 +1,17 @@
 ;;; mastodon-toot-test.el --- Tests for mastodon-toot.el  -*- lexical-binding: nil -*-
 
 (require 'el-mock)
+(require 'mastodon-http)
+
+(defconst mastodon-toot--200-html
+  "HTTP/1.1 200 OK
+Date: Mon, 20 Dec 2021 13:42:29 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked")
+
+(defconst mastodon-toot--mock-toot
+  (propertize "here is a mock toot text."
+              'toot-json mastodon-tl-test-base-toot))
 
 (defconst mastodon-toot--multi-mention
   '((mentions .
@@ -49,9 +60,35 @@ mention string."
         (mastodon-instance-url "https://local.social"))
     (should (string= (mastodon-toot--mentions mastodon-toot-no-mention) ""))))
 
-(ert-deftest mastodon-toot--cancel ()
+;; TODO: test y-or-no-p with matodon-toot--cancel
+(ert-deftest mastodon-toot--kill ()
   "Should kill the buffer when cancelling the toot."
   (with-mock
     (mock (kill-buffer-and-window))
-    (mastodon-toot--cancel)
+    (mastodon-toot--kill)
     (mock-verify)))
+
+(ert-deftest mastodon-toot--delete-toot-fail ()
+  "Should refuse to delete toot."
+    (with-temp-buffer
+      (insert mastodon-toot--mock-toot)
+      (goto-char (point-min))
+      (should (equal (mastodon-toot--delete-toot)
+                     "You can only delete (and redraft) your own toots."))))
+
+(ert-deftest mastodon-toot--delete-toot ()
+  "Should return correct triaged response to a DELETE request."
+  (let ((delete-response (get-buffer-create "delete-200")))
+    (with-current-buffer delete-response
+      (insert mastodon-toot--200-html))
+    (let ((toot mastodon-tl-test-base-toot))
+      (with-mock
+        (mock (mastodon-tl--property 'toot-json) => mastodon-tl-test-base-toot)
+        (mock (mastodon-toot--own-toot-p toot) => t)
+        (mock (mastodon-http--api (format "statuses/61208"))
+              => "https://local.social/statuses/61208")
+        (mock (y-or-n-p "Delete this toot? ") => t)
+        (mock (mastodon-http--delete "https://local.social/statuses/61208")
+              => delete-response)
+        (should (equal (mastodon-toot--delete-toot)
+                       "Toot deleted!"))))))
