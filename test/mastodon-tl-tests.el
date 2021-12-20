@@ -91,6 +91,54 @@
             (reblogged)))
   "A sample reblogged/boosted toot (parsed json)")
 
+(defconst mastodon-tl--follow-notify-true-response
+  "HTTP/1.1 200 OK
+Date: Mon, 20 Dec 2021 13:42:29 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Server: Mastodon
+X-Frame-Options: DENY
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 1; mode=block
+Permissions-Policy: interest-cohort=()
+X-RateLimit-Limit: 300
+X-RateLimit-Remaining: 298
+X-RateLimit-Reset: 2021-12-20T13:45:00.630990Z
+Cache-Control: no-store
+Vary: Accept, Accept-Encoding, Origin
+ETag: W/\"bee52f489c87e9a305e5d0b7bdca7ac1\"
+X-Request-Id: 5be9a64e-7d97-41b4-97f3-17b5e972a675
+X-Runtime: 0.371914
+Strict-Transport-Security: max-age=63072000; includeSubDomains
+Strict-Transport-Security: max-age=31536000
+
+{\"id\":\"123456789\",\"following\":true,\"showing_reblogs\":true,\"notifying\":true,\"followed_by\":true,\"blocking\":false,\"blocked_by\":false,\"muting\":false,\"muting_notifications\":false,\"requested\":false,\"domain_blocking\":false,\"endorsed\":false,\"note\":\"\"}")
+
+(defconst mastodon-tl--follow-notify-false-response
+  "HTTP/1.1 200 OK
+Date: Mon, 20 Dec 2021 13:42:29 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Server: Mastodon
+X-Frame-Options: DENY
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 1; mode=block
+Permissions-Policy: interest-cohort=()
+X-RateLimit-Limit: 300
+X-RateLimit-Remaining: 298
+X-RateLimit-Reset: 2021-12-20T13:45:00.630990Z
+Cache-Control: no-store
+Vary: Accept, Accept-Encoding, Origin
+ETag: W/\"bee52f489c87e9a305e5d0b7bdca7ac1\"
+X-Request-Id: 5be9a64e-7d97-41b4-97f3-17b5e972a675
+X-Runtime: 0.371914
+Strict-Transport-Security: max-age=63072000; includeSubDomains
+Strict-Transport-Security: max-age=31536000
+
+{\"id\":\"123456789\",\"following\":true,\"showing_reblogs\":true,\"notifying\":false,\"followed_by\":true,\"blocking\":false,\"blocked_by\":false,\"muting\":false,\"muting_notifications\":false,\"requested\":false,\"domain_blocking\":false,\"endorsed\":false,\"note\":\"\"}")
+
 (ert-deftest mastodon-tl--remove-html-1 ()
   "Should remove all <span> tags."
   (let ((input "<span class=\"h-card\">foobar</span> <span>foobaz</span>"))
@@ -940,7 +988,7 @@ constant."
 		 "https://example.org"))))
 
 (ert-deftest mastodon-tl--userhandles ()
-  "Should recognise iserhandles in a toot and add the required properties to it."
+  "Should recognise userhandles in a toot and add the required properties to it."
   ;; Travis's Emacs doesn't have libxml so we fake things by inputting
   ;; propertized text and stubbing shr-render-region
   (let* ((fake-input-text
@@ -980,3 +1028,49 @@ constant."
   (should (null (mastodon-tl--extract-userhandle-from-url
                  "https://example.org/@someuser?shouldnot=behere"
                  "SomeUser"))))
+
+(ert-deftest mastodon-tl--do-user-action-function-follow-and-notify ()
+  "Should triage a follow request response buffer and return
+correct value for following, as well as notifications enabled or disabled."
+  (let* ((user-handle "some-user@instance.url")
+         (user-name "some-user")
+         (user-id "123456789")
+         (url-follow-only "https://instance.url/accounts/123456789/follow")
+         (url-true "https://instance.url/accounts/123456789/follow?notify=true")
+         (url-false "https://instance.url/accounts/123456789/follow?notify=false"))
+    (with-temp-buffer
+      (let ((response-buffer-true (current-buffer)))
+        (insert mastodon-tl--follow-notify-true-response)
+        (with-mock
+          (mock (mastodon-http--post url-follow-only nil nil)
+                => response-buffer-true)
+          (should
+           (equal
+            (mastodon-tl--do-user-action-function url-follow-only
+                                                  user-name
+                                                  user-handle
+                                                  "follow")
+            "User some-user (@some-user@instance.url) followed!")))
+        (with-mock
+          (mock (mastodon-http--post url-true nil nil) => response-buffer-true)
+          (should
+           (equal
+            (mastodon-tl--do-user-action-function url-true
+                                                  user-name
+                                                  user-handle
+                                                  "follow"
+                                                  "true")
+            "Receiving notifications for user some-user (@some-user@instance.url)!")))))
+    (with-temp-buffer
+      (let ((response-buffer-false (current-buffer)))
+        (insert mastodon-tl--follow-notify-false-response)
+        (with-mock
+          (mock (mastodon-http--post url-false nil nil) => response-buffer-false)
+          (should
+           (equal
+            (mastodon-tl--do-user-action-function url-false
+                                                  user-name
+                                                  user-handle
+                                                  "follow"
+                                                  "false")
+            "Not receiving notifications for user some-user (@some-user@instance.url)!")))))))
