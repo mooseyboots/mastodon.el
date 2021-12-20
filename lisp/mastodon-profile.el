@@ -66,7 +66,6 @@
 (defvar-local mastodon-profile--account nil
   "The data for the account being described in the current profile buffer.")
 
-;; this way you can update it with C-M-x:
 (defvar mastodon-profile-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "s") #'mastodon-profile--open-followers)
@@ -82,13 +81,9 @@
 This minor mode is used for mastodon profile pages and adds a couple of
 extra keybindings."
   :init-value nil
-  ;; The mode line indicator.
+  ;; modeline indicator:
   :lighter " Profile"
   :keymap mastodon-profile-mode-map
-  ;; :keymap '(((kbd "O") . mastodon-profile--open-followers)
-  ;;           ((kbd "o") . mastodon-profile--open-following)
-  ;;           ((kbd "a") . mastodon-profile--follow-request-accept)
-  ;;           ((kbd "r") . mastodon-profile--follow-request-reject)
   :group 'mastodon
   :global nil)
 
