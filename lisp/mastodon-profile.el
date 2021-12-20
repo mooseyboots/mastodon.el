@@ -405,7 +405,7 @@ If toot is a boost, opens the profile of the booster."
       (mastodon-media--get-media-link-rendering url))))
 
 (defun mastodon-profile--show-user (user-handle)
-  "Query user for USER-HANDLE from current status and show that user's profile."
+  "Query for USER-HANDLE from current status and show that user's profile."
   (interactive
    (list
     (let ((user-handles (mastodon-profile--extract-users-handles
@@ -453,7 +453,7 @@ FIELD is used to identify regions under 'account"
           tootv)))
 
 (defun mastodon-profile--search-account-by-handle (handle)
-  "Return an account based on a users HANDLE.
+  "Return an account based on a user's HANDLE.
 
 If the handle does not match a search return then retun NIL."
   (let* ((handle (if (string= "@" (substring handle 0 1))
@@ -461,7 +461,8 @@ If the handle does not match a search return then retun NIL."
                    handle))
          (matching-account
           (seq-remove
-           (lambda(x) (not (string= (alist-get 'acct x) handle)))
+           (lambda (x)
+             (not (string= (alist-get 'acct x) handle)))
            (mastodon-http--get-json
             (mastodon-http--api (format "accounts/search?q=%s" handle))))))
     (when (equal 1 (length matching-account))

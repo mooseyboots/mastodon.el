@@ -223,7 +223,7 @@ text, i.e. hidden spoiler text."
   "Prompts for tag and opens its timeline."
   (interactive)
   (let* ((word (or (word-at-point) ""))
-         (input (read-string (format "Load timeline for tag(%s): " word)))
+         (input (read-string (format "Load timeline for tag (%s): " word)))
          (tag (if (equal input "") word input)))
     (message "Loading timeline for #%s..." tag)
     (mastodon-tl--show-tag-timeline tag)))
@@ -989,7 +989,7 @@ webapp"
   "Query for USER-HANDLE from current status and follow that user.
 If NOTIFY is \"true\", enable notifications when that user posts.
 If NOTIFY is \"false\", disable notifications when that user posts.
-This can be called to toggle NOTIFY on users already being followed."
+Can be called to toggle NOTIFY on users already being followed."
   (interactive
    (list
     (mastodon-tl--interactive-user-handles-get "follow")))
@@ -1079,15 +1079,16 @@ Action must be either \"unblock\" or \"mute\"."
                        t))))
 
 (defun mastodon-tl--do-user-action-and-response (user-handle action &optional negp notify)
-  "Do ACTION on user NAME/USER-HANDLE.
+  "Do ACTION on user USER-HANDLE.
 NEGP is whether the action involves un-doing something.
 If NOTIFY is \"true\", enable notifications when that user posts.
 If NOTIFY is \"false\", disable notifications when that user posts.
 NOTIFY is only non-nil when called by `mastodon-tl--follow-user'."
   (let* ((account (if negp
-                      ;; TODO check if both are actually needed
+                      ;; if unmuting/unblocking, we got handle from mute/block list
                       (mastodon-profile--search-account-by-handle
                        user-handle)
+                      ;; if muting/blocking, we select from handles in current status
                     (mastodon-profile--lookup-account-in-status
                      user-handle (mastodon-profile--toot-json))))
          (user-id (mastodon-profile--account-field account 'id))
@@ -1104,7 +1105,9 @@ NOTIFY is only non-nil when called by `mastodon-tl--follow-user'."
       (message "Cannot find a user with handle %S" user-handle))))
 
 (defun mastodon-tl--do-user-action-function (url name user-handle action &optional notify)
-  "Post ACTION on user NAME/USER-HANDLE to URL."
+  "Post ACTION on user NAME/USER-HANDLE to URL.
+NOTIFY is either \"true\" or \"false\", and used when we have been called
+by `mastodon-tl--follow-user' to enable or disable notifications."
   (let ((response (mastodon-http--post url nil nil)))
     (mastodon-http--triage response
                            (lambda ()

@@ -166,7 +166,7 @@ Handle any errors from the server."
 
 (defun mastodon-auth--user-acct ()
   "Return a mastodon user acct name."
-  (or (cdr (assoc  mastodon-instance-url mastodon-auth--acct-alist))
+  (or (cdr (assoc mastodon-instance-url mastodon-auth--acct-alist))
       (let ((acct (mastodon-auth--get-account-name)))
         (push (cons mastodon-instance-url acct) mastodon-auth--acct-alist)
         acct)))
