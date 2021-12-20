@@ -1029,13 +1029,15 @@ constant."
                  "https://example.org/@someuser?shouldnot=behere"
                  "SomeUser"))))
 
-(ert-deftest mastodon-tl--do-user-action-function-follow-and-notify ()
+(ert-deftest mastodon-tl--do-user-action-function-follow-notify-block-mute ()
   "Should triage a follow request response buffer and return
 correct value for following, as well as notifications enabled or disabled."
   (let* ((user-handle "some-user@instance.url")
          (user-name "some-user")
          (user-id "123456789")
          (url-follow-only "https://instance.url/accounts/123456789/follow")
+         (url-mute "https://instance.url/accounts/123456789/mute")
+         (url-block "https://instance.url/accounts/123456789/block")
          (url-true "https://instance.url/accounts/123456789/follow?notify=true")
          (url-false "https://instance.url/accounts/123456789/follow?notify=false"))
     (with-temp-buffer
@@ -1050,7 +1052,25 @@ correct value for following, as well as notifications enabled or disabled."
                                                   user-name
                                                   user-handle
                                                   "follow")
-            "User some-user (@some-user@instance.url) followed!")))
+            "User some-user (@some-user@instance.url) followed!"))
+          (mock (mastodon-http--post url-mute nil nil)
+                => response-buffer-true)
+          (should
+           (equal
+            (mastodon-tl--do-user-action-function url-mute
+                                                  user-name
+                                                  user-handle
+                                                  "mute")
+            "User some-user (@some-user@instance.url) muted!"))
+          (mock (mastodon-http--post url-block nil nil)
+                => response-buffer-true)
+          (should
+           (equal
+            (mastodon-tl--do-user-action-function url-block
+                                                  user-name
+                                                  user-handle
+                                                  "blocked")
+            "User some-user (@some-user@instance.url) blocked!")))
         (with-mock
           (mock (mastodon-http--post url-true nil nil) => response-buffer-true)
           (should
