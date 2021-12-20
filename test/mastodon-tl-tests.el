@@ -1069,7 +1069,7 @@ correct value for following, as well as notifications enabled or disabled."
             (mastodon-tl--do-user-action-function url-block
                                                   user-name
                                                   user-handle
-                                                  "blocked")
+                                                  "block")
             "User some-user (@some-user@instance.url) blocked!")))
         (with-mock
           (mock (mastodon-http--post url-true nil nil) => response-buffer-true)
