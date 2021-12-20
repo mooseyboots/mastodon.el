@@ -98,6 +98,7 @@ mention string."
     (mock-verify)))
 
 (ert-deftest mastodon-toot--own-toot-p-fail ()
+  "Should not return t if not own toot."
   (let ((toot mastodon-toot-test-base-toot))
     (with-mock
       (mock (mastodon-auth--user-acct) => "joebogus@bogus.space")
@@ -105,6 +106,7 @@ mention string."
                           t))))))
 
 (ert-deftest mastodon-toot--own-toot-p ()
+  "Should return 't' if own toot."
   (let ((toot mastodon-toot-test-base-toot))
     (with-mock
       (mock (mastodon-auth--user-acct) => "acct42@example.space")
@@ -128,7 +130,7 @@ mention string."
     (let ((delete-response (current-buffer))
           (toot mastodon-toot-test-base-toot))
       (with-mock
-        (mock (mastodon-tl--property 'toot-json) => mastodon-toot-test-base-toot)
+        (mock (mastodon-tl--property 'toot-json) => toot)
         ;; (mock (mastodon-toot--own-toot-p toot) => t)
         (mock (mastodon-auth--user-acct) => "acct42@example.space")
         (mock (mastodon-http--api (format "statuses/61208"))
@@ -138,3 +140,31 @@ mention string."
               => delete-response)
         (should (equal (mastodon-toot--delete-toot)
                        "Toot deleted!"))))))
+
+(ert-deftest mastodon-toot-action-pin ()
+  "Should return callback provided by `mastodon-toot--pin-toot-toggle'."
+  (with-temp-buffer
+    (insert mastodon-toot--200-html)
+    (let ((pin-response (current-buffer))
+          (toot mastodon-toot-test-base-toot)
+          (id 61208))
+      (with-mock
+        (mock (mastodon-tl--property 'base-toot-id) => id)
+        (mock (mastodon-http--api "statuses/61208/pin")
+        => "https://example.space/statuses/61208/pin")
+        (mock (mastodon-http--post "https://example.space/statuses/61208/pin" nil nil)
+              => pin-response)
+        (should (equal (mastodon-toot--action "pin" (lambda ()
+                                                      (message "Toot pinned!")))
+                       "Toot pinned!"))))))
+
+(ert-deftest mastodon-toot--pin-toot-fail ()
+  (with-temp-buffer
+    (insert mastodon-toot--200-html)
+    (let ((pin-response (current-buffer))
+          (toot mastodon-toot-test-base-toot))
+      (with-mock
+        (mock (mastodon-tl--property 'toot-json) => toot)
+        (mock (mastodon-auth--user-acct) => "joebogus@example.space")
+        (should (equal (mastodon-toot--pin-toot-toggle)
+                       "You can only pin your own toots."))))))
