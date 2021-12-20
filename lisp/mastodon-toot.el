@@ -46,6 +46,7 @@
   (defvar company-backends))
 
 (defvar mastodon-instance-url)
+(defvar mastodon-tl--buffer-spec)
 (autoload 'mastodon-auth--user-acct "mastodon-auth")
 (autoload 'mastodon-http--api "mastodon-http")
 (autoload 'mastodon-http--delete "mastodon-http")
@@ -277,27 +278,21 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
     (kill-new url)
     (message "Toot URL copied to the clipboard.")))
 
+(defun mastodon-toot--own-toot-p (toot)
+  "Check if TOOT is user's own, e.g. for deleting it."
+  (and (not (alist-get 'reblog toot))
+       (equal (alist-get 'acct (alist-get 'account toot))
+              (mastodon-auth--user-acct))))
+
 (defun mastodon-toot--delete-toot ()
   "Delete user's toot at point synchronously."
   (interactive)
-  (let* ((toot (mastodon-tl--property 'toot-json))
-         (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
-         (url (mastodon-http--api (format "statuses/%s" id))))
-    (if (or (alist-get 'reblog toot)
-            (not (equal (alist-get 'acct
-                                   (alist-get 'account toot))
-                        (mastodon-auth--user-acct))))
-        (message "You can only delete your own toots.")
-      (if (y-or-n-p (format "Delete this toot? "))
-          (let ((response (mastodon-http--delete url)))
-            (mastodon-http--triage response
-                                   (lambda ()
-                                     (mastodon-tl--reload-timeline-or-profile)
-                                     (message "Toot deleted!"))))))))
+  (mastodon-toot--delete-and-redraft-toot t))
 
 ;; TODO: handle media/poll for redrafting toots
-(defun mastodon-toot--delete-and-redraft-toot ()
-  "Delete and redraft user's toot at point synchronously."
+(defun mastodon-toot--delete-and-redraft-toot (&optional no-redraft)
+  "Delete and redraft user's toot at point synchronously.
+NO-REDRAFT means delete toot only."
   (interactive)
   (let* ((toot (mastodon-tl--property 'toot-json))
          (id (mastodon-tl--as-string (mastodon-tl--toot-id toot)))
@@ -305,31 +300,42 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
          (toot-cw (alist-get 'spoiler_text toot))
          (toot-visibility (alist-get 'visibility toot))
          (reply-id (alist-get 'in_reply_to_id toot)))
-    (if (or (alist-get 'reblog toot)
-            (not (equal (alist-get 'acct
-                                   (alist-get 'account toot))
-                        (mastodon-auth--user-acct))))
-        (message "You can only delete and redraft your own toots.")
-      (if (y-or-n-p (format "Delete and redraft this toot? "))
+    (if (not (mastodon-toot--own-toot-p toot))
+        (message "You can only delete (and redraft) your own toots.")
+      (if (y-or-n-p (if no-redraft
+                        (format "Delete this toot? ")
+                      (format "Delete and redraft this toot? ")))
           (let* ((response (mastodon-http--delete url)))
             (mastodon-http--triage
              response
              (lambda ()
-               (with-current-buffer response
-                 (let* ((json-response (mastodon-http--process-json))
-                        (content (alist-get 'text json-response)))
-                   ;; (media (alist-get 'media_attachments json-response)))
-                   (mastodon-toot--compose-buffer nil nil)
-                   (goto-char (point-max))
-                   (insert content)
-                   ;; adopt reply-to-id, visibility and CW from deleted toot:
-                   (when reply-id
-                     (setq mastodon-toot--reply-to-id reply-id))
-                   (setq mastodon-toot--visibility toot-visibility)
-                   (when (not (equal toot-cw ""))
-                     (setq mastodon-toot--content-warning t)
-                     (setq mastodon-toot--content-warning-from-reply-or-redraft toot-cw))
-                   (mastodon-toot--update-status-fields))))))))))
+               (if no-redraft
+                   (progn
+                     (when mastodon-tl--buffer-spec
+                            (mastodon-tl--reload-timeline-or-profile))
+                     (message "Toot deleted!"))
+                 (mastodon-toot--redraft response
+                                         reply-id
+                                         toot-visibility
+                                         toot-cw)))))))))
+
+(defun mastodon-toot--redraft (response &optional reply-id toot-visibility toot-cw)
+  "Opens a new toot compose buffer using values from RESPONSE buffer.
+REPLY-ID, TOOT-VISIBILITY, and TOOT-CW of deleted toot are preseved."
+  (with-current-buffer response
+    (let* ((json-response (mastodon-http--process-json))
+           (content (alist-get 'text json-response)))
+      (mastodon-toot--compose-buffer nil nil)
+      (goto-char (point-max))
+      (insert content)
+      ;; adopt reply-to-id, visibility and CW from deleted toot:
+      (when reply-id
+        (setq mastodon-toot--reply-to-id reply-id))
+      (setq mastodon-toot--visibility toot-visibility)
+      (when (not (equal toot-cw ""))
+        (setq mastodon-toot--content-warning t)
+        (setq mastodon-toot--content-warning-from-reply-or-redraft toot-cw))
+      (mastodon-toot--update-status-fields))))
 
 (defun mastodon-toot--bookmark-toot-toggle ()
   "Bookmark or unbookmark toot at point synchronously."
