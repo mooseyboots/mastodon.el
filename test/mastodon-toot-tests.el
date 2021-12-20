@@ -97,29 +97,44 @@ mention string."
     (mastodon-toot--kill)
     (mock-verify)))
 
+(ert-deftest mastodon-toot--own-toot-p-fail ()
+  (let ((toot mastodon-toot-test-base-toot))
+    (with-mock
+      (mock (mastodon-auth--user-acct) => "joebogus@bogus.space")
+      (should (not (equal (mastodon-toot--own-toot-p toot)
+                          t))))))
+
+(ert-deftest mastodon-toot--own-toot-p ()
+  (let ((toot mastodon-toot-test-base-toot))
+    (with-mock
+      (mock (mastodon-auth--user-acct) => "acct42@example.space")
+      (should (equal (mastodon-toot--own-toot-p toot)
+                     t)))))
+
 (ert-deftest mastodon-toot--delete-toot-fail ()
   "Should refuse to delete toot."
-    (let ((toot mastodon-toot-test-base-toot))
-      (with-mock
-        (mock (mastodon-auth--user-acct) => "joebogus")
-        ;; (mock (mastodon-toot--own-toot-p toot) => nil)
-        (mock (mastodon-tl--property 'toot-json) => mastodon-toot-test-base-toot)
-        (should (equal (mastodon-toot--delete-toot)
-                       "You can only delete (and redraft) your own toots.")))))
+  (let ((toot mastodon-toot-test-base-toot))
+    (with-mock
+      (mock (mastodon-auth--user-acct) => "joebogus")
+      ;; (mock (mastodon-toot--own-toot-p toot) => nil)
+      (mock (mastodon-tl--property 'toot-json) => mastodon-toot-test-base-toot)
+      (should (equal (mastodon-toot--delete-toot)
+                     "You can only delete (and redraft) your own toots.")))))
 
 (ert-deftest mastodon-toot--delete-toot ()
   "Should return correct triaged response to a legitimate DELETE request."
-    (with-temp-buffer
-      (insert mastodon-toot--200-html)
-      (let ((delete-response (current-buffer))
-            (toot mastodon-toot-test-base-toot))
-        (with-mock
-          (mock (mastodon-tl--property 'toot-json) => mastodon-toot-test-base-toot)
-          (mock (mastodon-toot--own-toot-p toot) => t)
-          (mock (mastodon-http--api (format "statuses/61208"))
-                => "https://local.social/statuses/61208")
-          (mock (y-or-n-p "Delete this toot? ") => t)
-          (mock (mastodon-http--delete "https://local.social/statuses/61208")
-                => delete-response)
-          (should (equal (mastodon-toot--delete-toot)
-                         "Toot deleted!"))))))
+  (with-temp-buffer
+    (insert mastodon-toot--200-html)
+    (let ((delete-response (current-buffer))
+          (toot mastodon-toot-test-base-toot))
+      (with-mock
+        (mock (mastodon-tl--property 'toot-json) => mastodon-toot-test-base-toot)
+        ;; (mock (mastodon-toot--own-toot-p toot) => t)
+        (mock (mastodon-auth--user-acct) => "acct42@example.space")
+        (mock (mastodon-http--api (format "statuses/61208"))
+              => "https://example.space/statuses/61208")
+        (mock (y-or-n-p "Delete this toot? ") => t)
+        (mock (mastodon-http--delete "https://example.space/statuses/61208")
+              => delete-response)
+        (should (equal (mastodon-toot--delete-toot)
+                       "Toot deleted!"))))))
