@@ -188,7 +188,8 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
                         (propertize marker 'face 'success)))))))
 
 (defun mastodon-toot--action (action callback)
-  "Take ACTION on toot at point, then execute CALLBACK."
+  "Take ACTION on toot at point, then execute CALLBACK.
+Makes a POST request to the server."
   (let* ((id (mastodon-tl--property 'base-toot-id))
          (url (mastodon-http--api (concat "statuses/"
                                           (mastodon-tl--as-string id)
@@ -248,26 +249,6 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
                                  (message (format "%s #%s" action id))))
       (message "Nothing to favorite here?!?"))))
 
-(defun mastodon-toot--pin-toot-toggle ()
-  "Pin or unpin user's toot at point."
-  (interactive)
-  (let* ((toot (mastodon-tl--property 'toot-json))
-         (pinnable-p (and
-                      (not (alist-get 'reblog toot))
-                      (equal (alist-get 'acct
-                                        (alist-get 'account toot))
-                             (mastodon-auth--user-acct))))
-         (pinned-p (equal (alist-get 'pinned toot) t))
-         (action (if pinned-p "unpin" "pin"))
-         (msg (if pinned-p "unpinned" "pinned"))
-         (msg-y-or-n (if pinned-p "Unpin" "Pin")))
-    (if (not pinnable-p)
-        (message "You can only pin your own toots.")
-      (if (y-or-n-p (format "%s this toot? " msg-y-or-n))
-          (mastodon-toot--action action
-                                 (lambda ()
-                                   (message "Toot %s!" msg)))))))
-
 (defun mastodon-toot--copy-toot-url ()
   "Copy URL of toot at point."
   (interactive)
@@ -283,6 +264,22 @@ Remove MARKER if REMOVE is non-nil, otherwise add it."
   (and (not (alist-get 'reblog toot))
        (equal (alist-get 'acct (alist-get 'account toot))
               (mastodon-auth--user-acct))))
+
+(defun mastodon-toot--pin-toot-toggle ()
+  "Pin or unpin user's toot at point."
+  (interactive)
+  (let* ((toot (mastodon-tl--property 'toot-json))
+         (pinnable-p (mastodon-toot--own-toot-p toot))
+         (pinned-p (equal (alist-get 'pinned toot) t))
+         (action (if pinned-p "unpin" "pin"))
+         (msg (if pinned-p "unpinned" "pinned"))
+         (msg-y-or-n (if pinned-p "Unpin" "Pin")))
+    (if (not pinnable-p)
+        (message "You can only pin your own toots.")
+      (if (y-or-n-p (format "%s this toot? " msg-y-or-n))
+          (mastodon-toot--action action
+                                 (lambda ()
+                                   (message "Toot %s!" msg)))))))
 
 (defun mastodon-toot--delete-toot ()
   "Delete user's toot at point synchronously."
