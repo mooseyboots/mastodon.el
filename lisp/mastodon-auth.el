@@ -124,13 +124,22 @@ Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
   "Return the access token to use with the current `mastodon-instance-url'.
 
 Generate token and set if none known yet."
-  (let ((token
-         (cdr (assoc mastodon-instance-url mastodon-auth--token-alist))))
-    (unless token 
-      (let ((json (mastodon-auth--get-token)))
-        (setq token (plist-get json :access_token))
-        (push (cons mastodon-instance-url token) mastodon-auth--token-alist)))
-    token))
+  (if-let ((token (cdr (assoc mastodon-instance-url mastodon-auth--token-alist))))
+      token
+
+    (mastodon-auth--handle-token-response (mastodon-auth--get-token))))
+
+(defun mastodon-auth--handle-token-response (response)
+  (pcase response
+    ((and (let token (plist-get response :access_token))
+          (guard token))
+     (cdar (push (cons mastodon-instance-url token)
+                 mastodon-auth--token-alist)))
+
+    (`(:error ,class :error_description ,error)
+     (error "mastodon-auth--access-token: %s: %s" class error))
+
+    (_ (error "Unknown response from mastodon-auth--get-token!"))))
 
 (defun mastodon-auth--get-account-name ()
   "Request user credentials and return an account name."
