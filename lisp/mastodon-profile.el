@@ -213,6 +213,7 @@ extra keybindings."
     (mastodon-profile-update-mode t)
     (insert note)
     (goto-char (point-min))
+    (delete-trailing-whitespace) ; remove all ^M's
     (message "Edit your profile note. C-c C-c to send, C-c C-k to cancel.")))
 
 (defun mastodon-profile--user-profile-send-updated ()
