@@ -128,6 +128,8 @@ etc.")
     ;; version that knows about more types of links.
     (define-key map [remap shr-next-link] 'mastodon-tl--next-tab-item)
     (define-key map [remap shr-previous-link] 'mastodon-tl--previous-tab-item)
+    ;; keep new my-profile binding; shr 'O' doesn't work here anyway
+    (define-key map (kbd "O") 'mastodon-profile--my-profile)
     (keymap-canonicalize map))
   "The keymap to be set for shr.el generated links that are not images.
 
