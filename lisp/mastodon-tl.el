@@ -225,7 +225,7 @@ text, i.e. hidden spoiler text."
   "Prompts for tag and opens its timeline."
   (interactive)
   (let* ((word (or (word-at-point) ""))
-         (input (read-string (format "Load timeline for tag(%s): " word)))
+         (input (read-string (format "Load timeline for tag (%s): " word)))
          (tag (if (equal input "") word input)))
     (message "Loading timeline for #%s..." tag)
     (mastodon-tl--show-tag-timeline tag)))
@@ -288,12 +288,10 @@ Optionally start from POS."
        (mastodon-media--get-avatar-rendering avatar-url))
      (propertize name
                  'face 'mastodon-display-name-face
-                 'help-echo
-                 (mastodon-tl--format-faves-count toot))
-                 ;; 'help-echo
                  ;; echo faves count when point on post author name:
                  ;; which is where --goto-next-toot puts point.
-                 ;; (mastodon-tl--format-faves-count toot))
+                 'help-echo
+                 (mastodon-tl--format-faves-count toot))
      " ("
      (propertize (concat "@" handle)
                  'face 'mastodon-handle-face
@@ -654,7 +652,7 @@ Used for hitting <return> on a given link."
            (error "Unknown link type %s" link-type)))))
 
 (defun mastodon-tl--do-link-action (event)
-  "Do the action of the link at.
+  "Do the action of the link at point.
 Used for a mouse-click EVENT on a link."
   (interactive "e")
   (mastodon-tl--do-link-action-at-point (posn-point (event-end event))))
@@ -724,18 +722,17 @@ message is a link which unhides/hides the main body."
 
 (defun mastodon-tl--content (toot)
   "Retrieve text content from TOOT.
-If we are in thread view, the toot content is propertized with
-faves/boosts/replies counts."
+Runs `mastodon-tl--render-text' and fetches poll or media."
   (let* ((content (mastodon-tl--field 'content toot))
          (reblog (alist-get 'reblog toot))
          (poll-p (if reblog
                      (alist-get 'poll reblog)
                    (alist-get 'poll toot))))
     (concat
-      (mastodon-tl--render-text content toot)
-      (when poll-p
-        (mastodon-tl--get-poll toot))
-      (mastodon-tl--media toot))))
+     (mastodon-tl--render-text content toot)
+     (when poll-p
+       (mastodon-tl--get-poll toot))
+     (mastodon-tl--media toot))))
 
 (defun mastodon-tl--insert-status (toot body author-byline action-byline)
   "Display the content and byline of timeline element TOOT.
@@ -763,7 +760,7 @@ takes a single function. By default it is
       (mastodon-media--inline-images start-pos (point)))))
 
 (defun mastodon-tl--get-poll (toot)
-  "If post TOOT is a poll, return a formatted string of poll."
+  "If TOOT includes a poll, return it as a formatted string."
   (let* ((poll (mastodon-tl--field 'poll toot))
          (options (mastodon-tl--field 'options poll))
          (option-titles (mapcar (lambda (x)
@@ -831,7 +828,6 @@ takes a single function. By default it is
            (url (mastodon-http--api (format "polls/%s/votes" poll-id)))
            ;; need to zero-index our option:
            (option-as-arg (number-to-string (1- (string-to-number (car option)))))
-           ;; (option-indexed
            (arg `(("choices[]" . ,option-as-arg)))
            (response (mastodon-http--post url arg nil)))
       (mastodon-http--triage response
