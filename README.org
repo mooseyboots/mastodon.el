@@ -1,13 +1,91 @@
-* mastodon.el
+#+OPTIONS: toc:nil
 
-[[https://melpa.org/#/mastodon][file:https://melpa.org/packages/mastodon-badge.svg]]
+* mastodon.el fork
 
-[[https://travis-ci.org/jdenen/mastodon.el][https://travis-ci.org/jdenen/mastodon.el.svg?branch=master]]
-[[http://waffle.io/jdenen/mastodon.el][https://badge.waffle.io/jdenen/mastodon.el.png?label=in%20progress&title=In%20Progress]]
+This is a fork of of the great but seemingly dormant https://github.com/jdenen/mastodon.el.
 
-Emacs client for [[https://github.com/tootsuite/mastodon][Mastodon]]
+It adds the following features:
 
-[[http://spacemacs.org][https://cdn.rawgit.com/syl20bnr/spacemacs/442d025779da2f62fc86c2082703697714db6514/assets/spacemacs-badge.svg]]
+| Profiles:       |                                                                                    |
+|                 | display profile metadata fields                                                    |
+|                 | display pinned toots first                                                         |
+|                 | display relationship (follows you/followed by you)                                 |
+|                 | display toots/follows/followers counts                                             |
+|                 | links/tags/mentions in profile bios are active links                               |
+|                 | show a lock icon for locked accounts                                               |
+| =R=, =C-c a=, =C-c r= | view/accept/reject follow requests                                                 |
+| =V=               | view your favorited toots                                                          |
+| =i=               | toggle pinning of toots                                                            |
+| =S-C-P=           | jump to your profile                                                               |
+| =U=               | update your profile bio note                                                       |
+| =O=               | jump to own profile                                                                |
+| Notifications:  |                                                                                    |
+|                 | follow requests now also appear in notifications                                   |
+| =a=, =r=            | accept/reject follow request                                                       |
+|                 | notifications for when a user posts (=mastodon-tl--enable-notify-user-posts=)        |
+| Timelines:      |                                                                                    |
+| =C=               | copy url of toot at point                                                          |
+| =d=               | delete your toot at point, and reload current timeline                             |
+| =D=               | delete and redraft toot at point, preserving reply/CW/visibility                   |
+| =W=, =M=, =B=         | (un)follow, (un)mute, (un)block author of toot at point                            |
+| =k=, =K=            | toggle bookmark of toot at point, view bookmarked toots                            |
+|                 | display polls and vote on them                                                     |
+|                 | images are links to the full image, can be zoomed/rotated/saved (see image keymap) |
+|                 | images scale properly                                                              |
+|                 | toot visibility (direct, followers only) icon appears in toot bylines              |
+|                 | display toot's number of favorites, boosts and replies                             |
+|                 | customize option to cache images                                                   |
+| Toots:          |                                                                                    |
+|                 | mention booster in replies by default                                              |
+|                 | replies preserve visibility status/CW of original toot                             |
+|                 | autocompletion of user mentions, via =company-mode= (must be installed to work)      |
+| =C-c C-a=         | media uploads, asynchronous                                                        |
+|                 | media upload previews displayed in toot compose buffer                             |
+| =C-c C-n=         | and sensitive media/nsfw flag                                                      |
+| =C-c C-e=         | add emoji (if =emojify= installed)                                                   |
+|                 | download and use your instance's custom emoji                                      |
+|                 | server's maximum toot length shown in toot compose buffer                          |
+| Search:         |                                                                                    |
+| =S=               | search (posts, users, tags) (NB: only posts you have interacted with are searched) |
+|                 |                                                                                    |
+
+It also makes some small cosmetic changes to make timelines easier to read, and makes some functions asynchronous, based on https://github.com/ieure/mastodon.el.
+
+This updated version is not on MELPA, to use it you need to clone and require it as per the installation instructions below.
+
+The minimum Emacs version is now 26.1. But if you are running an older version it shouldn't be very hard to get it working.
+
+I did this for my own use and to learn more Elisp. Feel free to improve it.
+
+** live-updating timelines: =mastodon-async-mode=
+
+(code taken from https://github.com/alexjgriffith/mastodon-future.el.)
+
+Works for federated, local, and home timelines and for notifications. It's pretty necro, sometimes it goes off the rails, so use at your own risk. Not a super high priority for me, but some people dig it. 
+
+To enable, it, add =(require 'mastodon-async)= to your =init.el=. Then you can view a timeline with one of the commands that begin with =mastodon-async--stream-=.
+
+** NB: dependency
+
+This version depends on the library =request= (for uploading attachments). You can install it from MELPA, or https://github.com/tkf/emacs-request.
+
+** NB: bugs
+
+This repo also incorporates fixes for two bugs that were never merged into the upstream repo: 
+- https://github.com/jdenen/mastodon.el/issues/227 (and https://github.com/jdenen/mastodon.el/issues/234)
+- https://github.com/jdenen/mastodon.el/issues/228
+
+** 2FA
+
+It looks like 2-factor auth was never completed in the original repo. It's not a priority for me, auth ain't my thing. If you want to hack on it, its on the develop branch in the original repo.
+
+** contributing
+
+Contributions are welcome. Registration is disabled by default on the gitea instance, but if you are interested, get in touch with me on mastodon:
+
+[[https://todon.nl/@mousebot][@mousebot@todon.nl]]
+
+* Original README
 
 ** Installation
 
