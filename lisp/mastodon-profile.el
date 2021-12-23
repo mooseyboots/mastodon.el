@@ -62,7 +62,6 @@
 (defvar mastodon-tl--buffer-spec)
 (defvar mastodon-tl--update-point)
 
-
 (defvar-local mastodon-profile--account nil
   "The data for the account being described in the current profile buffer.")
 
@@ -475,8 +474,8 @@ If the handle does not match a search return then retun NIL."
 These include the author, author of reblogged entries and any user mentioned."
   (when status
     (let ((this-account (alist-get 'account status))
-	  (mentions (alist-get 'mentions status))
-	  (reblog (alist-get 'reblog status)))
+	      (mentions (alist-get 'mentions status))
+	      (reblog (alist-get 'reblog status)))
       (seq-filter
        'stringp
        (seq-uniq

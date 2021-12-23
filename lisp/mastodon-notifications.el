@@ -49,7 +49,6 @@
 (autoload 'mastodon-tl--toot-id "mastodon-tl.el")
 (defvar mastodon-tl--display-media-p)
 
-
 (defvar mastodon-notifications--types-alist
   '(("mention" . mastodon-notifications--mention)
     ("follow" . mastodon-notifications--follow)
@@ -210,7 +209,7 @@
 (defun mastodon-notifications--status (note)
   "Format for a `status' NOTE.
 Status notifications are given when
-`mastodon-tl--notify-user-posts' has been set."
+`mastodon-tl--enable-notify-user-posts' has been set."
   (let ((id (cdr (assoc 'id note)))
         (status (mastodon-tl--field 'status note)))
     (mastodon-notifications--insert-status
