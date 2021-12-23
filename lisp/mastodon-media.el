@@ -2,9 +2,10 @@
 
 ;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.9.0
-;; Homepage: https://github.com/jdenen/mastodon.el
-;; Package-Requires: ((emacs "24.4"))
+;; Maintainer: Marty Hiatt <martianhiatus@riseup.net>
+;; Version: 0.10.0
+;; Package-Requires: ((emacs "27.1"))
+;; Homepage: https://git.blast.noho.st/mouse/mastodon.el
 
 ;; This file is not part of GNU Emacs.
 
@@ -32,22 +33,31 @@
 ;; required by the server and client.
 
 ;;; Code:
+(require 'url-cache)
+
 (defvar url-show-status)
+
+(defvar mastodon-tl--shr-image-map-replacement)
 
 (defgroup mastodon-media nil
   "Inline Mastadon media."
   :prefix "mastodon-media-"
   :group 'mastodon)
 
-(defcustom mastodon-media--avatar-height 30
+(defcustom mastodon-media--avatar-height 20
   "Height of the user avatar images (if shown)."
   :group 'mastodon-media
   :type 'integer)
 
 (defcustom mastodon-media--preview-max-height 250
-  "Max height of any media attachment preview to be shown."
+  "Max height of any media attachment preview to be shown in timelines."
   :group 'mastodon-media
   :type 'integer)
+
+(defcustom mastodon-media--enable-image-caching nil
+  "Whether images should be cached."
+  :group 'mastodon-media
+  :type 'boolean)
 
 (defvar mastodon-media--generic-avatar-data
   (base64-decode-string
@@ -85,7 +95,7 @@ m836fL6tra0jYkUiEb/fz8k3waLhikQiXq+3/NtiSayNjY1fv35BbVP5fN7pdG5tbR0Fy+12c360
 Hxzz5a8KI6V6EMMwzo/2fZ2YTqej0WgqlSoVLqRUDwYCAajNiqKoYDBYphOLY8ViscItVG1VJEmu
 r6+XeU8sjhWPxzc3N9sNiyAIDMOqS1YbDqwKx1YRrFQqxc7HJDRnpdPpUuEqgoVhWL0+i6hFz6tL
 ja3iM4u1zw1qwhlfJihI0bfCNhxYe4NSqg3/A862hQAbrdtHAAAAAElFTkSuQmCC")
-  "The PNG data for a generic 100x100 avatar")
+  "The PNG data for a generic 100x100 avatar.")
 
 (defvar mastodon-media--generic-broken-image-data
   (base64-decode-string
@@ -125,17 +135,17 @@ CAQgEIBAAAIBFiNOFMaY6V1tnFhkDQIQCEAgAIEABAKAQAACAQgEIBCAQAACAQgEIBCAQABIXO4e
 c1y+zhoEIBCAQAAQCEAgAIEABAIQCEAgAIEABAIQCEAgAAgEIBCAQAACAQgEIBCAQAACAQgEAIEA
 BAIQCEAgAIEABAIsJVH58WqHw8FIgjUIQCAACAQgEIBAAAIBCAQgEIBAAAIBCAQgEAAEAhAIQCBA
 fKRJkmVZjAQwh78A6vCRWJE8K+8AAAAASUVORK5CYII=")
-  "The PNG data for a generic 200x200 'broken image' view")
+  "The PNG data for a generic 200x200 'broken image' view.")
 
 (defun mastodon-media--process-image-response
-    (status-plist marker image-options region-length)
+    (status-plist marker image-options region-length url)
   "Callback function processing the url retrieve response for URL.
 
 STATUS-PLIST is the usual plist of status events as per `url-retrieve'.
 IMAGE-OPTIONS are the precomputed options to apply to the image.
 MARKER is the marker to where the response should be visible.
-REGION-LENGTH is the length of the region that should be replaced with the image.
-"
+REGION-LENGTH is the length of the region that should be replaced
+with the image."
   (when (marker-buffer marker) ; only if the buffer hasn't been kill in the meantime
     (let ((url-buffer (current-buffer))
           (is-error-response-p (eq :error (car status-plist))))
@@ -145,8 +155,14 @@ REGION-LENGTH is the length of the region that should be replaced with the image
                          (search-forward "\n\n")
                          (buffer-substring (point) (point-max))))
                  (image (when data
-                          (apply #'create-image data (when image-options 'imagemagick)
+                          (apply #'create-image data
+                                 (if (version< emacs-version "27.1")
+                                     (when image-options 'imagemagick)
+                                   nil) ; inbuilt scaling in 27.1
                                  t image-options))))
+            (when mastodon-media--enable-image-caching
+              (unless (url-is-cached url) ; cache if not already cached
+                (url-store-in-cache url-buffer)))
             (with-current-buffer (marker-buffer marker)
               ;; Save narrowing in our buffer
               (let ((inhibit-read-only t))
@@ -165,11 +181,14 @@ REGION-LENGTH is the length of the region that should be replaced with the image
               (kill-buffer url-buffer)))))))
 
 (defun mastodon-media--load-image-from-url (url media-type start region-length)
-  "Takes a URL and MEDIA-TYPE and load the image asynchronously.
+  "Take a URL and MEDIA-TYPE and load the image asynchronously.
 
-MEDIA-TYPE is a symbol and either 'avatar or 'media-link."
+MEDIA-TYPE is a symbol and either 'avatar or 'media-link.
+START is the position where we start loading the image.
+REGION-LENGTH is the range from start to propertize."
   ;; TODO: Cache the avatars
-  (let ((image-options (when (image-type-available-p 'imagemagick)
+  (let ((image-options (when (or (image-type-available-p 'imagemagick)
+                                 (image-transforms-p)) ; inbuilt scaling in 27.1
                          (cond
                           ((eq media-type 'avatar)
                            `(:height ,mastodon-media--avatar-height))
@@ -182,9 +201,18 @@ MEDIA-TYPE is a symbol and either 'avatar or 'media-link."
       (condition-case nil
           ;; catch any errors in url-retrieve so as to not abort
           ;; whatever called us
-          (url-retrieve url
-                        #'mastodon-media--process-image-response
-                        (list marker image-options region-length))
+          (if (and mastodon-media--enable-image-caching
+                   (url-is-cached url))
+              ;; if image url is cached, decompress and use it
+              (with-current-buffer (url-fetch-from-cache url)
+                (set-buffer-multibyte nil)
+                (goto-char (point-min))
+                (zlib-decompress-region (goto-char (search-forward "\n\n")) (point-max))
+                (mastodon-media--process-image-response nil marker image-options region-length url))
+            ;; else fetch as usual and process-image-response will cache it
+            (url-retrieve url
+                          #'mastodon-media--process-image-response
+                          (list marker image-options region-length url)))
         (error (with-current-buffer buffer
                  ;; TODO: Consider adding retries
                  (put-text-property marker
@@ -212,22 +240,22 @@ found."
          ;; Avatars are just one character in the buffer
          ((eq media-type 'avatar)
           (list next-pos (+ next-pos 1) 'avatar))
-        ;; Media links are 5 character ("[img]")
+         ;; Media links are 5 character ("[img]")
          ((eq media-type 'media-link)
           (list next-pos (+ next-pos 5) 'media-link)))))))
 
 (defun mastodon-media--valid-link-p (link)
-  "Checks to make sure that the missing string has
+  "Check if LINK is valid.
 
-not been returned."
+Checks to make sure the missing string has not been returned."
   (and link
        (> (length link) 8)
        (or (string= "http://" (substring link 0 7))
            (string= "https://" (substring link 0 8)))))
 
 (defun mastodon-media--inline-images (search-start search-end)
-  "Find all `Media_Links:' in the range from SEARCH-START to SEARCH-END
-replacing them with the referenced image."
+  "Find all `Media_Links:' in the range from SEARCH-START to SEARCH-END.
+Replace them with the referenced image."
   (save-excursion
     (goto-char search-start)
     (let (line-details)
@@ -246,11 +274,12 @@ replacing them with the referenced image."
              image-url media-type start (- end start))))))))
 
 (defun mastodon-media--get-avatar-rendering (avatar-url)
-  "Returns the string to be written that renders the avatar at AVATAR-URL."
+  "Return the string to be written that renders the avatar at AVATAR-URL."
   ;; We use just an empty space as the textual representation.
   ;; This is what a user will see on a non-graphical display
   ;; where not showing an avatar at all is preferable.
-  (let ((image-options (when (image-type-available-p 'imagemagick)
+  (let ((image-options (when (or (image-type-available-p 'imagemagick)
+                                 (image-transforms-p)) ; inbuilt scaling in 27.1
                          `(:height ,mastodon-media--avatar-height))))
     (concat
      (propertize " "
@@ -258,19 +287,33 @@ replacing them with the referenced image."
                  'media-state 'needs-loading
                  'media-type 'avatar
                  'display (apply #'create-image mastodon-media--generic-avatar-data
-                                 (when image-options 'imagemagick)
+                                 (if (version< emacs-version "27.1")
+                                     (when image-options 'imagemagick)
+                                   nil) ; inbuilt scaling in 27.1
                                  t image-options))
      " ")))
 
-(defun mastodon-media--get-media-link-rendering (media-url)
-  "Returns the string to be written that renders the image at MEDIA-URL."
-  (concat
-   (propertize "[img]"
-               'media-url media-url
-               'media-state 'needs-loading
-               'media-type 'media-link
-               'display (create-image mastodon-media--generic-broken-image-data nil t))
-   " "))
+(defun mastodon-media--get-media-link-rendering (media-url &optional full-remote-url type)
+  "Return the string to be written that renders the image at MEDIA-URL.
+FULL-REMOTE-URL is used for `shr-browse-image'.
+TYPE is the attachment's type field on the server."
+  (let ((help-echo
+         "RET/i: load full image (prefix: copy URL), +/-: zoom, r: rotate, o: save preview"))
+    (concat
+     (propertize "[img]"
+                 'media-url media-url
+                 'media-state 'needs-loading
+                 'media-type 'media-link
+                 'mastodon-media-type type
+                 'display (create-image mastodon-media--generic-broken-image-data nil t)
+                 'mouse-face 'highlight
+                 'mastodon-tab-stop 'image ; for do-link-action-at-point
+                 'image-url full-remote-url ; for shr-browse-image
+                 'keymap mastodon-tl--shr-image-map-replacement
+                 'help-echo (if (string= type "image")
+                                help-echo
+                              (concat help-echo "\ntype: " type)))
+                 " ")))
 
 (provide 'mastodon-media)
 ;;; mastodon-media.el ends here

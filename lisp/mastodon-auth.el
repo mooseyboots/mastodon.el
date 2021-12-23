@@ -2,9 +2,10 @@
 
 ;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.9.0
-;; Homepage: https://github.com/jdenen/mastodon.el
-;; Package-Requires: ((emacs "24.4"))
+;; Maintainer: Marty Hiatt <martianhiatus@riseup.net>
+;; Version: 0.10.0
+;; Package-Requires: ((emacs "27.1"))
+;; Homepage: https://git.blast.noho.st/mouse/mastodon.el
 
 ;; This file is not part of GNU Emacs.
 
@@ -32,6 +33,7 @@
 (require 'plstore)
 (require 'auth-source)
 (require 'json)
+(eval-when-compile (require 'subr-x)) ; for if-let
 
 (autoload 'mastodon-client "mastodon-client")
 (autoload 'mastodon-http--api "mastodon-http")
@@ -60,14 +62,19 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
   "Alist of account accts (name@domain) keyed by instance url.")
 
 (defun mastodon-auth--generate-token ()
-  "Make POST to generate auth token."
+  "Make POST to generate auth token.
+
+If no auth-sources file, runs
+`mastodon-auth--generate-token-no-storing-credentials'. If
+auth-sources file exists, runs
+`mastodon-auth--generate-token-and-store'."
   (if (or (null mastodon-auth-source-file)
 	  (string= "" mastodon-auth-source-file))
       (mastodon-auth--generate-token-no-storing-credentials)
     (mastodon-auth--generate-token-and-store)))
 
 (defun mastodon-auth--generate-token-no-storing-credentials ()
-  "Make POST to generate auth token."
+  "Make POST to generate auth token, without using auth-sources file."
   (mastodon-http--post
    (concat mastodon-instance-url "/oauth/token")
    `(("client_id" . ,(plist-get (mastodon-client) :client_id))
@@ -82,7 +89,7 @@ if you are happy with unencryped storage use e.g. \"~/authinfo\"."
 (defun mastodon-auth--generate-token-and-store ()
   "Make POST to generate auth token.
 
-Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
+Reads and/or stores secrets in `MASTODON-AUTH-SOURCE-FILE'."
   (let* ((auth-sources (list mastodon-auth-source-file))
 	 (auth-source-creation-prompts
           '((user . "Enter email for %h: ")
@@ -110,7 +117,7 @@ Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
         (funcall (plist-get credentials-plist :save-function))))))
 
 (defun mastodon-auth--get-token ()
-  "Make auth token request and return JSON response."
+  "Make a request to generate an auth token and return JSON response."
   (with-current-buffer (mastodon-auth--generate-token)
     (goto-char (point-min))
     (re-search-forward "^$" nil 'move)
@@ -121,15 +128,23 @@ Reads and/or stores secres in `MASTODON-AUTH-SOURCE-FILE'."
       (json-read-from-string json-string))))
 
 (defun mastodon-auth--access-token ()
-  "Return the access token to use with the current `mastodon-instance-url'.
+  "Return exiting or generate new access token.
 
-Generate token and set if none known yet."
+If an access token for `mastodon-instance-url' is in
+`mastodon-auth--token-alist', return it.
+
+Otherwise, generate a token and pass it to
+`mastodon-auth--handle-token-reponse'."
   (if-let ((token (cdr (assoc mastodon-instance-url mastodon-auth--token-alist))))
       token
-
     (mastodon-auth--handle-token-response (mastodon-auth--get-token))))
 
 (defun mastodon-auth--handle-token-response (response)
+  "Add token RESPONSE to `mastodon-auth--token-alist'.
+
+The token is returned by `mastodon-auth--get-token'.
+
+Handle any errors from the server."
   (pcase response
     ((and (let token (plist-get response :access_token))
           (guard token))
@@ -137,21 +152,20 @@ Generate token and set if none known yet."
                  mastodon-auth--token-alist)))
 
     (`(:error ,class :error_description ,error)
-     (error "mastodon-auth--access-token: %s: %s" class error))
-
+     (error "Mastodon-auth--access-token: %s: %s" class error))
     (_ (error "Unknown response from mastodon-auth--get-token!"))))
 
 (defun mastodon-auth--get-account-name ()
   "Request user credentials and return an account name."
-  (cdr (assoc
-        'acct
-        (mastodon-http--get-json
-         (mastodon-http--api
-          "accounts/verify_credentials")))))
+  (alist-get
+   'acct
+   (mastodon-http--get-json
+    (mastodon-http--api
+     "accounts/verify_credentials"))))
 
 (defun mastodon-auth--user-acct ()
   "Return a mastodon user acct name."
-  (or (cdr (assoc  mastodon-instance-url mastodon-auth--acct-alist))
+  (or (cdr (assoc mastodon-instance-url mastodon-auth--acct-alist))
       (let ((acct (mastodon-auth--get-account-name)))
         (push (cons mastodon-instance-url acct) mastodon-auth--acct-alist)
         acct)))

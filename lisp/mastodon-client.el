@@ -2,9 +2,10 @@
 
 ;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.9.0
-;; Homepage: https://github.com/jdenen/mastodon.el
-;; Package-Requires: ((emacs "24.4"))
+;; Maintainer: Marty Hiatt <martianhiatus@riseup.net>
+;; Version: 0.10.0
+;; Package-Requires: ((emacs "27.1"))
+;; Homepage: https://git.blast.noho.st/mouse/mastodon.el
 
 ;; This file is not part of GNU Emacs.
 
@@ -94,7 +95,7 @@ Make `mastodon-client--fetch' call to determine client values."
     (cdr mastodon)))
 
 (defun mastodon-client ()
-  "Return variable client secrets to use for the current `mastodon-instance-url'..
+  "Return variable client secrets to use for `mastodon-instance-url'.
 
 Read plist from `mastodon-client--token-file' if variable is nil.
 Fetch and store plist if `mastodon-client--read' returns nil."

@@ -2,9 +2,10 @@
 
 ;; Copyright (C) 2017-2019 Johnson Denen
 ;; Author: Johnson Denen <johnson.denen@gmail.com>
-;; Version: 0.9.0
-;; Package-Requires: ((emacs "24.4"))
-;; Homepage: https://github.com/jdenen/mastodon.el
+;; Maintainer: Marty Hiatt <martianhiatus@riseup.net>
+;; Version: 0.10.0
+;; Package-Requires: ((emacs "27.1"))
+;; Homepage: https://git.blast.noho.st/mouse/mastodon.el
 
 ;; This file is not part of GNU Emacs.
 
@@ -30,11 +31,14 @@
 ;;; Code:
 (autoload 'mastodon-http--api "mastodon-http")
 (autoload 'mastodon-http--get-json "mastodon-http")
+(autoload 'mastodon-http--get-search-json "mastodon-http")
 (autoload 'mastodon-media--inline-images "mastodon-media")
 (autoload 'mastodon-mode "mastodon")
 (autoload 'mastodon-tl--as-string "mastodon-tl")
 (autoload 'mastodon-tl--property "mastodon-tl")
 (autoload 'mastodon-tl--toot "mastodon-tl")
+
+(defvar mastodon-instance-url)
 
 (defgroup mastodon-inspect nil
   "Tools to help inspect toots."
@@ -59,7 +63,7 @@
    (concat "*mastodon-inspect-toot-"
            (mastodon-tl--as-string (mastodon-tl--property 'toot-id))
            "*")
-  (mastodon-tl--property 'toot-json)))
+   (mastodon-tl--property 'toot-json)))
 
 (defun mastodon-inspect--download-single-toot (toot-id)
   "Download the toot/status represented by TOOT-ID."
@@ -69,7 +73,7 @@
 (defun mastodon-inspect--view-single-toot (toot-id)
   "View the toot/status represented by TOOT-ID."
   (interactive "s Toot ID: ")
-  (let ((buffer (get-buffer-create(concat "*mastodon-status-" toot-id "*"))))
+  (let ((buffer (get-buffer-create (concat "*mastodon-status-" toot-id "*"))))
     (with-current-buffer buffer
       (let ((toot (mastodon-inspect--download-single-toot toot-id )))
         (mastodon-tl--toot toot)
@@ -86,6 +90,40 @@
   (mastodon-inspect--dump-json-in-buffer
    (concat "*mastodon-status-raw-" toot-id "*")
    (mastodon-inspect--download-single-toot toot-id)))
+
+
+(defvar mastodon-inspect--search-query-accounts-result)
+(defvar mastodon-inspect--single-account-json)
+
+(defvar mastodon-inspect--search-query-full-result)
+(defvar mastodon-inspect--search-result-tags)
+
+(defun mastodon-inspect--get-search-result (query)
+  "Inspect function for a search result for QUERY."
+  (interactive)
+  (setq mastodon-inspect--search-query-full-result
+        (append ; convert vector to list
+         (mastodon-http--get-search-json
+         (format "%s/api/v2/search" mastodon-instance-url)
+         query)
+         nil))
+  (setq mastodon-inspect--search-result-tags
+        (append (cdr
+                 (caddr mastodon-inspect--search-query-full-result))
+                nil)))
+
+(defun mastodon-inspect--get-search-account (query)
+  "Return JSON for a single account after search QUERY."
+  (interactive)
+  (setq mastodon-inspect--search-query-accounts-result
+        (append ; convert vector to list
+         (mastodon-http--get-search-json
+         (format "%s/api/v1/accounts/search" mastodon-instance-url)
+         query)
+         nil))
+  (setq mastodon-inspect--single-account-json
+      (car mastodon-inspect--search-query-accounts-result)))
+
 
 (provide 'mastodon-inspect)
 ;;; mastodon-inspect.el ends here
