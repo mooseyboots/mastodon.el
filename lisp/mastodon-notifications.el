@@ -223,7 +223,7 @@ Status notifications are given when
         "Posted"))
      id)))
 
-(defun mastodon-notifications--insert-status (toot body author-byline action-byline &optional id)
+(defun mastodon-notifications--insert-status (toot body author-byline action-byline id)
   "Display the content and byline of timeline element TOOT.
 
 BODY will form the section of the toot above the byline.
@@ -238,19 +238,7 @@ takes a single function. By default it is
 `mastodon-tl--byline-boosted'.
 
 ID is the notification's own id, which is attached as a property."
-  (let ((start-pos (point)))
-    (insert
-     (propertize
-      (concat "\n"
-              body
-              " \n"
-              (mastodon-tl--byline toot author-byline action-byline))
-      'toot-id      id
-      'base-toot-id (mastodon-tl--toot-id toot)
-      'toot-json    toot)
-     "\n")
-    (when mastodon-tl--display-media-p
-      (mastodon-media--inline-images start-pos (point)))))
+  (mastodon-tl--insert-status toot body author-byline action-byline id))
 
 (defun mastodon-notifications--by-type (note)
   "Filters NOTE for those listed in `mastodon-notifications--types-alist'."

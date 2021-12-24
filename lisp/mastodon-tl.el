@@ -734,7 +734,7 @@ Runs `mastodon-tl--render-text' and fetches poll or media."
        (mastodon-tl--get-poll toot))
      (mastodon-tl--media toot))))
 
-(defun mastodon-tl--insert-status (toot body author-byline action-byline)
+(defun mastodon-tl--insert-status (toot body author-byline action-byline &optional id)
   "Display the content and byline of timeline element TOOT.
 
 BODY will form the section of the toot above the byline.
@@ -744,7 +744,10 @@ portion of the byline that takes one variable. By default it is
 ACTION-BYLINE is also an optional function for adding an action,
 such as boosting favouriting and following to the byline. It also
 takes a single function. By default it is
-`mastodon-tl--byline-boosted'"
+`mastodon-tl--byline-boosted'.
+
+ID is that of the toot, which is attached as a property if it is
+a notification."
   (let ((start-pos (point)))
     (insert
      (propertize
@@ -752,7 +755,8 @@ takes a single function. By default it is
               body
               " \n"
               (mastodon-tl--byline toot author-byline action-byline))
-      'toot-id      (alist-get 'id toot)
+      'toot-id      (or id ; for notifications
+                        (alist-get 'id toot))
       'base-toot-id (mastodon-tl--toot-id toot)
       'toot-json    toot)
      "\n")
