@@ -69,8 +69,6 @@
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "s") #'mastodon-profile--open-followers)
     (define-key map (kbd "g") #'mastodon-profile--open-following)
-    (define-key map (kbd "a") #'mastodon-profile--follow-request-accept)
-    (define-key map (kbd "j") #'mastodon-profile--follow-request-reject)
     map)
   "Keymap for `mastodon-profile-mode'.")
 
@@ -152,50 +150,6 @@ extra keybindings."
   (mastodon-tl--init "follow-requests"
                      "follow_requests"
                      'mastodon-profile--add-author-bylines))
-
-(defun mastodon-profile--follow-request-accept ()
-  "Accept the follow request of user at point."
-  (interactive)
-  (if (mastodon-tl--find-property-range 'toot-json (point))
-      (let* ((acct-json (mastodon-profile--toot-json))
-             (id (alist-get 'id acct-json))
-             (handle (alist-get 'acct acct-json))
-             (name (alist-get 'username acct-json)))
-        (if id
-            (let ((response
-                   (mastodon-http--post
-                    (concat
-                     (mastodon-http--api "follow_requests")
-                     (format "/%s/authorize" id))
-                    nil nil)))
-              (mastodon-http--triage response
-                                     (lambda ()
-                                       (message "Follow request of %s (@%s) accepted!"
-                                                name handle))))
-          (message "No account result at point?")))
-    (message "No follow request at point?")))
-
-(defun mastodon-profile--follow-request-reject ()
-  "Reject the follow request of user at point."
-  (interactive)
-  (if (mastodon-tl--find-property-range 'toot-json (point))
-      (let* ((acct-json (mastodon-profile--toot-json))
-             (id (alist-get 'id acct-json))
-             (handle (alist-get 'acct acct-json))
-             (name (alist-get 'username acct-json)))
-        (if id
-            (let ((response
-                   (mastodon-http--post
-                    (concat
-                     (mastodon-http--api "follow_requests")
-                     (format "/%s/reject" id))
-                    nil nil)))
-              (mastodon-http--triage response
-                                     (lambda ()
-                                       (message "Follow request of %s (@%s) rejected!"
-                                                name handle))))
-          (message "No account result at point?")))
-    (message "No follow request at point?")))
 
 (defun mastodon-profile--update-user-profile-note ()
   "Fetch user's profile note and display for editing."

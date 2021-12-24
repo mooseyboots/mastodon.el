@@ -75,14 +75,24 @@
    " "
    (cdr (assoc message mastodon-notifications--response-alist))))
 
-(defun mastodon-notifications--follow-request-accept-notifs ()
-  "Accept the follow request of user at point, in notifications view."
+(defun mastodon-notifications--follow-request-process (&optional reject)
+  "Process the follow request at point.
+With no argument, the request is accepted. Argument REJECT means
+reject the request. Can be called in notifications view or in
+follow-requests view."
   (interactive)
   (when (mastodon-tl--find-property-range 'toot-json (point))
     (let* ((toot-json (mastodon-tl--property 'toot-json))
-           (f-req-p (string= "follow_request" (alist-get 'type toot-json))))
+           (f-reqs-view-p (string= "follow_requests"
+                                   (plist-get mastodon-tl--buffer-spec 'endpoint)))
+           (f-req-p (or (string= "follow_request" (alist-get 'type toot-json)) ;notifs
+                        f-reqs-view-p))
+           (accept-reject-string (if reject
+                                     "reject"
+                                   "accept")))
       (if f-req-p
-          (let* ((account (alist-get 'account toot-json))
+          (let* ((account (or (alist-get 'account toot-json) ;notifs
+                              toot-json)) ;f-reqs
                  (id (alist-get 'id account))
                  (handle (alist-get 'acct account))
                  (name (alist-get 'username account)))
@@ -91,41 +101,28 @@
                        (mastodon-http--post
                         (concat
                          (mastodon-http--api "follow_requests")
-                         (format "/%s/authorize" id))
+                         (format "/%s/%s" id accept-reject-string))
                         nil nil)))
                   (mastodon-http--triage response
                                          (lambda ()
-                                           (mastodon-notifications--get)
-                                           (message "Follow request of %s (@%s) accepted!"
-                                                    name handle))))
+                                           (unless f-reqs-view-p
+                                             (mastodon-notifications--get))
+                                           (message "Follow request of %s (@%s) %sed!"
+                                                    name handle accept-reject-string))))
               (message "No account result at point?")))
         (message "No follow request at point?")))))
 
-(defun mastodon-notifications--follow-request-reject-notifs ()
-  "Reject the follow request of user at point, in notifications view."
+(defun mastodon-notifications--follow-request-accept ()
+  "Accept a follow request.
+Can be called in notifications view or in follow-requests view."
   (interactive)
-  (when (mastodon-tl--find-property-range 'toot-json (point))
-    (let* ((toot-json (mastodon-tl--property 'toot-json))
-           (f-req-p (string= "follow_request" (alist-get 'type toot-json))))
-      (if f-req-p
-          (let* ((account (alist-get 'account toot-json))
-                 (id (alist-get 'id account))
-                 (handle (alist-get 'acct account))
-                 (name (alist-get 'username account)))
-            (if id
-                (let ((response
-                       (mastodon-http--post
-                        (concat
-                         (mastodon-http--api "follow_requests")
-                         (format "/%s/reject" id))
-                        nil nil)))
-                  (mastodon-http--triage response
-                                         (lambda ()
-                                           (mastodon-notifications--get)
-                                           (message "Follow request of %s (@%s) rejected!"
-                                                    name handle))))
-              (message "No account result at point?")))
-        (message "No follow request at point?")))))
+  (mastodon-notifications--follow-request-process))
+
+(defun mastodon-notifications--follow-request-reject ()
+  "Reject a follow request.
+Can be called in notifications view or in follow-requests view."
+  (interactive)
+  (mastodon-notifications--follow-request-process t))
 
 (defun mastodon-notifications--mention (note)
   "Format for a `mention' NOTE."
