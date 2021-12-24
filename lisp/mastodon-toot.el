@@ -873,11 +873,11 @@ REPLY-JSON is the full JSON of the toot being replied to."
          (buffer (or buffer-exists (get-buffer-create "*new toot*")))
          (inhibit-read-only t))
     (switch-to-buffer-other-window buffer)
+    (text-mode)
     (mastodon-toot-mode t)
     (when (not buffer-exists)
       (mastodon-toot--display-docs-and-status-fields)
       (mastodon-toot--setup-as-reply reply-to-user reply-to-id reply-json))
-    (mastodon-toot-mode t)
     (unless mastodon-toot--max-toot-chars
       (mastodon-toot--get-max-toot-chars))
     (when (require 'company nil :noerror)
