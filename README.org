@@ -1,8 +1,10 @@
 #+OPTIONS: toc:nil
 
-* mastodon.el fork
+* mastodon.el updated
 
-This is a fork of of the great but seemingly dormant https://github.com/jdenen/mastodon.el.
+This is an updated version of the great but seemingly dormant mastodon client for emacs.
+
+[The original readme is below.]
 
 It adds the following features:
 
@@ -51,23 +53,21 @@ It adds the following features:
 
 It also makes some small cosmetic changes to make timelines easier to read, and makes some functions asynchronous, based on https://github.com/ieure/mastodon.el.
 
-This updated version is not on MELPA, to use it you need to clone and require it as per the installation instructions below.
-
-The minimum Emacs version is now 26.1. But if you are running an older version it shouldn't be very hard to get it working.
-
-I did this for my own use and to learn more Elisp. Feel free to improve it.
+The minimum Emacs version is now 27.1. But if you are running an older version it shouldn't be very hard to get it working.
 
 ** live-updating timelines: =mastodon-async-mode=
 
 (code taken from https://github.com/alexjgriffith/mastodon-future.el.)
 
-Works for federated, local, and home timelines and for notifications. It's pretty necro, sometimes it goes off the rails, so use at your own risk. Not a super high priority for me, but some people dig it. 
+Works for federated, local, and home timelines and for notifications. It's a little touchy, one thing to avoid is trying to load a timeline more than once at a time. It can go off the rails a bit, but it's still pretty cool.
 
 To enable, it, add =(require 'mastodon-async)= to your =init.el=. Then you can view a timeline with one of the commands that begin with =mastodon-async--stream-=.
 
-** NB: dependency
+** NB: dependencies
 
-This version depends on the library =request= (for uploading attachments). You can install it from MELPA, or https://github.com/tkf/emacs-request.
+This version depends on the library =request= (for uploading attachments). You can install it from MELPA, or https://github.com/tkf/emacs-request. It also depends on =seq=.
+
+Optional dependencies are =company= for autocompletion of mentions when composing a toot, and =emojify= for inserting and viewing emojis.
 
 ** NB: bugs
 
@@ -81,10 +81,9 @@ It looks like 2-factor auth was never completed in the original repo. It's not a
 
 ** contributing
 
-Contributions are welcome. Registration is disabled by default on the gitea instance, but if you are interested, get in touch with me on mastodon:
+Contributions are welcome. Registration is disabled by default on the gitea instance, but if you are interested, get in touch with me on mastodon: [[https://todon.nl/@mousebot][@mousebot@todon.nl]]. Or just leave an issue on github.
 
-[[https://todon.nl/@mousebot][@mousebot@todon.nl]]
-
+For now, to get started with hacking, pull off the develop branch of the blast repo.
 * Original README
 
 ** Installation
