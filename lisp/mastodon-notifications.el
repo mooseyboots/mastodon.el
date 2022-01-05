@@ -55,7 +55,8 @@
     ("favourite" . mastodon-notifications--favourite)
     ("reblog" . mastodon-notifications--reblog)
     ("follow_request" . mastodon-notifications--follow-request)
-    ("status" . mastodon-notifications--status))
+    ("status" . mastodon-notifications--status)
+    ("poll" . mastodon-notifications--poll))
   "Alist of notification types and their corresponding function.")
 
 (defvar mastodon-notifications--response-alist
@@ -64,7 +65,8 @@
     ("Favourited" . "your status from")
     ("Boosted" . "your status from")
     ("Requested to follow" . "you")
-    ("Posted" . "a post"))
+    ("Posted" . "a post")
+    ("Posted a poll" . "that has now ended"))
   "Alist of subjects for notification types.")
 
 (defun mastodon-notifications--byline-concat (message)
@@ -151,6 +153,10 @@ Status notifications are given when
 `mastodon-tl--enable-notify-user-posts' has been set."
   (mastodon-notifications--format-note note 'status))
 
+(defun mastodon-notifications--poll (note)
+  "Format for a `poll' NOTE."
+  (mastodon-notifications--format-note note 'poll))
+
 (defun mastodon-notifications--format-note (note type)
   "Format for a NOTE of TYPE."
   (let ((id (alist-get 'id note))
@@ -186,7 +192,7 @@ Status notifications are given when
         (cond ((equal type 'boost)
                "Boosted")
               ((equal type 'favorite)
-               "Favorited")
+               "Favourited")
               ((equal type 'follow-request)
                "Requested to follow")
               ((equal type 'follow)
@@ -194,7 +200,9 @@ Status notifications are given when
               ((equal type 'mention)
                "Mentioned")
               ((equal type 'status)
-               "Posted"))))
+               "Posted")
+              ((equal type 'poll)
+               "Posted a poll"))))
      id)))
 
 (defun mastodon-notifications--insert-status (toot body author-byline action-byline id)
