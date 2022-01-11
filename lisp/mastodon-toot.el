@@ -96,7 +96,8 @@ followers-only), or \"direct\"."
   :group 'mastodon-toot
   :type 'integer)
 
-(defcustom mastodon-toot--enable-completion-for-mentions (if (require 'company nil :noerror) "following" "off")
+(defcustom mastodon-toot--enable-completion-for-mentions
+  (if (require 'company nil :noerror) "following" "off")
   "Whether to enable company completion for mentions.
 
 Used for completion in toot compose buffer.
@@ -125,7 +126,8 @@ This is only used if company mode is installed."
 (defvar-local mastodon-toot--visibility "public"
   "A string indicating the visibility of the toot being composed.
 
-Valid values are \"direct\", \"private\" (followers-only), \"unlisted\", and \"public\".")
+Valid values are \"direct\", \"private\" (followers-only),
+\"unlisted\", and \"public\".")
 
 (defvar-local mastodon-toot--media-attachments nil
   "A list of the media attachments of the toot being composed.")
@@ -279,6 +281,8 @@ Makes a POST request to the server."
       (if (y-or-n-p (format "%s this toot? " msg-y-or-n))
           (mastodon-toot--action action
                                  (lambda ()
+                                   (when mastodon-tl--buffer-spec
+                                     (mastodon-tl--reload-timeline-or-profile))
                                    (message "Toot %s!" msg)))))))
 
 (defun mastodon-toot--delete-toot ()
@@ -873,11 +877,11 @@ REPLY-JSON is the full JSON of the toot being replied to."
          (buffer (or buffer-exists (get-buffer-create "*new toot*")))
          (inhibit-read-only t))
     (switch-to-buffer-other-window buffer)
+    (text-mode)
     (mastodon-toot-mode t)
     (when (not buffer-exists)
       (mastodon-toot--display-docs-and-status-fields)
       (mastodon-toot--setup-as-reply reply-to-user reply-to-id reply-json))
-    (mastodon-toot-mode t)
     (unless mastodon-toot--max-toot-chars
       (mastodon-toot--get-max-toot-chars))
     (when (require 'company nil :noerror)

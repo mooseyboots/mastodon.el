@@ -113,6 +113,7 @@ Authorization header is included by default unless UNAUTHENTICED-P is non-nil."
 	 (append
 	  (unless unauthenticed-p
 	    `(("Authorization" . ,(concat "Bearer " (mastodon-auth--access-token)))))
+          ;; pleroma compatibility:
           (unless (assoc "Content-Type" headers)
             '(("Content-Type" . "application/x-www-form-urlencoded")))
 	  headers)))
