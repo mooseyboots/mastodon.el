@@ -494,11 +494,8 @@ START and END are the boundaries of the link in the toot."
                          url toot-instance-url))
          (url-instance (concat "https://"
                                (url-host (url-generic-parse-url url))))
-         (maybe-userhandle (if (string= mastodon-instance-url url-instance)
-                                        ; if handle is local, then no instance suffix:
-                               (buffer-substring-no-properties start end)
-                             (mastodon-tl--extract-userhandle-from-url
-                              url (buffer-substring-no-properties start end)))))
+         (maybe-userhandle (mastodon-tl--extract-userhandle-from-url
+                            url (buffer-substring-no-properties start end))))
     (cond (;; Hashtags:
            maybe-hashtag
            (setq mastodon-tab-stop-type 'hashtag
@@ -550,11 +547,16 @@ START and END are the boundaries of the link in the toot."
 
 BUFFER-TEXT is the text covered by the link with URL, for a user profile
 this should be of the form <at-sign><user id>, e.g. \"@Gargon\"."
-  (let ((parsed-url (url-generic-parse-url url)))
+  (let* ((parsed-url (url-generic-parse-url url))
+         (local-p (string=
+                   (url-host (url-generic-parse-url mastodon-instance-url))
+                   (url-host parsed-url))))
     (when (and (string= "@" (substring buffer-text 0 1))
                (string= (downcase buffer-text)
                         (downcase (substring (url-filename parsed-url) 1))))
-      (concat buffer-text "@" (url-host parsed-url)))))
+      (if local-p
+          buffer-text ; no instance suffic for local mention
+        (concat buffer-text "@" (url-host parsed-url))))))
 
 (defun mastodon-tl--extract-hashtag-from-url (url instance-url)
   "Return the hashtag that URL points to or nil if URL is not a tag link.
